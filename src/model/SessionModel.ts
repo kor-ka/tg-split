@@ -2,7 +2,7 @@ import React from "react";
 import { io, Socket } from "socket.io-client";
 import { VM } from "../utils/vm/VM";
 import Cookies from "js-cookie";
-import { BalanceState, Log, Operation, User } from "../../entity";
+import { BalanceState, FullState, Log, Operation, User } from "../../entity";
 import { Deffered } from "../utils/deffered";
 import { UsersModule } from "./UsersModule";
 
@@ -46,17 +46,23 @@ export class SessionModel {
             console.log(e);
         });
 
-        this.socket.on("init", ({ balanceState, log, users }: { balanceState: BalanceState, log: Log, users: User[] }) => {
-            users.forEach(this.users.updateUser)
-            this.log.next(log)
-            this.bumpBalance(balanceState);
+
+        this.socket.on("state", ({ balanceState, log, users }: Partial<FullState>) => {
+            if (balanceState) {
+                this.bumpBalance(balanceState);
+            }
+            if (log) {
+                for (let i = log.length - 1; i >= 0; i--) {
+                    this.addOperation(log[i])
+                }
+            }
+            if (users) {
+                users.forEach(this.users.updateUser)
+            }
+
         });
 
-        this.socket.on("balanceUpdated", (balanceState: BalanceState) => {
-            this.bumpBalance(balanceState);
-        });
-
-        this.socket.on("userUpdated", (user: User) => {
+        this.socket.on("user", (user: User) => {
             this.users.updateUser(user)
         });
 
@@ -76,12 +82,12 @@ export class SessionModel {
         }
     }
 
-    commitOperation = (operation: Omit<Operation, 'id'>): Promise<Operation> => {
+    nextId = () => this.localOprationId++
+    commitOperation = (operation: Omit<Operation, 'uid'>): Promise<Operation> => {
         const d = new Deffered<Operation>()
-        this.emit("operation", operation, (res: { patch: { operation: Operation, balanceState: BalanceState }, error: never } | { error: string, patch: never }) => {
+        this.emit("op", operation, (res: { patch: { operation: Operation, balanceState: BalanceState }, error: never } | { error: string, patch: never }) => {
             const { patch, error } = res
             if (patch) {
-                (operation as Operation).id = (this.localOprationId++).toString()
                 this.bumpBalance(patch.balanceState)
                 this.addOperation(patch.operation)
                 d.resolve(patch.operation)

@@ -1,4 +1,4 @@
-import { Balance as SavedBalance, BALANCE, OP, SavedOp } from "./splitStore";
+import { Balance as SavedBalance, BALANCE, OP, SavedOp, OmitUnion } from "./splitStore";
 import { singleton } from "tsyringe";
 import { Operation, OperationSplit, BalanceState, Balance } from "../../../../entity";
 import { MDBClient } from "../../utils/MDB";
@@ -12,16 +12,16 @@ export class SplitModule {
   private balance = BALANCE();
   private ops = OP();
 
-  readonly stateSubject = new Subject<{ balance: BalanceState, operation: Operation }>
+  readonly stateSubject = new Subject<{ chatId: number, balanceState: BalanceState, operation: Operation }>
 
-  commitOperation = async (userId: string, chatId: number, operation: Operation) => {
+  commitOperation = async (chatId: number, operation: Operation) => {
     const session = MDBClient.startSession()
     try {
       await session.withTransaction(async () => {
         // Write op
-        const { id, ...op } = operation;
+        const { id, uid, ...op } = operation;
         // TODO: idempotencyKey unique index, correction unique index
-        const insertedId = (await this.ops.insertOne({ ...op, idempotencyKey: `${userId}_${id}`, chatId })).insertedId
+        const insertedId = (await this.ops.insertOne({ ...op, uid, idempotencyKey: `${uid}_${id}`, chatId })).insertedId
         operation.id = insertedId.toHexString()
 
         // Update balance
@@ -42,30 +42,59 @@ export class SplitModule {
           chatId,
           $inc: { ...updateBalances, seq: 1 }
         }, { upsert: true })
-        const balance = await this.getBalance(chatId)
 
-        // notify
-        this.stateSubject.next({ balance, operation })
       })
+
+      const balanceState = await this.getBalance(chatId)
+      // notify
+      this.stateSubject.next({ chatId, balanceState, operation })
+      return { operation, balanceState }
 
     } finally {
       await session.endSession()
     }
+
   };
 
+  balanceCache = new Map<number, BalanceState>();
   getBalance = async (chatId: number): Promise<BalanceState> => {
     const savedBalance = (await this.balance.findOne({ chatId }))!
     const balance = Object.entries(savedBalance.balance).reduce((balance, [acc, sum]) => {
       balance.push({ pair: acc.split('-') as [string, string], sum })
       return balance
     }, [] as Balance)
-    return { seq: savedBalance.seq, balance }
+    const res = { seq: savedBalance.seq, balance }
+    this.balanceCache.set(chatId, res)
+    return res
+  }
+
+  getBalanceCached = async (chatId: number) => {
+    let b = this.balanceCache.get(chatId)
+    if (!b) {
+      b = await this.getBalance(chatId)
+    }
+    return b
+  }
+
+  logCache = new Map<string, SavedOp[]>();
+  getLog = async (chatId: number, limit = 500): Promise<SavedOp[]> => {
+    const res = await this.ops.find({ chatId }, { limit }).toArray()
+    this.logCache.set(`${chatId}-${limit}`, res)
+    return res
+  }
+
+  getLogCached = async (chatId: number, limit = 500) => {
+    let log = this.logCache.get(`${chatId}-${limit}`)
+    if (!log) {
+      log = await this.getLog(chatId, limit)
+    }
+    return log
   }
 }
 
 type Atom = [string, number]
-const atom = (src: string, dst: string, sum: number): Atom => {
-  const flip = src.localeCompare(dst)
+const atom = (src: number, dst: number, sum: number): Atom => {
+  const flip = src > dst ? -1 : 1
   const account = [flip === 1 ? src : dst, flip === 1 ? dst : src].join('-')
   return [account, sum * flip]
 }
