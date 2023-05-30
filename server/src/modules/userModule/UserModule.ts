@@ -7,7 +7,7 @@ import { SavedUser, USER } from "./userStore";
 export class UserModule {
   private db = USER();
 
-  readonly userUpdated = new Subject<{ chatId: number, user: User }>()
+  readonly userUpdated = new Subject<{ chatId: number, user: User }>();
 
   updateUser = async (
     chatId: number,
@@ -31,14 +31,14 @@ export class UserModule {
       { upsert: true }
     );
 
-    this.userUpdated.next({ chatId, user })
+    this.userUpdated.next({ chatId, user });
 
     return res;
   };
 
-  private usersCache = new Map<number, SavedUser[]>
+  private usersCache = new Map<number, SavedUser[]>;
   getUsers = async (chatId: number): Promise<SavedUser[]> => {
-    const res = (await this.db.find({ $in: { chatIds: chatId } }).toArray())
+    const res = (await this.db.find({ chatIds: chatId }).toArray())
     this.usersCache.set(chatId, res)
     return res
   };

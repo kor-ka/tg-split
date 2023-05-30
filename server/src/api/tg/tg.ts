@@ -9,7 +9,6 @@ import { UserModule } from "../../modules/userModule/UserModule";
 export class TelegramBot {
   private pinModule = container.resolve(PinsModule);
   private chatMetaModule = container.resolve(ChatMetaModule);
-  private splitModule = container.resolve(SplitModule);
   private userModule = container.resolve(UserModule)
 
   private token = process.env.TELEGRAM_BOT_TOKEN!;
@@ -51,7 +50,7 @@ export class TelegramBot {
           }
         }
 
-        upd.new_chat_members?.forEach(u => {
+        upd.new_chat_members?.filter(u => !u.is_bot).forEach(u => {
           this.userModule.updateUser(upd.chat.id, {
             id: u.id,
             name: u.first_name,
@@ -69,7 +68,7 @@ export class TelegramBot {
     this.bot.on("left_chat_member", async (upd) => {
       try {
         const left = upd.left_chat_member;
-        if (left) {
+        if (left && !left.is_bot) {
           this.userModule.updateUser(upd.chat.id, {
             id: left.id,
             name: left.first_name,

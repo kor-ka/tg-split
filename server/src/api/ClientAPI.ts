@@ -48,7 +48,7 @@ export class ClientAPI {
         this.io.on('connection', (socket) => {
             try {
                 const sw = new SW("connection");
-                if (!socket.handshake.query.tgQueue) {
+                if (!socket.handshake.query.userState) {
                     return;
                 }
                 sw.lap();
@@ -118,6 +118,6 @@ export const savedOpToApi = (saved: SavedOp[]): Log => {
 export const savedUserToApi = (saved: SavedUser[], chatId: number): User[] => {
     return saved.map(s => {
         const { _id, chatIds, disabledChatIds, ...u } = s
-        return { ...u, disabled: disabledChatIds.includes(chatId) }
+        return { ...u, disabled: !!disabledChatIds?.includes(chatId) }
     })
 }

@@ -1,8 +1,6 @@
 import * as crypto from "crypto";
 
-const tgToken =
-  process.env.TELEGRAM_BOT_TOKEN ||
-  require("../../../../../../secret.json").tgBotToken;
+const tgToken = process.env.TELEGRAM_BOT_TOKEN!;
 
 export const checkTgAuth = (initData: string, hash: string, authDate: number) => {
   try {

@@ -1,8 +1,7 @@
 import { MongoClient, Db } from "mongodb";
 
 // Connection URL
-const url =
-  process.env.MONGODB_URI || require("../../../../../secret.json").mdbUrl;
+const url = process.env.MONGODB_URI!;
 
 // Database Name
 const dbName = "tg-split";
@@ -34,41 +33,48 @@ export const initMDB = () => {
 };
 
 const _initMDB = async () => {
-  MDB = await new Promise<Db>((resolve) => {
-    connect(resolve);
-  });
 
-  MDB.collection("balances").createIndex(
-    { chatId: 1 },
-    {
-      name: "balances:chatUnique",
-      unique: true,
-    }
-  );
+  try {
+    MDB = await new Promise<Db>((resolve) => {
+      connect(resolve);
+    });
 
-  MDB.collection("ops").createIndex(
-    { chatId: 1, idempotencyKey: 1 },
-    {
-      name: "ops:idempotencyUnique",
-      unique: true,
-    }
-  );
+    await MDB.collection("balances").createIndex(
+      { chatId: 1 },
+      {
+        name: "balances:chatUnique",
+        unique: true,
+      }
+    );
 
-  MDB.collection("ops").createIndex(
-    { correction: 1 },
-    {
-      name: "ops:corectionUnique",
-      unique: true,
-      partialFilterExpression: { correction: { $type: "objectId" } },
-    }
-  );
+    await MDB.collection("ops").createIndex(
+      { chatId: 1, idempotencyKey: 1 },
+      {
+        name: "ops:idempotencyUnique",
+        unique: true,
+      }
+    );
 
-  MDB.collection("users").createIndex(
-    { id: 1 },
-    {
-      name: "users:unique",
-      unique: true,
-    }
-  );
+    await MDB.collection("ops").createIndex(
+      { correction: 1 },
+      {
+        name: "ops:corectionUnique",
+        unique: true,
+        partialFilterExpression: { correction: { $type: "objectId" } },
+      }
+    );
+
+    await MDB.collection("users").createIndex(
+      { id: 1 },
+      {
+        name: "users:unique",
+        unique: true,
+      }
+    );
+
+  } catch (e) {
+    console.error(e)
+    throw (e)
+  }
 
 };

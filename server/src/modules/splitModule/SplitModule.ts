@@ -12,7 +12,7 @@ export class SplitModule {
   private balance = BALANCE();
   private ops = OP();
 
-  readonly stateSubject = new Subject<{ chatId: number, balanceState: BalanceState, operation: Operation }>
+  readonly stateSubject = new Subject<{ chatId: number, balanceState: BalanceState, operation: Operation }>;
 
   commitOperation = async (chatId: number, operation: Operation) => {
     const session = MDBClient.startSession()
@@ -57,12 +57,19 @@ export class SplitModule {
 
   balanceCache = new Map<number, BalanceState>();
   getBalance = async (chatId: number): Promise<BalanceState> => {
-    const savedBalance = (await this.balance.findOne({ chatId }))!
-    const balance = Object.entries(savedBalance.balance).reduce((balance, [acc, sum]) => {
-      balance.push({ pair: acc.split('-') as [string, string], sum })
-      return balance
-    }, [] as Balance)
-    const res = { seq: savedBalance.seq, balance }
+    const savedBalance = (await this.balance.findOne({ chatId }))
+    let balance: Balance
+    let seq = 0
+    if (savedBalance) {
+      balance = Object.entries(savedBalance.balance).reduce((balance, [acc, sum]) => {
+        balance.push({ pair: acc.split('-') as [string, string], sum })
+        return balance
+      }, [] as Balance)
+      seq = savedBalance.seq
+    } else {
+      balance = []
+    }
+    const res = { seq, balance }
     this.balanceCache.set(chatId, res)
     return res
   }
@@ -93,7 +100,7 @@ export class SplitModule {
   }
 }
 
-type Atom = [string, number]
+type Atom = [string, number];
 const atom = (src: number, dst: number, sum: number): Atom => {
   const flip = src > dst ? -1 : 1
   const account = [flip === 1 ? src : dst, flip === 1 ? dst : src].join('-')

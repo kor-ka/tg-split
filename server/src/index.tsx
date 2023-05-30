@@ -37,7 +37,7 @@ const getIndexStrPromise = () => {
   });
 };
 // index file for SSR
-let _indexFileStr: Promise<string> | undefined = getIndexStrPromise();
+let _indexFileStr: Promise<string> | undefined;
 
 const getIndexStr = () => {
   if (!_indexFileStr) {
@@ -87,6 +87,7 @@ initMDB().then(() => {
 
       const usersProvider = new UsersModule()
 
+      // const app = ''
       const app = ReactDOMServer.renderToString(
         <UserContext.Provider
           value={userId}
@@ -124,4 +125,4 @@ initMDB().then(() => {
   new TelegramBot().init();
 
   server.listen(PORT, () => console.log(`lll- on ${PORT}`));
-});
+}).catch(e => console.error(e));
