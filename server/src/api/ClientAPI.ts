@@ -53,7 +53,7 @@ export class ClientAPI {
                 }
                 sw.lap();
                 const { initData, initDataUnsafe } = socket.handshake.query
-                const tgData = JSON.parse(decodeURIComponent(initDataUnsafe as string)) as { auth_date: number, hash: string, chat?: { id: number }, start_param?: string, chat_instance?: string, user: { id: number } }
+                const tgData = JSON.parse(decodeURIComponent(initDataUnsafe as string)) as { auth_date: number, hash: string, chat?: { id: number }, start_param?: string, chat_instance?: string, user: { id: number, first_name: string, last_name?: string, username?: string } }
                 const { auth_date, hash, chat_instance } = tgData
                 const auth = checkTgAuth(decodeURIComponent(initData as string), hash, auth_date);
                 if (!auth) {
@@ -81,10 +81,12 @@ export class ClientAPI {
                         const cid = await this.resolveChatId(chatId, chat_instance);
                         socket.join("chatClient_" + cid);
 
+                        this.userModule.updateUser(cid, { id: tgData.user.id, name: tgData.user.first_name, lastname: tgData.user.last_name, username: tgData.user.username, disabled: false })
+
                         { // cached
                             const balance = await this.splitModule.getBalanceCached(cid)
                             const log = savedOpToApi(await this.splitModule.getLogCached(cid))
-                            const users = savedUserToApi(await this.userModule.getUsersCached(cid))
+                            const users = savedUserToApi(await this.userModule.getUsersCached(cid), cid)
                             const upd: Partial<FullState> = { balanceState: balance, log, users }
                             socket.emit("state", upd)
                         }
@@ -92,7 +94,7 @@ export class ClientAPI {
                         { // actual
                             const balance = await this.splitModule.getBalance(cid)
                             const log = savedOpToApi(await this.splitModule.getLog(cid))
-                            const users = savedUserToApi(await this.userModule.getUsersCached(cid))
+                            const users = savedUserToApi(await this.userModule.getUsersCached(cid), cid)
                             const upd: Partial<FullState> = { balanceState: balance, log, users }
                             socket.emit("state", upd)
                         }
@@ -110,14 +112,14 @@ export class ClientAPI {
 
 const savedOpToApi = (saved: SavedOp[]): Log => {
     return saved.map(s => {
-        const { _id, ...op } = s
-        return { ...op, id: _id.toHexString() }
+        const { _id, correction, ...op } = s
+        return { ...op, id: _id.toHexString(), correction: correction?.toHexString() }
     })
 }
 
-const savedUserToApi = (saved: SavedUser[]): User[] => {
+const savedUserToApi = (saved: SavedUser[], chatId: number): User[] => {
     return saved.map(s => {
-        const { _id, ...u } = s
-        return u
+        const { _id, chatIds, disabledChatIds, ...u } = s
+        return { ...u, disabled: disabledChatIds.includes(chatId) }
     })
 }

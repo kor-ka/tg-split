@@ -1,8 +1,10 @@
 export type User = {
     id: number;
     name: string;
-    imageUrl?: string
-    disabled?: boolean
+    lastname?: string;
+    username?: string;
+    imageUrl?: string;
+    disabled: boolean;
 }
 
 export type Balance = { pair: [string, string], sum: number }[]

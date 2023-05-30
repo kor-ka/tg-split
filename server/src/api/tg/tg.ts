@@ -4,11 +4,13 @@ import { renderPin } from "./renderPin";
 import { container } from "tsyringe";
 import { ChatMetaModule } from "../../modules/chatMetaModule/ChatMetaModule";
 import { SplitModule } from "../../modules/splitModule/SplitModule";
+import { UserModule } from "../../modules/userModule/UserModule";
 
 export class TelegramBot {
   private pinModule = container.resolve(PinsModule);
   private chatMetaModule = container.resolve(ChatMetaModule);
   private splitModule = container.resolve(SplitModule);
+  private userModule = container.resolve(UserModule)
 
   private token =
     process.env.TELEGRAM_BOT_TOKEN ||
@@ -49,6 +51,34 @@ export class TelegramBot {
           if (upd.chat.title) {
             await this.chatMetaModule.updateName(upd.chat.id, upd.chat.title);
           }
+        }
+
+        upd.new_chat_members?.forEach(u => {
+          this.userModule.updateUser(upd.chat.id, {
+            id: u.id,
+            name: u.first_name,
+            lastname: u.last_name,
+            username: u.username,
+            disabled: false
+          })
+        })
+
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    this.bot.on("left_chat_member", async (upd) => {
+      try {
+        const left = upd.left_chat_member;
+        if (left) {
+          this.userModule.updateUser(upd.chat.id, {
+            id: left.id,
+            name: left.first_name,
+            lastname: left.last_name,
+            username: left.username,
+            disabled: true
+          });
         }
       } catch (e) {
         console.log(e);
@@ -106,7 +136,15 @@ export class TelegramBot {
 
     this.bot.on("message", async (message) => {
       try {
-        //  TODO: save users 
+        if (message.from && !message.from.is_bot) {
+          this.userModule.updateUser(message.chat.id, {
+            id: message.from.id,
+            name: message.from.first_name,
+            lastname: message.from.last_name,
+            username: message.from.username,
+            disabled: false
+          })
+        }
       } catch (e) {
         console.error(e);
       }
