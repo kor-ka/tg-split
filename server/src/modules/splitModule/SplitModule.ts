@@ -20,7 +20,7 @@ export class SplitModule {
       await session.withTransaction(async () => {
         // Write op
         const { id, uid, correction, ...op } = operation;
-        const insertedId = (await this.ops.insertOne({ ...op, uid, idempotencyKey: `${uid}_${id}`, chatId, correction: correction ? new ObjectId(correction) : undefined })).insertedId
+        const insertedId = (await this.ops.insertOne({ ...op, uid, idempotencyKey: `${uid}_${id}`, chatId, correction: correction ? new ObjectId(correction) : undefined }, { session })).insertedId
         operation.id = insertedId.toHexString()
 
         // Update balance
@@ -38,9 +38,9 @@ export class SplitModule {
         }, {} as { [selector: string]: number })
 
         await this.balance.updateOne({ chatId }, {
-          chatId,
+          $set: { chatId },
           $inc: { ...updateBalances, seq: 1 }
-        }, { upsert: true })
+        }, { upsert: true, session })
 
       })
 

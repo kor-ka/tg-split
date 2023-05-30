@@ -4,6 +4,7 @@ import Cookies from "js-cookie";
 import { BalanceState, FullState, Log, Operation, User } from "../../entity";
 import { Deffered } from "../utils/deffered";
 import { UsersModule } from "./UsersModule";
+import { OmitUnion } from "../utils/types";
 
 type TgWebAppInitData = { chat?: { id: number }, user: { id: number }, start_param?: string } & unknown;
 
@@ -47,6 +48,7 @@ export class SessionModel {
 
 
         this.socket.on("state", ({ balanceState, log, users }: Partial<FullState>) => {
+            console.log("on_State", { balanceState, log, users })
             if (balanceState) {
                 this.bumpBalance(balanceState);
             }
@@ -68,7 +70,10 @@ export class SessionModel {
     }
 
     private bumpBalance = (balanceState: BalanceState) => {
-        if (this.balance.val?.seq ?? -1 < balanceState.seq) {
+        console.log('bumpBalance', this.balance.val?.seq, balanceState)
+
+        if ((this.balance.val?.seq ?? -1) < balanceState.seq) {
+            console.log('bumpBalance yep', balanceState)
             this.balance.next(balanceState)
         }
     }
@@ -82,9 +87,10 @@ export class SessionModel {
     }
 
     nextId = () => this.localOprationId++
-    commitOperation = (operation: Omit<Operation, 'uid'>): Promise<Operation> => {
+    commitOperation = (operation: OmitUnion<Operation, 'uid'>): Promise<Operation> => {
         const d = new Deffered<Operation>()
         this.emit("op", operation, (res: { patch: { operation: Operation, balanceState: BalanceState }, error: never } | { error: string, patch: never }) => {
+            console.log("on_op_ack", res)
             const { patch, error } = res
             if (patch) {
                 this.bumpBalance(patch.balanceState)

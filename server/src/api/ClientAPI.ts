@@ -35,9 +35,9 @@ export class ClientAPI {
 
     readonly init = () => {
         this.splitModule.stateSubject.subscribe(state => {
-            const { chatId, ...update } = state
-            const upd: Partial<FullState> = update
-            this.io.to('chatClient_' + state.chatId).emit('state', update)
+            const { chatId, balanceState, operation } = state
+            const upd: Partial<FullState> = { balanceState, log: [operation] }
+            this.io.to('chatClient_' + chatId).emit('state', upd)
         })
 
         this.userModule.userUpdated.subscribe(({ user, chatId }) => {

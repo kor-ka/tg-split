@@ -18,6 +18,7 @@ export const MainScreenView = ({ balance, log }: { balance?: Balance, log?: Log 
     return <>
         <BalanceView balance={balance} />
         <LogView log={log} />
+        <AddExpence />
     </>
 }
 
@@ -27,4 +28,13 @@ const BalanceView = ({ balance }: { balance?: Balance }) => {
 
 const LogView = ({ log }: { log?: Log }) => {
     return <>{JSON.stringify(log)}</>
+}
+
+const AddExpence = () => {
+    const model = React.useContext(ModelContext)
+    const onClick = () => {
+        model?.commitOperation({ type: 'split', sum: 10, id: model.nextId() + '', uids: [102133736, 6065926905] })
+            .catch(e => console.error(e))
+    }
+    return <button onClick={onClick} >AddExpence</button>
 }
