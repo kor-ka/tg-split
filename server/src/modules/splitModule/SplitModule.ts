@@ -19,9 +19,8 @@ export class SplitModule {
     try {
       await session.withTransaction(async () => {
         // Write op
-        const { id, uid, ...op } = operation;
-        // TODO: idempotencyKey unique index, correction unique index
-        const insertedId = (await this.ops.insertOne({ ...op, uid, idempotencyKey: `${uid}_${id}`, chatId })).insertedId
+        const { id, uid, correction, ...op } = operation;
+        const insertedId = (await this.ops.insertOne({ ...op, uid, idempotencyKey: `${uid}_${id}`, chatId, correction: correction ? new ObjectId(correction) : undefined })).insertedId
         operation.id = insertedId.toHexString()
 
         // Update balance
@@ -78,7 +77,7 @@ export class SplitModule {
 
   logCache = new Map<string, SavedOp[]>();
   getLog = async (chatId: number, limit = 500): Promise<SavedOp[]> => {
-    const res = await this.ops.find({ chatId }, { limit }).toArray()
+    const res = await this.ops.find({ chatId }, { limit, sort: { _id: -1 } }).toArray()
     this.logCache.set(`${chatId}-${limit}`, res)
     return res
   }
@@ -113,7 +112,7 @@ const opToAtoms = (op: SavedOp | Operation) => {
   return atoms
 }
 
-const splitOpToAtoms = (split: Omit<OperationSplit, 'id'>): Atom[] => {
+const splitOpToAtoms = (split: Omit<OperationSplit, 'id' | 'correction'>): Atom[] => {
   const dst = split.uid
   const atoms: Atom[] = []
   // TODO: use math sutable for finacial operations

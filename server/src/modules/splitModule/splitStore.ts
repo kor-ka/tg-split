@@ -11,6 +11,6 @@ export type Balance = {
 }
 export const BALANCE = () => MDB.collection<Balance>("balances");
 
-
-export type SavedOp = WithId<OmitUnion<Operation, 'id'>>
-export const OP = () => MDB.collection<OmitUnion<Operation, 'id'> & { chatId: number, idempotencyKey: string }>("balances");
+export type ServerOp = OmitUnion<Operation, 'id' | 'correction'> & { correction?: ObjectId, chatId: number, idempotencyKey: string }
+export type SavedOp = WithId<ServerOp>
+export const OP = () => MDB.collection<ServerOp>("ops");

@@ -5,7 +5,7 @@ const url =
   process.env.MONGODB_URI || require("../../../../../secret.json").mdbUrl;
 
 // Database Name
-const dbName = "tg-ytbq";
+const dbName = "tg-split";
 
 export const MDBClient = new MongoClient(url, { minPoolSize: 100 });
 
@@ -38,115 +38,37 @@ const _initMDB = async () => {
     connect(resolve);
   });
 
-  MDB.collection("content").createIndex(
-    { "descriptor.type": 1, "descriptor.id": 1, chatId: 1 },
-    {
-      name: "content:contentUnique",
-      unique: true,
-      partialFilterExpression: { "descriptor.type": { $type: "string" } },
-    }
-  );
-
-  MDB.collection("content").createIndex(
+  MDB.collection("balances").createIndex(
     { chatId: 1 },
     {
-      name: "content:playingUnique",
-      unique: true,
-      partialFilterExpression: { playing: { $type: "objectId" } },
-    }
-  );
-
-  MDB.collection("content").createIndex(
-    { chatId: 1, "descriptor.type": 1, "descriptor.id": 1 },
-    {
-      name: "content:playingContent",
-      partialFilterExpression: { playing: { $type: "objectId" } },
-    }
-  );
-
-  MDB.collection("content").createIndex(
-    {
-      chatId: 1,
-      playing: 1,
-      lastPlayed: 1,
-      playedQueueScore: -1,
-      "votes.rating": -1,
-      replyMessageId: 1,
-    },
-    {
-      name: "content:pickNextCandidate",
-    }
-  );
-
-  MDB.collection("content").createIndex(
-    {
-      chatId: 1,
-      playedQueueScore: 1,
-    },
-    {
-      name: "content:pickNextScoreTopBot",
-      partialFilterExpression: { playedQueueScore: { $type: "int" } },
-    }
-  );
-
-  MDB.collection("content").createIndex(
-    {
-      chatId: 1,
-      playing: -1,
-      lastPlayed: 1,
-      playedQueueScore: -1,
-      "votes.rating": -1,
-      replyMessageId: 1,
-    },
-    {
-      name: "content:queue",
-    }
-  );
-
-  MDB.collection("content").createIndex(
-    {
-      chatId: 1,
-      lastPlayed: 1,
-      playedQueueScore: -1,
-      "votes.rating": -1,
-      replyMessageId: 1,
-    },
-    {
-      name: "content:upNext",
-      partialFilterExpression: { playing: null },
-    }
-  );
-
-  MDB.collection("pins").createIndex(
-    { chatId: 1 },
-    {
-      name: "pins:chatUnique",
+      name: "balances:chatUnique",
       unique: true,
     }
   );
 
-  MDB.collection("video_meta").createIndex(
+  MDB.collection("ops").createIndex(
+    { chatId: 1, idempotencyKey: 1 },
+    {
+      name: "ops:idempotencyUnique",
+      unique: true,
+    }
+  );
+
+  MDB.collection("ops").createIndex(
+    { correction: 1 },
+    {
+      name: "ops:corectionUnique",
+      unique: true,
+      partialFilterExpression: { correction: { $type: "objectId" } },
+    }
+  );
+
+  MDB.collection("users").createIndex(
     { id: 1 },
     {
-      name: "vide:idUnique",
+      name: "users:unique",
       unique: true,
     }
   );
 
-  // Bind sessions
-  MDB.collection("bind_session").createIndex(
-    { code: 1 },
-    {
-      name: "code:unique",
-      unique: true,
-    }
-  );
-
-  MDB.collection("bind_session").createIndex(
-    { sessionId: 1 },
-    {
-      name: "session:unique",
-      unique: true,
-    }
-  );
 };
