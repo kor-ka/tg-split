@@ -12,9 +12,7 @@ export class TelegramBot {
   private splitModule = container.resolve(SplitModule);
   private userModule = container.resolve(UserModule)
 
-  private token =
-    process.env.TELEGRAM_BOT_TOKEN ||
-    require("../../../../../../secret.json").tgBotToken;
+  private token = process.env.TELEGRAM_BOT_TOKEN!;
   private bot = new TB(this.token, {
     polling: true,
   });
@@ -44,7 +42,7 @@ export class TelegramBot {
         console.log("new_chat_members", upd.new_chat_members);
         let botAdded = upd.new_chat_members?.find(
           // TODO: update id
-          (u) => u.id === 304064430 || u.id === 431107640 || u.id === 5333305311
+          (u) => u.id === 6065926905
         );
         if (botAdded) {
           this.createPin(upd.chat.id).catch(((e) => console.log(e)));

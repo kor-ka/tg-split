@@ -17,6 +17,6 @@
   "include": [
     "src/**/*",
     "../entity.ts",
-    "../src/model/SessionModel.ts"
+    "../src/view/MainScreen.ts"
   ]
 }

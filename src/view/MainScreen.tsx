@@ -1,6 +1,12 @@
+import React from "react";
 import { Balance, Log } from "../../entity"
 import { SessionModel } from "../model/SessionModel"
+import { UsersModule } from "../model/UsersModule";
 import { useVMvalue } from "../utils/vm/useVM"
+
+export const ModelContext = React.createContext<SessionModel | undefined>(undefined);
+export const UserContext = React.createContext<number | undefined>(undefined);
+export const UsersProvider = React.createContext<UsersModule>(new UsersModule());
 
 export const MainScreen = ({ model }: { model: SessionModel }) => {
     const balance = useVMvalue(model.balance)

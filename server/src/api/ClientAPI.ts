@@ -83,21 +83,19 @@ export class ClientAPI {
 
                         this.userModule.updateUser(cid, { id: tgData.user.id, name: tgData.user.first_name, lastname: tgData.user.last_name, username: tgData.user.username, disabled: false })
 
-                        { // cached
-                            const balance = await this.splitModule.getBalanceCached(cid)
-                            const log = savedOpToApi(await this.splitModule.getLogCached(cid))
-                            const users = savedUserToApi(await this.userModule.getUsersCached(cid), cid)
-                            const upd: Partial<FullState> = { balanceState: balance, log, users }
+                        const users = savedUserToApi(await this.userModule.getUsersCached(cid), cid)
+                        const { balance, balancePromsie } = await this.splitModule.getBalanceCached(cid)
+                        const { log, logPromise } = await this.splitModule.getLogCached(cid)
+                        // emit cached
+                        const upd: FullState = { balanceState: balance, log: savedOpToApi(log), users }
+                        socket.emit("state", upd)
+
+                        { // emit updated
+                            const [balance, log] = await Promise.all([balancePromsie, logPromise])
+                            const upd: FullState = { balanceState: balance, log: savedOpToApi(log), users }
                             socket.emit("state", upd)
                         }
 
-                        { // actual
-                            const balance = await this.splitModule.getBalance(cid)
-                            const log = savedOpToApi(await this.splitModule.getLog(cid))
-                            const users = savedUserToApi(await this.userModule.getUsersCached(cid), cid)
-                            const upd: Partial<FullState> = { balanceState: balance, log, users }
-                            socket.emit("state", upd)
-                        }
                     } catch (e) {
                         console.error(e)
                     }
@@ -110,14 +108,14 @@ export class ClientAPI {
     }
 }
 
-const savedOpToApi = (saved: SavedOp[]): Log => {
+export const savedOpToApi = (saved: SavedOp[]): Log => {
     return saved.map(s => {
         const { _id, correction, ...op } = s
         return { ...op, id: _id.toHexString(), correction: correction?.toHexString() }
     })
 }
 
-const savedUserToApi = (saved: SavedUser[], chatId: number): User[] => {
+export const savedUserToApi = (saved: SavedUser[], chatId: number): User[] => {
     return saved.map(s => {
         const { _id, chatIds, disabledChatIds, ...u } = s
         return { ...u, disabled: disabledChatIds.includes(chatId) }

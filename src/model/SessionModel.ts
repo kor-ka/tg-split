@@ -1,4 +1,3 @@
-import React from "react";
 import { io, Socket } from "socket.io-client";
 import { VM } from "../utils/vm/VM";
 import Cookies from "js-cookie";
@@ -98,9 +97,3 @@ export class SessionModel {
         return d.promise
     };
 }
-
-export const ModelContext = React.createContext<SessionModel | undefined>(
-    undefined
-);
-
-export const UserContext = React.createContext<number | undefined>(undefined);

@@ -1,8 +1,8 @@
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { ModelContext, SessionModel, UserContext } from "./model/SessionModel";
+import { SessionModel } from "./model/SessionModel";
 import reportWebVitals from "./reportWebVitals";
-import { MainScreen } from "./view/MainScreen";
+import { MainScreen, ModelContext, UserContext, UsersProvider } from "./view/MainScreen";
 
 const root = createRoot(document.getElementById("root")!);
 if (window.location.pathname.startsWith("/tg/")) {
@@ -18,7 +18,9 @@ if (window.location.pathname.startsWith("/tg/")) {
       root.render(
         <ModelContext.Provider value={model}>
           <UserContext.Provider value={model.tgWebApp.user.id}>
-            <MainScreen model={model} />
+            <UsersProvider.Provider value={model.users}>
+              <MainScreen model={model} />
+            </UsersProvider.Provider>
           </UserContext.Provider>
         </ModelContext.Provider>
       );

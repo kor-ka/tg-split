@@ -1,5 +1,6 @@
 // lig bug workaround
 import * as TB from "node-telegram-bot-api";
+import "dotenv/config"
 import "reflect-metadata";
 import cookieParser from "cookie-parser";
 import compression from "compression";
@@ -11,10 +12,11 @@ import { TelegramBot } from "./api/tg/tg";
 import { SocketApi } from "./api/socket";
 import { container } from "tsyringe";
 import * as fs from "fs";
-import { ContentModule } from "./modules/contentModule/ContentModule";
-import { convertToContentArray } from "./api/QueueAPI";
 import { initMDB } from "./utils/MDB";
-import { UserContext } from "../../src/model/SessionModel";
+import { MainScreenView, UserContext, UsersProvider } from "../../src/view/MainScreen";
+import { SplitModule } from "./modules/splitModule/SplitModule";
+import { savedOpToApi } from "./api/ClientAPI";
+import { UsersModule } from "../../src/model/UsersModule";
 
 var path = require("path");
 const PORT = process.env.PORT || 5001;
@@ -75,19 +77,25 @@ initMDB().then(() => {
 
   app.use(compression()).get("/tg/", async (req, res) => {
     try {
-      const contentModule = container.resolve(ContentModule);
-      const q = req.query.tgWebAppStartParam ? await contentModule.getQueueCached(Number(req.query.tgWebAppStartParam), 100) : undefined;
-      const userIdString = req.cookies.user_id
+      const chatId = Number(req.query.tgWebAppStartParam)
+      const splitModule = container.resolve(SplitModule);
+      const userIdString = req.cookies.user_id;
+      const userId = userIdString ? Number.parseInt(userIdString, 10) : undefined
+      const { balance } = await splitModule.getBalanceCached(chatId)
+      const { log: savedLog } = await splitModule.getLogCached(chatId)
+      const log = savedOpToApi(savedLog);
 
-      // TODO: fix SSR
-      const app = ''
-      // const app = ReactDOMServer.renderToString(
-      //   <UserContext.Provider
-      //     value={userIdString ? Number.parseInt(userIdString, 10) : undefined}
-      //   >
-      //     <MaSVi queue={q ? convertToContentArray(q) : getPlacegolderQueue()} />
-      //   </UserContext.Provider>
-      // );
+      const usersProvider = new UsersModule()
+
+      const app = ReactDOMServer.renderToString(
+        <UserContext.Provider
+          value={userId}
+        >
+          <UsersProvider.Provider value={usersProvider}>
+            <MainScreenView balance={balance.balance} log={log} />
+          </UsersProvider.Provider>
+        </UserContext.Provider>
+      );
       const data = await getIndexStr();
       res.send(
         data.replace('<div id="root"></div>', `<div id="root">${app}</div>`)

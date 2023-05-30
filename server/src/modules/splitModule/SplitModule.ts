@@ -68,11 +68,12 @@ export class SplitModule {
   }
 
   getBalanceCached = async (chatId: number) => {
-    let b = this.balanceCache.get(chatId)
-    if (!b) {
-      b = await this.getBalance(chatId)
+    let balance = this.balanceCache.get(chatId)
+    const balancePromsie = this.getBalance(chatId)
+    if (!balance) {
+      balance = await balancePromsie
     }
-    return b
+    return { balance, balancePromsie }
   }
 
   logCache = new Map<string, SavedOp[]>();
@@ -84,10 +85,11 @@ export class SplitModule {
 
   getLogCached = async (chatId: number, limit = 500) => {
     let log = this.logCache.get(`${chatId}-${limit}`)
+    const logPromise = this.getLog(chatId, limit)
     if (!log) {
-      log = await this.getLog(chatId, limit)
+      log = await logPromise
     }
-    return log
+    return { log, logPromise }
   }
 }
 
