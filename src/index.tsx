@@ -1,8 +1,20 @@
 import { createRoot } from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import { SessionModel } from "./model/SessionModel";
 import reportWebVitals from "./reportWebVitals";
-import { MainScreen, ModelContext, UserContext, UsersProvider } from "./view/MainScreen";
+import { AddExpenceScreen, MainScreen, ModelContext, UserContext, UsersProvider } from "./view/MainScreen";
+
+const router = createBrowserRouter([
+  {
+    path: "/tg",
+    element: <MainScreen />,
+  },
+  {
+    path: "/tg/addExpence",
+    element: <AddExpenceScreen />,
+  },
+]);
 
 const root = createRoot(document.getElementById("root")!);
 if (window.location.pathname.startsWith("/tg/")) {
@@ -19,7 +31,7 @@ if (window.location.pathname.startsWith("/tg/")) {
         <ModelContext.Provider value={model}>
           <UserContext.Provider value={model.tgWebApp.user.id}>
             <UsersProvider.Provider value={model.users}>
-              <MainScreen model={model} />
+              <RouterProvider router={router} />
             </UsersProvider.Provider>
           </UserContext.Provider>
         </ModelContext.Provider>

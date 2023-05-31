@@ -8,6 +8,8 @@ import { OmitUnion } from "../utils/types";
 
 type TgWebAppInitData = { chat?: { id: number }, user: { id: number }, start_param?: string } & unknown;
 
+export const __DEV__ = window.location.hostname.indexOf("localhost") >= 0
+
 export class SessionModel {
     readonly tgWebApp: TgWebAppInitData;
     readonly balance = new VM<BalanceState | undefined>(undefined);
