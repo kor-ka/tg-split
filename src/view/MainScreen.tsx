@@ -195,7 +195,7 @@ export const AddExpenceScreen = () => {
         <BackButtopnController />
         <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0px' }}>
             <input ref={descriptionRef} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="Enter a description" />
-            <input ref={sumRef} defaultValue={0} autoFocus={true} type="number" inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
+            <input ref={sumRef} autoFocus={true} type="number" inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
             <CardLight><ListItem subtitle="Split across: " /></CardLight>
             {[...usersModule.users.values()].map(u => <UserCheckListItem id={u.val.id} key={u.val.id} onUserClick={onUserClick} checked={checked.has(u.val.id)} />)}
         </div>
