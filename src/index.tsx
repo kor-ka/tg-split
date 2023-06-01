@@ -3,7 +3,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import { SessionModel } from "./model/SessionModel";
 import reportWebVitals from "./reportWebVitals";
-import { AddExpenceScreen, MainScreen, ModelContext, UserContext, UsersProvider } from "./view/MainScreen";
+import { AddExpenceScreen, AddTransferScreen, MainScreen, ModelContext, UserContext, UsersProvider } from "./view/MainScreen";
 
 const router = createBrowserRouter([
   {
@@ -13,6 +13,10 @@ const router = createBrowserRouter([
   {
     path: "/tg/addExpence",
     element: <AddExpenceScreen />,
+  },
+  {
+    path: "/tg/addPayment",
+    element: <AddTransferScreen />,
   },
 ]);
 

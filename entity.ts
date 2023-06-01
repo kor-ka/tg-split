@@ -16,11 +16,11 @@ export type OperationBase = { id: string, uid: number, correction?: string }
 export type OperationSplit = OperationBase & {
     type: 'split',
     uids: number[],
-    sum: number
+    sum: number,
+    description?: string
 }
 export type OperationTransfer = OperationBase & {
     type: 'transfer',
-    title: string,
     dstUid: number,
     sum: number
 }

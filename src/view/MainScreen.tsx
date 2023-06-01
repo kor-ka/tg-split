@@ -34,6 +34,7 @@ export const MainScreenView = ({ balance, log }: { balance?: Balance, log?: Log 
         <BackButtopnController />
         <BalanceView balance={balance} />
         <LogView log={log} />
+        <button onClick={() => nav("/tg/addPayment")} >Add payment</button>
         <MainButtopnController onClick={() => nav("/tg/addExpence")} text={"Add expence"} />
     </div>
 }
@@ -43,16 +44,16 @@ const Card = ({ children }: { children: any }) => {
 }
 
 const CardLight = ({ children }: { children: any }) => {
-    return <div style={{ margin: '0px 24px', }}>{children}</div>
+    return <div style={{ margin: '0px 20px', }}>{children}</div>
 }
 
 const ListItem = ({ titile: title, subtitle, left }: { titile: string, subtitle?: string, left?: string }) => {
     return <div style={{ display: 'flex', flexDirection: "row", justifyContent: 'space-between', padding: 4, alignItems: 'center' }}>
-        <div style={{ display: 'flex', flexDirection: "column" }}>
-            <div style={{ padding: 4 }}>{title}</div>
-            <div style={{ padding: 4, fontSize: '0.8em', color: "var(--tg-theme-hint-color)" }}>{subtitle}</div>
+        <div style={{ display: 'flex', flexDirection: "column", flexShrink: 1, minWidth: 0 }}>
+            <div style={{ padding: 4, paddingBottom: 2, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{title}</div>
+            <div style={{ padding: 4, paddingTop: 2, fontSize: '0.8em', color: "var(--tg-theme-hint-color)" }}>{subtitle}</div>
         </div>
-        <div style={{ padding: '4px 16px', fontSize: '1.4em', }}>{left}</div>
+        <div style={{ padding: '4px 16px', fontSize: '1.4em', flexShrink: 0 }}>{left}</div>
     </div>
 }
 
@@ -69,15 +70,30 @@ const SplitLogItem = ({ op }: { op: OperationSplit }) => {
     const actor = useVMvalue(usersModule.getUser(op.uid))
     // extract as components? 
     // TODO: test many - should not affect summ
-    const names = React.useMemo(() => op.uids.map((uid) => usersModule.getUser(uid).val.name).join(', '), [...op.uids])
+    const names = React.useMemo(() => {
+        return op.uids.map((uid) => usersModule.getUser(uid).val.name).join(', ')
+
+    }, [...op.uids])
+    const namesShort = React.useMemo(() => {
+        return op.uids.length > 2 ? `${op.uids.length} persons` : names
+    }, [...op.uids, names])
+
+    const subtitle = React.useMemo(() => {
+        return [op.description, `Splitted among: ${names}`].filter(Boolean).join('. ')
+    }, [names, op.description])
+
     return <CardLight>
-        <ListItem titile={`⚡️ ${[actor.name, actor.lastname].filter(Boolean).join(' ')} splitted`} subtitle={names} left={op.sum.toString()} />
+        <ListItem titile={`⚡️ ${actor.fullName} → ${namesShort}`} subtitle={subtitle} left={(op.sum).toString()} />
     </CardLight>
 }
 
 const TransferLogItem = ({ op }: { op: OperationTransfer }) => {
+    const usersModule = React.useContext(UsersProvider)
+    const srcuser = useVMvalue(usersModule.getUser(op.uid))
+    const dstuser = useVMvalue(usersModule.getUser(op.dstUid))
+    const subtitle = React.useMemo(() => `${srcuser.name} payed ${op.sum} to ${dstuser.name}`, [srcuser, dstuser])
     return <CardLight>
-        <ListItem titile={`Name here ${op.uid} paid`} subtitle={`${op.dstUid}`} left={op.sum.toString()} />
+        <ListItem titile={`💸 ${srcuser.fullName} → ${dstuser.fullName}`} subtitle={subtitle} left={op.sum.toString()} />
     </CardLight>
 }
 
@@ -92,7 +108,7 @@ export const AddExpenceScreen = () => {
     const onClick = React.useCallback(() => {
         if (!loading) {
             setLoading(true)
-            model?.commitOperation({ type: 'split', sum: 10, id: model.nextId() + '', uids: [102133736, 6065926905] })
+            model?.commitOperation({ type: 'split', sum: 10, id: model.nextId() + '', description: "Payed for food and gas", uids: [102133736, 6065926905] })
                 .catch(e => console.error(e))
                 .then(() => nav(-1))
                 .finally(() => setLoading(false))
@@ -101,6 +117,25 @@ export const AddExpenceScreen = () => {
     return <>
         <BackButtopnController />
         <MainButtopnController onClick={onClick} text={"Add expence"} progress={loading} />
+    </>
+}
+
+export const AddTransferScreen = () => {
+    const nav = useNavigate()
+    const model = React.useContext(ModelContext)
+    const [loading, setLoading] = React.useState(false)
+    const onClick = React.useCallback(() => {
+        if (!loading) {
+            setLoading(true)
+            model?.commitOperation({ type: 'transfer', sum: 10, id: model.nextId() + '', dstUid: 6065926905 })
+                .catch(e => console.error(e))
+                .then(() => nav(-1))
+                .finally(() => setLoading(false))
+        }
+    }, [loading])
+    return <>
+        <BackButtopnController />
+        <MainButtopnController onClick={onClick} text={"Add payment"} progress={loading} />
     </>
 }
 
