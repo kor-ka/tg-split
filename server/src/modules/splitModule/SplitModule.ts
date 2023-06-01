@@ -1,8 +1,8 @@
-import { Balance as SavedBalance, BALANCE, OP, SavedOp, OmitUnion } from "./splitStore";
+import { Balance as SavedBalance, BALANCE, OP, SavedOp, OmitUnion, ServerOp } from "./splitStore";
 import { singleton } from "tsyringe";
 import { Operation, OperationSplit, BalanceState, Balance } from "../../../../entity";
 import { MDBClient } from "../../utils/MDB";
-import { ObjectId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 import { Subject } from "../../utils/subject";
 
 type StateListener = (balance: BalanceState, op: Operation) => void
@@ -13,9 +13,12 @@ export class SplitModule {
   private ops = OP();
 
   readonly stateSubject = new Subject<{ chatId: number, balanceState: BalanceState, operation: Operation }>;
+  readonly opUpdatedSubject = new Subject<{ chatId: number, operation: Operation }>;
 
   commitOperation = async (chatId: number, operation: Operation) => {
     const session = MDBClient.startSession()
+
+    let srcOp: WithId<ServerOp> | undefined
     try {
       await session.withTransaction(async () => {
         // Write op
@@ -27,7 +30,9 @@ export class SplitModule {
         let atoms = opToAtoms(operation)
 
         if (operation.correction) {
-          let srcOp = (await this.ops.findOne({ _id: new ObjectId(operation.correction) }))!
+          srcOp = (await this.ops.findOne({ _id: new ObjectId(operation.correction) }))!
+          await this.ops.updateOne({ _id: srcOp._id }, { corrected: true }, { session })
+
           const origAtoms = opToAtoms(srcOp)
           atoms = sumAtoms([...atoms, ...invertAtoms(origAtoms)])
         }
@@ -44,13 +49,20 @@ export class SplitModule {
 
       })
 
-      const balanceState = await this.getBalance(chatId)
-      // notify
-      this.stateSubject.next({ chatId, balanceState, operation })
-      return { operation, balanceState }
+
 
     } finally {
       await session.endSession()
+
+      const balanceState = await this.getBalance(chatId)
+
+      // notify
+      this.stateSubject.next({ chatId, balanceState, operation })
+      if (srcOp) {
+        // TODO: notify in one event?
+        this.opUpdatedSubject.next({ chatId, operation })
+      }
+      return { operation, balanceState }
     }
 
   };

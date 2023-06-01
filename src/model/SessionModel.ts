@@ -68,6 +68,18 @@ export class SessionModel {
             this.users.updateUser(user)
         });
 
+        this.socket.on("opUpdate", (updated: Operation) => {
+            if (this.logSet.has(updated.id)) {
+                const log = [...this.log.val ?? []].map(op => {
+                    if (op.id === updated.id) {
+                        return updated
+                    }
+                    return op
+                })
+                this.log.next(log)
+            }
+        });
+
     }
 
     private bumpBalance = (balanceState: BalanceState) => {

@@ -40,6 +40,11 @@ export class ClientAPI {
             this.io.to('chatClient_' + chatId).emit('state', upd)
         })
 
+        this.splitModule.opUpdatedSubject.subscribe(({ chatId, operation }) => {
+            const upd: Operation = operation
+            this.io.to('chatClient_' + chatId).emit('opUpdate', upd)
+        })
+
         this.userModule.userUpdated.subscribe(({ user, chatId }) => {
             const upd: User = user
             this.io.to('chatClient_' + chatId).emit('user', upd)
