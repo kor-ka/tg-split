@@ -35,7 +35,7 @@ export const MainScreenView = ({ balance, log }: { balance?: Balance, log?: Log 
         <BalanceView balance={balance} />
         <LogView log={log} />
         {/* <button onClick={() => nav("/tg/addPayment")} >Add payment</button> */}
-        <MainButtopnController isVisible={true} onClick={() => nav("/tg/addExpence")} text={"Add expence"} />
+        <MainButtopnController onClick={() => nav("/tg/addExpence")} text={"Add expence"} />
     </div>
 }
 
@@ -181,7 +181,7 @@ export const AddExpenceScreen = () => {
             <CardLight><ListItem subtitle="Split across: " /></CardLight>
             {[...usersModule.users.values()].map(u => <UserCheckListItem id={u.val.id} key={u.val.id} onUserClick={onUserClick} checked={checked.has(u.val.id)} />)}
         </div>
-        <MainButtopnController isVisible={true} onClick={onClick} text={"Add expence"} progress={loading} />
+        <MainButtopnController onClick={onClick} text={"Add expence"} progress={loading} />
     </>
 }
 
@@ -217,7 +217,7 @@ export const AddTransferScreen = () => {
             <CardLight><ListItem titile={`You → ${dst.fullName}`} /></CardLight>
             <input ref={sumRef} defaultValue={initialSum} autoFocus={true} type="number" inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
         </div>
-        <MainButtopnController isVisible={true} onClick={onClick} text={"Add payment"} progress={loading} />
+        <MainButtopnController onClick={onClick} text={"Add payment"} progress={loading} />
     </>
 }
 
@@ -249,10 +249,11 @@ export const BackButtopnController = () => {
     return (canGoBack && __DEV__) ? <button style={{ position: 'absolute', top: 0, left: 0 }} onClick={goBack}>{"< back"}</button> : null
 }
 
-export const MainButtopnController = ({ onClick, text, color, textColor, isActive, isVisible, progress }: { onClick: () => void, text?: string, color?: string, textColor?: string, isActive?: boolean, isVisible: boolean, progress?: boolean }) => {
+export const MainButtopnController = ({ onClick, text, color, textColor, isActive, isVisible, progress }: { onClick: () => void, text?: string, color?: string, textColor?: string, isActive?: boolean, isVisible?: boolean, progress?: boolean }) => {
     const mb = React.useMemo(() => (window as any).Telegram.WebApp.MainButton, [])
     React.useEffect(() => {
-        mb.setParams({ text, color, text_color: textColor, is_active: isActive, is_visible: isVisible })
+        console.log("configure mb", mb, { text, color, text_color: textColor, is_active: isActive ?? true, is_visible: isVisible ?? true })
+        mb.setParams({ text, color, text_color: textColor, is_active: isActive ?? true, is_visible: isVisible ?? true })
     }, [text, color, textColor, isActive, isVisible])
     React.useEffect(() => {
         mb.onClick(onClick)
@@ -261,6 +262,7 @@ export const MainButtopnController = ({ onClick, text, color, textColor, isActiv
         }
     }, [onClick])
     React.useEffect(() => {
+        console.log("configure mb", mb, progress)
         if (progress) {
             mb.showProgress()
         } else {
@@ -268,5 +270,5 @@ export const MainButtopnController = ({ onClick, text, color, textColor, isActiv
         }
     }, [progress])
 
-    return (__DEV__ && isVisible) ? <button style={{ position: 'absolute', top: 0, right: 0 }} disabled={!isActive === false} onClick={onClick} >{text}{progress ? "⌛️" : ""}</button> : null
+    return (__DEV__ && isVisible !== false) ? <button style={{ position: 'absolute', top: 0, right: 0 }} disabled={isActive === true} onClick={onClick} >{text}{progress ? "⌛️" : ""}</button> : null
 }
