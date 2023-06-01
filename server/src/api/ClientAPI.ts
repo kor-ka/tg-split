@@ -67,8 +67,8 @@ export class ClientAPI {
                 sw.lap("tgAuth");
                 let chatId = tgData.start_param ? Number(tgData.start_param) : undefined;
                 socket.on("op", async (operation: Omit<Operation, 'uid'>, ack: (res: { patch: { operation: Operation, balanceState: BalanceState }, error?: never } | { error: string, patch?: never }) => void) => {
-                    const cid = await this.resolveChatId(chatId, chat_instance);
                     try {
+                        const cid = await this.resolveChatId(chatId, chat_instance);
                         const op = { ...operation, uid: tgData.user.id } as Operation
                         const patch = await this.splitModule.commitOperation(cid, op)
                         ack({ patch })
