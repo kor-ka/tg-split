@@ -4,18 +4,36 @@ import { SessionModel } from "../model/SessionModel"
 import { UsersModule } from "../model/UsersModule";
 import { useVMvalue } from "../utils/vm/useVM"
 import {
-    useLocation,
-    useNavigate, useSearchParams
+    useLocation as loc,
+    useNavigate as nav, useSearchParams
 } from "react-router-dom";
 
 export let __DEV__ = false
+let WebApp: any = undefined
 if (typeof window !== "undefined") {
     __DEV__ = window.location.hostname.indexOf("localhost") >= 0
+    WebApp = (window as any).Telegram.WebApp
 }
 
 export const ModelContext = React.createContext<SessionModel | undefined>(undefined);
 export const UserContext = React.createContext<number | undefined>(undefined);
 export const UsersProvider = React.createContext<UsersModule>(new UsersModule());
+
+const useNav = () => {
+    if (typeof window !== "undefined") {
+        return nav()
+    } else {
+        return () => { }
+    }
+}
+
+const useLoc = () => {
+    if (typeof window !== "undefined") {
+        return loc()
+    } else {
+        return { key: "default" }
+    }
+}
 
 export const MainScreen = () => {
     const model = React.useContext(ModelContext)
@@ -29,7 +47,7 @@ const MainScreenWithModel = ({ model }: { model: SessionModel }) => {
 }
 
 export const MainScreenView = ({ balance, log }: { balance?: Balance, log?: Log }) => {
-    const nav = useNavigate()
+    const nav = useNav()
     return <div style={{ padding: "8px 0px" }}>
         <BackButtopnController />
         <BalanceView balance={balance} />
@@ -71,7 +89,7 @@ const BalanceEntry = ({ balance }: { balance: Balance[0] }) => {
 
     }, [balance])
 
-    const nav = useNavigate()
+    const nav = useNav()
     const navigateToAddPayment = React.useCallback(() => {
         nav(`/tg/addPayment?uid=${user.id}&sum=${balance.sum}`)
     }, [nav, user.id])
@@ -138,7 +156,7 @@ const UserCheckListItem = React.memo(({ id, checked, onUserClick }: { id: number
 })
 
 export const AddExpenceScreen = () => {
-    const nav = useNavigate()
+    const nav = useNav()
     const model = React.useContext(ModelContext)
     const descriptionRef = React.useRef<HTMLInputElement>(null)
     const sumRef = React.useRef<HTMLInputElement>(null)
@@ -186,7 +204,7 @@ export const AddExpenceScreen = () => {
 }
 
 export const AddTransferScreen = () => {
-    const nav = useNavigate()
+    const nav = useNav()
     const sumRef = React.useRef<HTMLInputElement>(null)
 
     let [searchParams] = useSearchParams();
@@ -222,11 +240,11 @@ export const AddTransferScreen = () => {
 }
 
 export const BackButtopnController = () => {
-    const nav = useNavigate()
-    const bb = React.useMemo(() => (window as any).Telegram.WebApp.BackButton, [])
+    const nav = useNav()
+    const bb = React.useMemo(() => WebApp?.BackButton, [])
     const goBack = useCallback(() => nav(-1), [])
 
-    const location = useLocation();
+    const location = useLoc();
     const canGoBack = React.useMemo(() => location.key !== 'default', [location.key])
 
 
@@ -250,7 +268,7 @@ export const BackButtopnController = () => {
 }
 
 export const MainButtopnController = ({ onClick, text, color, textColor, isActive, isVisible, progress }: { onClick: () => void, text?: string, color?: string, textColor?: string, isActive?: boolean, isVisible?: boolean, progress?: boolean }) => {
-    const mb = React.useMemo(() => (window as any).Telegram.WebApp.MainButton, [])
+    const mb = React.useMemo(() => WebApp?.MainButton, [])
     React.useEffect(() => {
         console.log("configure mb", mb, { text, color, text_color: textColor, is_active: isActive ?? true, is_visible: isVisible ?? true })
         mb.setParams({ text, color, text_color: textColor, is_active: isActive ?? true, is_visible: isVisible ?? true })

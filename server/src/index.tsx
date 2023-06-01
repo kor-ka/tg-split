@@ -15,8 +15,9 @@ import * as fs from "fs";
 import { initMDB } from "./utils/MDB";
 import { MainScreenView, UserContext, UsersProvider } from "../../src/view/MainScreen";
 import { SplitModule } from "./modules/splitModule/SplitModule";
-import { savedOpToApi } from "./api/ClientAPI";
-import { UsersModule } from "../../src/model/UsersModule";
+import { savedOpToApi, savedUserToApi } from "./api/ClientAPI";
+import { UsersModule as UsersClientModule } from "../../src/model/UsersModule";
+import { UserModule } from "./modules/userModule/UserModule";
 
 var path = require("path");
 const PORT = process.env.PORT || 5001;
@@ -85,7 +86,10 @@ initMDB().then(() => {
       const { log: savedLog } = await splitModule.getLogCached(chatId)
       const log = savedOpToApi(savedLog);
 
-      const usersProvider = new UsersModule()
+      const users = await container.resolve(UserModule).getUsersCached(chatId)
+      const usersProvider = new UsersClientModule()
+      savedUserToApi(users, chatId).forEach(usersProvider.updateUser)
+
 
       // const app = ''
       const app = ReactDOMServer.renderToString(
