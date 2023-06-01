@@ -74,8 +74,16 @@ export class SessionModel {
         console.log('bumpBalance', this.balance.val?.seq, balanceState)
 
         if ((this.balance.val?.seq ?? -1) < balanceState.seq) {
-            console.log('bumpBalance yep', balanceState)
-            this.balance.next(balanceState)
+            const b = balanceState.balance
+                .filter(e => e.pair.includes(this.tgWebApp.user.id) && e.sum !== 0)
+                .map(e => {
+                    if (e.pair[0] !== this.tgWebApp.user.id) {
+                        e.pair.reverse()
+                        e.sum *= -1
+                    }
+                    return e
+                }).sort((a, b) => a.sum - b.sum)
+            this.balance.next({ seq: balanceState.seq, balance: b })
         }
     }
 

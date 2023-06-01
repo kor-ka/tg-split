@@ -7,7 +7,7 @@ export type User = {
     disabled: boolean;
 }
 
-export type Balance = { pair: [string, string], sum: number }[]
+export type Balance = { pair: [number, number], sum: number }[]
 
 export type BalanceState = { balance: Balance, seq: number }
 

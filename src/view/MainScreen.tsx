@@ -57,11 +57,27 @@ const ListItem = ({ titile: title, subtitle, left }: { titile: string, subtitle?
     </div>
 }
 
+const BalanceEntry = ({ balance }: { balance: Balance[0] }) => {
+    const usersModule = React.useContext(UsersProvider)
+    const user = useVMvalue(usersModule.getUser(balance.pair[1]))
+    const title = React.useMemo(() => {
+        const youOwe = balance.sum < 0;
+        return `${youOwe ? 'You' : user.fullName} → ${youOwe ? user.fullName : 'you'}`
+
+    }, [balance])
+    const subtitle = React.useMemo(() => {
+        const youOwe = balance.sum < 0;
+        return `${youOwe ? 'You' : user.fullName} owe${youOwe ? '' : 's'} ${youOwe ? user.fullName : 'you'}`
+
+    }, [balance])
+    return <Card>
+        <ListItem titile={title} subtitle={subtitle} left={balance.sum.toString()} />
+    </Card>
+}
+
 const BalanceView = ({ balance }: { balance?: Balance }) => {
     return <>{balance?.map(e =>
-        <Card>
-            <ListItem titile={"some one owes"} subtitle={e.pair.join('→')} left={e.sum.toString()} />
-        </Card>
+        <BalanceEntry balance={e} />
     )}</>
 }
 

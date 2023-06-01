@@ -62,7 +62,7 @@ export class SplitModule {
     let seq = 0
     if (savedBalance) {
       balance = Object.entries(savedBalance.balance).reduce((balance, [acc, sum]) => {
-        balance.push({ pair: acc.split('-') as [string, string], sum })
+        balance.push({ pair: acc.split('-').map(uid => Number(uid)) as [number, number], sum })
         return balance
       }, [] as Balance)
       seq = savedBalance.seq
