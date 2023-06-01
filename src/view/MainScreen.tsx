@@ -231,7 +231,7 @@ export const AddTransferScreen = () => {
     }, [loading])
     return <>
         <BackButtopnController />
-        <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '20px 0px' }}>
             <CardLight><ListItem titile={`You → ${dst.fullName}`} /></CardLight>
             <input ref={sumRef} defaultValue={initialSum} autoFocus={true} type="number" inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
         </div>
