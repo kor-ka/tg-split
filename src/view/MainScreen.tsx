@@ -91,7 +91,7 @@ const BalanceEntry = ({ balance }: { balance: Balance[0] }) => {
 
     const nav = useNav()
     const navigateToAddPayment = React.useCallback(() => {
-        nav(`/tg/addPayment?uid=${user.id}&sum=${balance.sum}`)
+        nav(`/tg/addPayment?uid=${user.id}&sum=${Math.abs(balance.sum)}`)
     }, [nav, user.id])
     return <div onClick={balance.sum < 0 ? navigateToAddPayment : undefined}>
         <Card>
