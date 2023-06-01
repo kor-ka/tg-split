@@ -17,6 +17,18 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--tg-theme-text-color);
+  font-size: large;
+
+}
+
+input,
+select,
+textarea {
+  color: var(--tg-theme-text-color);
+  font-size: 2em;
+  background-color: var(--tg-theme-bg-color);
+  border: none;
+  outline: none;
 }
 
 code {

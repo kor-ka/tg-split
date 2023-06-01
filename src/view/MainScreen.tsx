@@ -5,7 +5,7 @@ import { UsersModule } from "../model/UsersModule";
 import { useVMvalue } from "../utils/vm/useVM"
 import {
     useLocation,
-    useNavigate, useNavigation
+    useNavigate, useSearchParams
 } from "react-router-dom";
 
 export let __DEV__ = false
@@ -34,7 +34,7 @@ export const MainScreenView = ({ balance, log }: { balance?: Balance, log?: Log 
         <BackButtopnController />
         <BalanceView balance={balance} />
         <LogView log={log} />
-        <button onClick={() => nav("/tg/addPayment")} >Add payment</button>
+        {/* <button onClick={() => nav("/tg/addPayment")} >Add payment</button> */}
         <MainButtopnController onClick={() => nav("/tg/addExpence")} text={"Add expence"} />
     </div>
 }
@@ -47,13 +47,13 @@ const CardLight = ({ children }: { children: any }) => {
     return <div style={{ margin: '0px 20px', }}>{children}</div>
 }
 
-const ListItem = ({ titile: title, subtitle, left }: { titile: string, subtitle?: string, left?: string }) => {
+const ListItem = ({ titile: title, subtitle, right }: { titile?: string, subtitle?: string, right?: React.ReactNode }) => {
     return <div style={{ display: 'flex', flexDirection: "row", justifyContent: 'space-between', padding: 4, alignItems: 'center' }}>
-        <div style={{ display: 'flex', flexDirection: "column", flexShrink: 1, minWidth: 0 }}>
-            <div style={{ padding: 4, paddingBottom: 2, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{title}</div>
-            <div style={{ padding: 4, paddingTop: 2, fontSize: '0.8em', color: "var(--tg-theme-hint-color)" }}>{subtitle}</div>
+        <div style={{ display: 'flex', padding: '2px 0px', flexDirection: "column", flexShrink: 1, minWidth: 0 }}>
+            {!!title && <div style={{ padding: '2px 4px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{title}</div>}
+            {!!subtitle && <div style={{ padding: '2px 4px', fontSize: '0.8em', color: "var(--tg-theme-hint-color)" }}>{subtitle}</div>}
         </div>
-        <div style={{ padding: '4px 16px', fontSize: '1.4em', flexShrink: 0 }}>{left}</div>
+        <div style={{ padding: '4px 16px', flexShrink: 0, alignItems: 'center' }}>{right}</div>
     </div>
 }
 
@@ -62,7 +62,7 @@ const BalanceEntry = ({ balance }: { balance: Balance[0] }) => {
     const user = useVMvalue(usersModule.getUser(balance.pair[1]))
     const title = React.useMemo(() => {
         const youOwe = balance.sum < 0;
-        return `${youOwe ? 'You' : user.fullName} → ${youOwe ? user.fullName : 'you'}`
+        return `${youOwe ? 'You' : user.name} → ${youOwe ? user.name : 'you'}`
 
     }, [balance])
     const subtitle = React.useMemo(() => {
@@ -70,14 +70,21 @@ const BalanceEntry = ({ balance }: { balance: Balance[0] }) => {
         return `${youOwe ? 'You' : user.fullName} owe${youOwe ? '' : 's'} ${youOwe ? user.fullName : 'you'}`
 
     }, [balance])
-    return <Card>
-        <ListItem titile={title} subtitle={subtitle} left={balance.sum.toString()} />
-    </Card>
+
+    const nav = useNavigate()
+    const navigateToAddPayment = React.useCallback(() => {
+        nav(`/tg/addPayment?uid=${user.id}&sum=${balance.sum}`)
+    }, [nav, user.id])
+    return <div onClick={balance.sum < 0 ? navigateToAddPayment : undefined}>
+        <Card>
+            <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em' }}>{(balance.sum).toString()}</span>} />
+        </Card>
+    </div>
 }
 
 const BalanceView = ({ balance }: { balance?: Balance }) => {
     return <>{balance?.map(e =>
-        <BalanceEntry balance={e} />
+        <BalanceEntry key={e.pair.join('-')} balance={e} />
     )}</>
 }
 
@@ -86,20 +93,19 @@ const SplitLogItem = ({ op }: { op: OperationSplit }) => {
     const actor = useVMvalue(usersModule.getUser(op.uid))
     // extract as components? 
     // TODO: test many - should not affect summ
-    const names = React.useMemo(() => {
-        return op.uids.map((uid) => usersModule.getUser(uid).val.name).join(', ')
-
+    const fullNames = React.useMemo(() => {
+        return op.uids.map((uid) => usersModule.getUser(uid).val.fullName).join(', ')
     }, [...op.uids])
     const namesShort = React.useMemo(() => {
-        return op.uids.length > 2 ? `${op.uids.length} persons` : names
-    }, [...op.uids, names])
+        return op.uids.length > 2 ? `${op.uids.length} persons` : op.uids.map((uid) => usersModule.getUser(uid).val.name).join(', ')
+    }, [...op.uids])
 
     const subtitle = React.useMemo(() => {
-        return [op.description, `Splitted among: ${names}`].filter(Boolean).join('. ')
-    }, [names, op.description])
+        return [op.description, `Splitted among: ${fullNames}`].filter(Boolean).join('. ')
+    }, [fullNames, op.description])
 
     return <CardLight>
-        <ListItem titile={`⚡️ ${actor.fullName} → ${namesShort}`} subtitle={subtitle} left={(op.sum).toString()} />
+        <ListItem titile={`⚡️ ${actor.name} → ${namesShort}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em' }}>{op.sum?.toString()}</span>} />
     </CardLight>
 }
 
@@ -107,43 +113,99 @@ const TransferLogItem = ({ op }: { op: OperationTransfer }) => {
     const usersModule = React.useContext(UsersProvider)
     const srcuser = useVMvalue(usersModule.getUser(op.uid))
     const dstuser = useVMvalue(usersModule.getUser(op.dstUid))
-    const subtitle = React.useMemo(() => `${srcuser.name} payed ${op.sum} to ${dstuser.name}`, [srcuser, dstuser])
+    const subtitle = React.useMemo(() => `${srcuser.fullName} payed ${op.sum} to ${dstuser.fullName}`, [srcuser, dstuser])
     return <CardLight>
-        <ListItem titile={`💸 ${srcuser.fullName} → ${dstuser.fullName}`} subtitle={subtitle} left={op.sum.toString()} />
+        <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em' }}>{(op.sum).toString()}</span>} />
     </CardLight>
 }
 
 const LogView = ({ log }: { log?: Log }) => {
-    return <>{log?.map(op => op.type === 'split' ? <SplitLogItem op={op} /> : op.type === 'transfer' ? <TransferLogItem op={op} /> : null)}</>
+    return <>{log?.map(op => op.type === 'split' ? <SplitLogItem key={op.id} op={op} /> : op.type === 'transfer' ? <TransferLogItem key={op.id} op={op} /> : null)}</>
 }
+
+
+const UserCheckListItem = React.memo(({ id, checked, onUserClick }: { id: number, checked: boolean, onUserClick: (id: number) => void }) => {
+    const usersModule = React.useContext(UsersProvider)
+    const user = useVMvalue(usersModule.getUser(id))
+    const onClick = React.useCallback(() => {
+        onUserClick(id)
+    }, [onUserClick, id])
+    return <div onClick={onClick}>
+        <Card>
+            <ListItem titile={user.fullName} right={<input checked={checked} readOnly={true} type="checkbox" style={{ transform: "scale(1.4)", filter: 'grayscale(1)' }} />} />
+        </Card>
+    </div>
+})
 
 export const AddExpenceScreen = () => {
     const nav = useNavigate()
     const model = React.useContext(ModelContext)
+    const descriptionRef = React.useRef<HTMLInputElement>(null)
+    const sumRef = React.useRef<HTMLInputElement>(null)
+
+    const usersModule = React.useContext(UsersProvider)
+
+    const [checked, setChecked] = React.useState<Set<number>>(new Set([...usersModule.users.values()].sort((a) => a.val.disabled ? -1 : 0).filter(u => !u.val.disabled).map(u => u.val.id)))
+    const onUserClick = React.useCallback((id: number) => {
+        setChecked(checked => {
+            const res = new Set(checked)
+            if (res.has(id)) {
+                res.delete(id)
+            } else {
+                res.add(id)
+            }
+            return res
+        })
+    }, [])
+
     const [loading, setLoading] = React.useState(false)
     const onClick = React.useCallback(() => {
+        const sum = Number(sumRef.current?.value)
+        if (sum === 0) {
+            return
+        }
         if (!loading) {
             setLoading(true)
-            model?.commitOperation({ type: 'split', sum: 10, id: model.nextId() + '', description: "Payed for food and gas", uids: [102133736, 6065926905] })
+            model?.commitOperation({ type: 'split', sum, id: model.nextId() + '', description: descriptionRef.current?.value, uids: [...checked.values()] })
                 .catch(e => console.error(e))
                 .then(() => nav(-1))
                 .finally(() => setLoading(false))
         }
-    }, [loading])
+    }, [loading, checked])
+
     return <>
         <BackButtopnController />
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0px' }}>
+            <input ref={descriptionRef} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="Enter a description" />
+            <input ref={sumRef} defaultValue={0} autoFocus={true} type="number" inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
+            <CardLight><ListItem subtitle="Split across: " /></CardLight>
+            {[...usersModule.users.values()].map(u => <UserCheckListItem id={u.val.id} key={u.val.id} onUserClick={onUserClick} checked={checked.has(u.val.id)} />)}
+        </div>
         <MainButtopnController onClick={onClick} text={"Add expence"} progress={loading} />
     </>
 }
 
 export const AddTransferScreen = () => {
     const nav = useNavigate()
+    const sumRef = React.useRef<HTMLInputElement>(null)
+
+    let [searchParams] = useSearchParams();
+
+    const usersModule = React.useContext(UsersProvider)
+
+    const dst = useVMvalue(usersModule.getUser(Number(searchParams.get('uid'))))
+    const initialSum = React.useMemo(() => Number(searchParams.get('sum')), [])
+
     const model = React.useContext(ModelContext)
     const [loading, setLoading] = React.useState(false)
     const onClick = React.useCallback(() => {
+        const sum = Number(sumRef.current?.value)
+        if (sum === 0) {
+            return
+        }
         if (!loading) {
             setLoading(true)
-            model?.commitOperation({ type: 'transfer', sum: 10, id: model.nextId() + '', dstUid: 6065926905 })
+            model?.commitOperation({ type: 'transfer', sum, id: model.nextId() + '', dstUid: dst.id })
                 .catch(e => console.error(e))
                 .then(() => nav(-1))
                 .finally(() => setLoading(false))
@@ -151,6 +213,10 @@ export const AddTransferScreen = () => {
     }, [loading])
     return <>
         <BackButtopnController />
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0px' }}>
+            <CardLight><ListItem titile={`You → ${dst.fullName}`} /></CardLight>
+            <input ref={sumRef} defaultValue={initialSum} autoFocus={true} type="number" inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
+        </div>
         <MainButtopnController onClick={onClick} text={"Add payment"} progress={loading} />
     </>
 }
@@ -180,7 +246,7 @@ export const BackButtopnController = () => {
         }
     }, [bb])
 
-    return (canGoBack && __DEV__) ? <button onClick={goBack}>{"< back"}</button> : null
+    return (canGoBack && __DEV__) ? <button style={{ position: 'absolute', top: 0, left: 0 }} onClick={goBack}>{"< back"}</button> : null
 }
 
 export const MainButtopnController = ({ onClick, text, color, textColor, isActive, isVisible, progress }: { onClick: () => void, text?: string, color?: string, textColor?: string, isActive?: boolean, isVisible?: boolean, progress?: boolean }) => {
@@ -202,5 +268,5 @@ export const MainButtopnController = ({ onClick, text, color, textColor, isActiv
         }
     }, [progress])
 
-    return (__DEV__ && isVisible !== false) ? <button disabled={isActive === false} onClick={onClick} >{text}{progress ? "⌛️" : ""}</button> : null
+    return (__DEV__ && isVisible !== false) ? <button style={{ position: 'absolute', top: 0, right: 0 }} disabled={isActive === false} onClick={onClick} >{text}{progress ? "⌛️" : ""}</button> : null
 }

@@ -16,6 +16,9 @@ export class SplitModule {
   readonly opUpdatedSubject = new Subject<{ chatId: number, operation: Operation }>;
 
   commitOperation = async (chatId: number, operation: Operation) => {
+    if (typeof operation.sum !== 'number') {
+      throw new Error("sum should be a number")
+    }
     const session = MDBClient.startSession()
 
     let srcOp: WithId<ServerOp> | undefined

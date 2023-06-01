@@ -1,8 +1,9 @@
 import { User } from "../../entity";
 import { VM } from "../utils/vm/VM";
 
+export type UserClient = Partial<User> & Pick<User, 'id'> & { fullName: string, name: string }
 export class UsersModule {
-    private users = new Map<number, VM<Partial<User> & Pick<User, 'id'> & { fullName: string, name: string }>>;
+    readonly users = new Map<number, VM<UserClient>>;
 
     readonly getUser = (id: number) => {
         let vm = this.users.get(id)
