@@ -8,6 +8,8 @@ export class UserModule {
   private db = USER();
 
   readonly userUpdated = new Subject<{ chatId: number, user: User }>();
+  private usersCache = new Map<number, SavedUser[]>;
+  
 
   updateUser = async (
     chatId: number,
@@ -32,11 +34,13 @@ export class UserModule {
     );
 
     this.userUpdated.next({ chatId, user });
-
+    
+    // TODO: better cahce update     
+    await this.getUsers(chatId)
+    
     return res;
   };
 
-  private usersCache = new Map<number, SavedUser[]>;
 
   getUser = async (uid: number): Promise<SavedUser | null> => {
     return this.db.findOne({ id: uid })
