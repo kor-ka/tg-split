@@ -83,8 +83,8 @@ initMDB().then(() => {
       const userIdString = req.cookies.user_id;
       const userId = userIdString ? Number.parseInt(userIdString, 10) : undefined
       
-      let { balance: balanceState } = await splitModule.getBalanceCached(chatId)
-      balanceState = balanceState.balance
+      const { balance: balanceState } = await splitModule.getBalanceCached(chatId)
+      cosnt balance = balanceState.balance
         .filter(e => e.pair.includes(userId) && e.sum !== 0)
         .map(e => {
             if (e.pair[0] !== userId) {
@@ -108,7 +108,7 @@ initMDB().then(() => {
           value={userId}
         >
           <UsersProvider.Provider value={usersProvider}>
-            <MainScreenView balance={balance.balance} log={log} />
+            <MainScreenView balance={balance} log={log} />
           </UsersProvider.Provider>
         </UserContext.Provider>
       );
