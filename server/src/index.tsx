@@ -82,7 +82,18 @@ initMDB().then(() => {
       const splitModule = container.resolve(SplitModule);
       const userIdString = req.cookies.user_id;
       const userId = userIdString ? Number.parseInt(userIdString, 10) : undefined
-      const { balance } = await splitModule.getBalanceCached(chatId)
+      
+      let { balance: balanceState } = await splitModule.getBalanceCached(chatId)
+      balanceState = balanceState.balance
+        .filter(e => e.pair.includes(userId) && e.sum !== 0)
+        .map(e => {
+            if (e.pair[0] !== userId) {
+                e.pair.reverse()
+                e.sum *= -1
+            }
+            return e
+        }).sort((a, b) => a.sum - b.sum)
+      
       const { log: savedLog } = await splitModule.getLogCached(chatId)
       const log = savedOpToApi(savedLog);
 
