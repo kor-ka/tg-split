@@ -119,7 +119,7 @@ const SplitLogItem = ({ op }: { op: OperationSplit }) => {
     }, [...op.uids])
 
     const subtitle = React.useMemo(() => {
-        return [op.description, `Splitted among: ${fullNames}`].filter(Boolean).join('. ')
+        return [op.description?.trim(), `Splitted among: ${fullNames}`].filter(Boolean).join('. ')
     }, [fullNames, op.description])
 
     return <CardLight>
