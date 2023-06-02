@@ -176,7 +176,7 @@ export class TelegramBot {
             }
           });
 
-          const lines = (await Promise.all(promieses)).join('\n');
+          const lines = (await Promise.all(promieses)).join('\n').trim() || '✨ All settled up ✨';
 
           const { buttonsRows } = renderPin(chatId, true);
 
