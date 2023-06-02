@@ -10,6 +10,7 @@ export class TelegramBot {
   private pinModule = container.resolve(PinsModule);
   private chatMetaModule = container.resolve(ChatMetaModule);
   private userModule = container.resolve(UserModule)
+  private splitModule = container.resolve(SplitModule)
 
   private token = process.env.TELEGRAM_BOT_TOKEN!;
   private bot = new TB(this.token, {
@@ -146,5 +147,47 @@ export class TelegramBot {
         console.error(e);
       }
     });
+
+    // TODO: this shit can race, add worker
+    this.splitModule.stateSubject.subscribe(async (upd) => {
+      try {
+        const { chatId, balanceState } = upd;
+        const pinned = await this.pinModule.getPinMeta(chatId)
+
+        if (pinned) {
+          // TODO: move to render pin, no pin case?
+          const promieses = balanceState.balance.filter(({ sum }) => sum !== 0).map(async ({ pair, sum }) => {
+            let owePair = [...pair]
+            let oweSum = sum
+            if (oweSum > 0) {
+              owePair.reverse
+              oweSum *= -1
+            }
+            const srcUser = await this.userModule.getUser(pair[0])
+            const srcName = [srcUser?.name, srcUser?.lastname].filter(Boolean).join(' ') || '???'
+            const dstUser = await this.userModule.getUser(pair[1])
+            const dstName = [dstUser?.name, dstUser?.lastname].filter(Boolean).join(' ') || '???'
+
+            return `${srcName} → ${dstName} ${sum}`
+          })
+
+          const lines = (await Promise.all(promieses)).join('\n')
+
+          const { buttonsRows } = renderPin(chatId, true);
+
+          await this.bot.editMessageText(lines, {
+            chat_id: chatId,
+            message_id: pinned.messageId,
+            parse_mode: "HTML",
+            reply_markup: { inline_keyboard: buttonsRows },
+          });
+
+        }
+      } catch (e) {
+        console.error(e)
+      }
+    })
+
   };
+
 }

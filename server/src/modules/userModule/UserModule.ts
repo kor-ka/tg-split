@@ -37,6 +37,11 @@ export class UserModule {
   };
 
   private usersCache = new Map<number, SavedUser[]>;
+
+  getUser = async (uid: number): Promise<SavedUser | null> => {
+    return this.db.findOne({ id: uid })
+  };
+
   getUsers = async (chatId: number): Promise<SavedUser[]> => {
     const res = (await this.db.find({ chatIds: chatId }).toArray())
     this.usersCache.set(chatId, res)
