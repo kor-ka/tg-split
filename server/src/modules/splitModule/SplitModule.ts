@@ -75,7 +75,7 @@ export class SplitModule {
     const savedBalance = (await this.balance.findOne({ chatId }))
     let balance: Balance
     let seq = 0
-    if (savedBalance) {
+    if (savedBalance?.balance) {
       balance = Object.entries(savedBalance.balance).reduce((balance, [acc, sum]) => {
         balance.push({ pair: acc.split('-').map(uid => Number(uid)) as [number, number], sum })
         return balance
