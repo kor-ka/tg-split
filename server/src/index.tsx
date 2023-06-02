@@ -85,7 +85,7 @@ initMDB().then(() => {
       
       const { balance: balanceState } = await splitModule.getBalanceCached(chatId)
       const balance = balanceState.balance
-        .filter(e => e.pair.includes(userId) && e.sum !== 0)
+        .filter(e => (userId !== undefined) && e.pair.includes(userId) && e.sum !== 0)
         .map(e => {
             if (e.pair[0] !== userId) {
                 e.pair.reverse()
