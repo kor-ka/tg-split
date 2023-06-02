@@ -165,7 +165,7 @@ export class TelegramBot {
               const dstUser = await this.userModule.getUser(pair[dst]);
               const dstName = [dstUser?.name, dstUser?.lastname].filter(Boolean).join(' ') || '???';
 
-              return `${srcName} → ${dstName} ${oweSum}`;
+              return `${srcName} → ${dstName} -${Math.abs(sum)}`;
             } catch(e) {
               console.error(e);
               return '';
