@@ -52,13 +52,13 @@ export class TelegramBot {
         }
 
         upd.new_chat_members?.filter(u => !u.is_bot).forEach(u => {
-          this.userModule.updateUser(upd.chat.id, {
+          await this.userModule.updateUser(upd.chat.id, {
             id: u.id,
             name: u.first_name,
             lastname: u.last_name,
             username: u.username,
             disabled: false
-          })
+          }).catch(e => console.error(e))
         })
 
       } catch (e) {
@@ -70,7 +70,7 @@ export class TelegramBot {
       try {
         const left = upd.left_chat_member;
         if (left && !left.is_bot) {
-          this.userModule.updateUser(upd.chat.id, {
+          await this.userModule.updateUser(upd.chat.id, {
             id: left.id,
             name: left.first_name,
             lastname: left.last_name,
@@ -135,7 +135,7 @@ export class TelegramBot {
     this.bot.on("message", async (message) => {
       try {
         if (message.from && !message.from.is_bot) {
-          this.userModule.updateUser(message.chat.id, {
+          await this.userModule.updateUser(message.chat.id, {
             id: message.from.id,
             name: message.from.first_name,
             lastname: message.from.last_name,
