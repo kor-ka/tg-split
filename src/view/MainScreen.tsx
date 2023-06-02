@@ -103,7 +103,7 @@ const BalanceEntry = ({ balance }: { balance: Balance[0] }) => {
 const BalanceView = ({ balance }: { balance?: Balance }) => {
     return <>{balance?.map(e =>
         <BalanceEntry key={e.pair.join('-')} balance={e} />
-    )}</>
+    ) ?? <Card> <ListItem titile={"✨ All settle up ✨"}/> </Card> }</>
 }
 
 const SplitLogItem = ({ op }: { op: OperationSplit }) => {
