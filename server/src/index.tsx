@@ -84,7 +84,7 @@ initMDB().then(() => {
       const userId = userIdString ? Number.parseInt(userIdString, 10) : undefined
       
       const { balance: balanceState } = await splitModule.getBalanceCached(chatId)
-      cosnt balance = balanceState.balance
+      const balance = balanceState.balance
         .filter(e => e.pair.includes(userId) && e.sum !== 0)
         .map(e => {
             if (e.pair[0] !== userId) {
