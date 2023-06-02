@@ -52,7 +52,7 @@ export class TelegramBot {
         }
 
         upd.new_chat_members?.filter(u => !u.is_bot).forEach(u => {
-          await this.userModule.updateUser(upd.chat.id, {
+          this.userModule.updateUser(upd.chat.id, {
             id: u.id,
             name: u.first_name,
             lastname: u.last_name,
@@ -152,26 +152,31 @@ export class TelegramBot {
     this.splitModule.stateSubject.subscribe(async (upd) => {
       try {
         const { chatId, balanceState } = upd;
-        const pinned = await this.pinModule.getPinMeta(chatId)
+        const pinned = await this.pinModule.getPinMeta(chatId);
 
         if (pinned) {
           // TODO: move to render pin, no pin case?
           const promieses = balanceState.balance.filter(({ sum }) => sum !== 0).map(async ({ pair, sum }) => {
-            let owePair = [...pair]
-            let oweSum = sum
-            if (oweSum > 0) {
-              owePair.reverse
-              oweSum *= -1
+            try {
+              let owePair = [...pair];
+              let oweSum = sum;
+              if (oweSum > 0) {
+                owePair.reverse;
+                oweSum *= -1;
+              }
+              const srcUser = await this.userModule.getUser(pair[0]);
+              const srcName = [srcUser?.name, srcUser?.lastname].filter(Boolean).join(' ') || '???';
+              const dstUser = await this.userModule.getUser(pair[1]);
+              const dstName = [dstUser?.name, dstUser?.lastname].filter(Boolean).join(' ') || '???';
+
+              return `${srcName} → ${dstName} ${sum}`;
+            } catch(e) {
+              console.error(e);
+              return '';
             }
-            const srcUser = await this.userModule.getUser(pair[0])
-            const srcName = [srcUser?.name, srcUser?.lastname].filter(Boolean).join(' ') || '???'
-            const dstUser = await this.userModule.getUser(pair[1])
-            const dstName = [dstUser?.name, dstUser?.lastname].filter(Boolean).join(' ') || '???'
+          });
 
-            return `${srcName} → ${dstName} ${sum}`
-          })
-
-          const lines = (await Promise.all(promieses)).join('\n')
+          const lines = (await Promise.all(promieses)).join('\n');
 
           const { buttonsRows } = renderPin(chatId, true);
 
