@@ -103,10 +103,10 @@ const BalanceEntry = ({ balance }: { balance: Balance[0] }) => {
 const BalanceView = ({ balance }: { balance?: Balance }) => {
     const userId = React.useContext(UserContext)
     if (userId === undefined) {
-        return <Card> <ListItem titile={"Loading..."} subtitle="..." /> </Card>
+        return <Card> <ListItem titile={"Loading..."} subtitle="Figuring out the final details..." /> </Card>
     }
     if (balance?.length === 0) {
-        return <Card> <ListItem titile="All settled up" subtitle="🎉" /> </Card>
+        return <Card> <ListItem titile="✨ All settled up ✨" subtitle="You are awesome" /> </Card>
     }
     return <>
         {balance?.map(e =>
