@@ -101,12 +101,17 @@ const BalanceEntry = ({ balance }: { balance: Balance[0] }) => {
 }
 
 const BalanceView = ({ balance }: { balance?: Balance }) => {
-    const settledUp = balance?.length === 0
+    const userId = React.useContext(UserContext)
+    if (userId === undefined) {
+        return <Card> <ListItem titile={"Loading..."} /> </Card>
+    }
+    if (balance?.length === 0) {
+        return <Card> <ListItem titile={"✨ All settled up ✨"} /> </Card>
+    }
     return <>
         {balance?.map(e =>
             <BalanceEntry key={e.pair.join('-')} balance={e} />
         )}
-        {settledUp && <Card> <ListItem titile={"✨ All settled up ✨"}/> </Card>}
     </>
 }
 
