@@ -11,7 +11,7 @@ export type Balance = { pair: [number, number], sum: number }[]
 
 export type BalanceState = { balance: Balance, seq: number }
 
-export type OperationBase = { id: string, uid: number, correction?: string }
+export type OperationBase = { id: string, uid: number, correction?: string, corrected?: boolean }
 
 export type OperationSplit = OperationBase & {
     type: 'split',

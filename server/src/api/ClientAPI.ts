@@ -92,12 +92,12 @@ export class ClientAPI {
                         const { balance, balancePromsie } = await this.splitModule.getBalanceCached(cid)
                         const { log, logPromise } = await this.splitModule.getLogCached(cid)
                         // emit cached
-                        const upd: FullState = { balanceState: balance, log: savedOpToApi(log), users }
+                        const upd: FullState = { balanceState: balance, log: savedOpsToApi(log), users }
                         socket.emit("state", upd)
 
                         { // emit updated
                             const [balance, log] = await Promise.all([balancePromsie, logPromise])
-                            const upd: FullState = { balanceState: balance, log: savedOpToApi(log), users }
+                            const upd: FullState = { balanceState: balance, log: savedOpsToApi(log), users }
                             socket.emit("state", upd)
                         }
 
@@ -113,11 +113,13 @@ export class ClientAPI {
     }
 }
 
-export const savedOpToApi = (saved: SavedOp[]): Log => {
-    return saved.map(s => {
-        const { _id, correction, ...op } = s
-        return { ...op, id: _id.toHexString(), correction: correction?.toHexString() }
-    })
+export const savedOpToApi = (saved: SavedOp): Operation => {
+    const { _id, correction, ...op } = saved
+    return { ...op, id: _id.toHexString(), correction: correction?.toHexString() }
+}
+
+export const savedOpsToApi = (saved: SavedOp[]): Log => {
+    return saved.map(savedOpToApi)
 }
 
 export const savedUserToApi = (saved: SavedUser[], chatId: number): User[] => {

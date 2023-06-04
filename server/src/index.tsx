@@ -15,7 +15,7 @@ import * as fs from "fs";
 import { initMDB } from "./utils/MDB";
 import { MainScreenView, UserContext, UsersProvider } from "../../src/view/MainScreen";
 import { SplitModule } from "./modules/splitModule/SplitModule";
-import { savedOpToApi, savedUserToApi } from "./api/ClientAPI";
+import { savedOpsToApi, savedUserToApi } from "./api/ClientAPI";
 import { UsersModule as UsersClientModule } from "../../src/model/UsersModule";
 import { UserModule } from "./modules/userModule/UserModule";
 
@@ -82,20 +82,20 @@ initMDB().then(() => {
       const splitModule = container.resolve(SplitModule);
       const userIdString = req.cookies.user_id;
       const userId = userIdString ? Number.parseInt(userIdString, 10) : undefined
-      
+
       const { balance: balanceState } = await splitModule.getBalanceCached(chatId)
       const balance = balanceState.balance
         .filter(e => (userId !== undefined) && e.pair.includes(userId) && e.sum !== 0)
         .map(e => {
-            if (e.pair[0] !== userId) {
-                e.pair.reverse()
-                e.sum *= -1
-            }
-            return e
+          if (e.pair[0] !== userId) {
+            e.pair.reverse()
+            e.sum *= -1
+          }
+          return e
         }).sort((a, b) => a.sum - b.sum)
-      
+
       const { log: savedLog } = await splitModule.getLogCached(chatId)
-      const log = savedOpToApi(savedLog);
+      const log = savedOpsToApi(savedLog);
 
       const users = await container.resolve(UserModule).getUsersCached(chatId)
       const usersProvider = new UsersClientModule()

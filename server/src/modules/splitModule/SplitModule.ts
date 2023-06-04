@@ -4,6 +4,7 @@ import { Operation, OperationSplit, BalanceState, Balance } from "../../../../en
 import { MDBClient } from "../../utils/MDB";
 import { ObjectId, WithId } from "mongodb";
 import { Subject } from "../../utils/subject";
+import { savedOpToApi } from "../../api/ClientAPI";
 
 type StateListener = (balance: BalanceState, op: Operation) => void
 
@@ -34,7 +35,8 @@ export class SplitModule {
 
         if (operation.correction) {
           srcOp = (await this.ops.findOne({ _id: new ObjectId(operation.correction) }))!
-          await this.ops.updateOne({ _id: srcOp._id }, { corrected: true }, { session })
+          await this.ops.updateOne({ _id: srcOp._id }, { $set: { corrected: true } }, { session })
+          srcOp.corrected = true
 
           const origAtoms = opToAtoms(srcOp)
           atoms = sumAtoms([...atoms, ...invertAtoms(origAtoms)])
@@ -56,17 +58,17 @@ export class SplitModule {
 
     } finally {
       await session.endSession()
-
-      const balanceState = await this.getBalance(chatId)
-
-      // notify
-      this.stateSubject.next({ chatId, balanceState, operation })
-      if (srcOp) {
-        // TODO: notify in one event?
-        this.opUpdatedSubject.next({ chatId, operation })
-      }
-      return { operation, balanceState }
     }
+
+    const balanceState = await this.getBalance(chatId)
+
+    // notify
+    this.stateSubject.next({ chatId, balanceState, operation })
+    if (srcOp) {
+      // TODO: notify in one event?
+      this.opUpdatedSubject.next({ chatId, operation: savedOpToApi(srcOp) })
+    }
+    return { operation, balanceState }
 
   };
 
