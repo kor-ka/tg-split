@@ -23,6 +23,9 @@
   --tg-theme-secondary-bg-color: #f4f4f5;
   --tg-viewport-height: 576px;
   --tg-viewport-stable-height: 576px;
+
+  --text-confirm-color: #31b545;
+  --text-destructive-color: #f56058;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -37,6 +40,10 @@
     --tg-theme-secondary-bg-color: #0f0f0f;
     --tg-viewport-height: 576px;
     --tg-viewport-stable-height: 576px;
+
+    --text-confirm-color: #31b545;
+    --text-destructive-color: #f16d66;
+
   }
 }
 

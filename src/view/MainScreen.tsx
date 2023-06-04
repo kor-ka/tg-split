@@ -125,7 +125,7 @@ const BalanceEntry = ({ balance }: { balance: Balance[0] }) => {
     }, [nav, user.id])
     return <div onClick={balance.sum < 0 ? navigateToAddPayment : undefined}>
         <Card>
-            <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em' }}>{(balance.sum).toString()}</span>} />
+            <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: balance.sum < 0 ? 'var(--text-destructive-color)' : 'var(--text-confirm-color)' }}>{(Math.abs(balance.sum)).toString()}</span>} />
         </Card>
     </div>
 }
@@ -146,6 +146,7 @@ const BalanceView = ({ balance }: { balance?: Balance }) => {
 }
 
 const SplitLogItem = React.memo(({ op }: { op: OperationSplit }) => {
+    const userId = React.useContext(UserContext)
     const usersModule = React.useContext(UsersProvider)
     const actor = useVMvalue(usersModule.getUser(op.uid))
     // extract as components? 
@@ -157,29 +158,48 @@ const SplitLogItem = React.memo(({ op }: { op: OperationSplit }) => {
         return op.uids.length > 2 ? `${op.uids.length} persons` : op.uids.map((uid) => usersModule.getUser(uid).val.name).join(', ')
     }, [...op.uids])
 
+    const title = React.useMemo(() => `⚡️ ${actor.name} → ${op.description || namesShort}`, [])
+
     const subtitle = React.useMemo(() => {
-        return [op.description?.trim(), `Splitted among: ${fullNames}`].filter(Boolean).join('. ')
+        return [op.description?.trim(), `Split among: ${fullNames}`, op.correction ? '(edit)' : ''].filter(Boolean).join('. ')
     }, [fullNames, op.description])
 
     const nav = useNav()
     const onClick = React.useCallback(() => {
         nav(`/tg/editExpence?editExpense=${op.id}`)
     }, [])
+
+    const sumColor = React.useMemo(() => {
+        if (op.uid === userId) {
+            return 'var(--text-destructive-color)'
+        } else if (userId && op.uids.includes(userId)) {
+            return 'var(--text-confirm-color)'
+        }
+    }, [op.uid, op.uids, userId])
     return <div onClick={!op.corrected ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
         <CardLight>
-
-            <ListItem titile={`⚡️ ${actor.name} → ${namesShort}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em' }}>{op.sum?.toString()}</span>} />
+            <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{op.sum?.toString()}</span>} />
         </CardLight>
     </div >
 })
 
 const TransferLogItem = React.memo(({ op }: { op: OperationTransfer }) => {
+    const userId = React.useContext(UserContext)
     const usersModule = React.useContext(UsersProvider)
     const srcuser = useVMvalue(usersModule.getUser(op.uid))
     const dstuser = useVMvalue(usersModule.getUser(op.dstUid))
     const subtitle = React.useMemo(() => `${srcuser.fullName} payed ${op.sum} to ${dstuser.fullName}`, [srcuser, dstuser])
+
+    const sumColor = React.useMemo(() => {
+        if (op.uid === userId) {
+            return 'var(--text-destructive-color)'
+        } else if (op.dstUid === userId) {
+            return 'var(--text-confirm-color)'
+        }
+    }, [op.uid, op.dstUid, userId])
+
     return <CardLight>
-        <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em' }}>{(op.sum).toString()}</span>} />
+        <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum).toString()}</span>} />
     </CardLight>
 })
 

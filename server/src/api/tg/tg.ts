@@ -158,15 +158,15 @@ export class TelegramBot {
           // TODO: move to render pin, no pin case?
           const promieses = balanceState.balance.filter(({ sum }) => sum !== 0).map(async ({ pair, sum }) => {
             try {
-              const src = sum < 0 ?  0 : 1
-              const dst = sum < 0 ?  1 : 0
+              const src = sum < 0 ? 0 : 1
+              const dst = sum < 0 ? 1 : 0
               const srcUser = await this.userModule.getUser(pair[src]);
               const srcName = [srcUser?.name, srcUser?.lastname].filter(Boolean).join(' ') || '???';
               const dstUser = await this.userModule.getUser(pair[dst]);
               const dstName = [dstUser?.name, dstUser?.lastname].filter(Boolean).join(' ') || '???';
 
-              return `${srcName} → ${dstName} -${Math.abs(sum)}`;
-            } catch(e) {
+              return `${srcName} → ${dstName} ${Math.abs(sum)}`;
+            } catch (e) {
               console.error(e);
               return '';
             }
