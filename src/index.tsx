@@ -20,9 +20,12 @@ const router = createBrowserRouter([
   },
 ]);
 
-const root = createRoot(document.getElementById("root")!);
-if (window.location.pathname.startsWith("/tg/")) {
-  let { initData, initDataUnsafe, ready } = (window as any).Telegram.WebApp;
+const tryInit = () => {
+  const wa = (window as any).Telegram.WebApp
+  if (!wa) {
+    return false
+  }
+  let { initData, initDataUnsafe, ready } = wa
   ready();
 
   const model = new SessionModel(
@@ -42,6 +45,17 @@ if (window.location.pathname.startsWith("/tg/")) {
       );
     }
   });
+  return true
+}
+const root = createRoot(document.getElementById("root")!);
+if (window.location.pathname.startsWith("/tg/")) {
+  if (!tryInit()) {
+    const interval = setInterval(() => {
+      if (tryInit()) {
+        clearInterval(interval)
+      }
+    }, 10)
+  }
 }
 
 // If you want to start measuring performance in your app, pass a function
