@@ -17,8 +17,8 @@ const tryInit = () => {
     window.history.replaceState({}, "", "/tg/addExpence");
   }
 
-  wa.MainButton.onClick(goToAddExpense)
   wa.MainButton.setParams({ is_active: true, is_visibe: true, text: "Add expense" })
+  wa.MainButton.onClick(goToAddExpense)
 
   const model = new SessionModel(
     { initData, initDataUnsafe }
