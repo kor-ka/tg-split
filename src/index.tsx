@@ -3,48 +3,51 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import { SessionModel } from "./model/SessionModel";
 import reportWebVitals from "./reportWebVitals";
-import { AddExpenceScreen, AddTransferScreen, MainScreen, ModelContext, UserContext, UsersProvider } from "./view/MainScreen";
 
-const router = createBrowserRouter([
-  {
-    path: "/tg",
-    element: <MainScreen />,
-  },
-  {
-    path: "/tg/addExpence",
-    element: <AddExpenceScreen />,
-  },
-  {
-    path: "/tg/addPayment",
-    element: <AddTransferScreen />,
-  },
-]);
 
 const tryInit = () => {
-  const wa = (window as any).Telegram.WebApp
+  const wa = (window as any).Telegram?.WebApp
   if (!wa) {
     return false
   }
   let { initData, initDataUnsafe, ready } = wa
   ready();
 
-  const model = new SessionModel(
-    { initData, initDataUnsafe }
-  );
-  const sub = model.balance.subscribe((b) => {
-    if (b) {
-      sub();
-      root.render(
-        <ModelContext.Provider value={model}>
-          <UserContext.Provider value={model.tgWebApp.user.id}>
-            <UsersProvider.Provider value={model.users}>
-              <RouterProvider router={router} />
-            </UsersProvider.Provider>
-          </UserContext.Provider>
-        </ModelContext.Provider>
-      );
-    }
-  });
+  const MS = import('./view/MainScreen').then(({ AddExpenceScreen, AddTransferScreen, MainScreen, ModelContext, UserContext, UsersProvider }) => {
+    const router = createBrowserRouter([
+      {
+        path: "/tg",
+        element: <MainScreen />,
+      },
+      {
+        path: "/tg/addExpence",
+        element: <AddExpenceScreen />,
+      },
+      {
+        path: "/tg/addPayment",
+        element: <AddTransferScreen />,
+      },
+    ]);
+
+    const model = new SessionModel(
+      { initData, initDataUnsafe }
+    );
+    const sub = model.balance.subscribe((b) => {
+      if (b) {
+        sub();
+        root.render(
+          <ModelContext.Provider value={model}>
+            <UserContext.Provider value={model.tgWebApp.user.id}>
+              <UsersProvider.Provider value={model.users}>
+                <RouterProvider router={router} />
+              </UsersProvider.Provider>
+            </UserContext.Provider>
+          </ModelContext.Provider>
+        );
+      }
+    });
+  })
+
   return true
 }
 const root = createRoot(document.getElementById("root")!);

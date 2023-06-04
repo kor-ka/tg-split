@@ -6,6 +6,38 @@
   --color-user-6: #ee7aae;
   --color-user-7: #6ec9cb;
   --color-user-8: #faa774;
+
+
+
+
+}
+
+:root {
+  --tg-color-scheme: light;
+  --tg-theme-bg-color: #ffffff;
+  --tg-theme-text-color: #000000;
+  --tg-theme-hint-color: #707579;
+  --tg-theme-link-color: #3390ec;
+  --tg-theme-button-color: #3390ec;
+  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-secondary-bg-color: #f4f4f5;
+  --tg-viewport-height: 576px;
+  --tg-viewport-stable-height: 576px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tg-color-scheme: dark;
+    --tg-theme-bg-color: #212121;
+    --tg-theme-text-color: #ffffff;
+    --tg-theme-hint-color: #aaaaaa;
+    --tg-theme-link-color: #8774e1;
+    --tg-theme-button-color: #8774e1;
+    --tg-theme-button-text-color: #ffffff;
+    --tg-theme-secondary-bg-color: #0f0f0f;
+    --tg-viewport-height: 576px;
+    --tg-viewport-stable-height: 576px;
+  }
 }
 
 
@@ -18,6 +50,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   color: var(--tg-theme-text-color);
   font-size: large;
+  background-color: var(--tg-theme-bg-color);
 
 }
 
