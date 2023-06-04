@@ -18,7 +18,7 @@ const tryInit = () => {
   }
 
   wa.MainButton.onClick(goToAddExpense)
-  wa.MainButton.setParams({ is_active: true, is_visibe: true, text: "Add expense" })``
+  wa.MainButton.setParams({ is_active: true, is_visibe: true, text: "Add expense" })
 
   const model = new SessionModel(
     { initData, initDataUnsafe }
