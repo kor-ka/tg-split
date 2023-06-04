@@ -4,6 +4,8 @@ import { SessionModel } from "../model/SessionModel"
 import { UsersModule } from "../model/UsersModule";
 import { useVMvalue } from "../utils/vm/useVM"
 import {
+    createBrowserRouter,
+    RouterProvider,
     useNavigate as nav, useResolvedPath, useSearchParams
 } from "react-router-dom";
 
@@ -31,6 +33,31 @@ const getPath = () => {
         return window.location.pathname
     }
     return ''
+}
+
+export const renderApp = (model: SessionModel) => {
+    const router = createBrowserRouter([
+        {
+            path: "/tg",
+            element: <MainScreen />,
+        },
+        {
+            path: "/tg/addExpence",
+            element: <AddExpenceScreen />,
+        },
+        {
+            path: "/tg/addPayment",
+            element: <AddTransferScreen />,
+        },
+    ]);
+
+    return <ModelContext.Provider value={model}>
+        <UserContext.Provider value={model.tgWebApp.user.id}>
+            <UsersProvider.Provider value={model.users}>
+                <RouterProvider router={router} />
+            </UsersProvider.Provider>
+        </UserContext.Provider>
+    </ModelContext.Provider>
 }
 
 export const MainScreen = () => {

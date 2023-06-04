@@ -1,5 +1,4 @@
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import { SessionModel } from "./model/SessionModel";
 import reportWebVitals from "./reportWebVitals";
@@ -24,38 +23,13 @@ const tryInit = () => {
   );
 
 
-  import('./view/MainScreen').then(({ AddExpenceScreen, AddTransferScreen, MainScreen, ModelContext, UserContext, UsersProvider }) => {
+  import('./view/MainScreen').then(({ renderApp }) => {
 
     const sub = model.balance.subscribe((b) => {
       if (b) {
         sub();
         wa.MainButton.offClick(goToAddExpense)
-
-        // initing router late so it handle possible path change by early button
-        const router = createBrowserRouter([
-          {
-            path: "/tg",
-            element: <MainScreen />,
-          },
-          {
-            path: "/tg/addExpence",
-            element: <AddExpenceScreen />,
-          },
-          {
-            path: "/tg/addPayment",
-            element: <AddTransferScreen />,
-          },
-        ]);
-
-        root.render(
-          <ModelContext.Provider value={model}>
-            <UserContext.Provider value={model.tgWebApp.user.id}>
-              <UsersProvider.Provider value={model.users}>
-                <RouterProvider router={router} />
-              </UsersProvider.Provider>
-            </UserContext.Provider>
-          </ModelContext.Provider>
-        );
+        root.render(renderApp(model))
       }
     });
   })
