@@ -26,7 +26,7 @@ export class SessionModel {
     };
 
     constructor(params: { initDataUnsafe: TgWebAppInitData, initData: string }) {
-        Cookies.set("user_id", params.initDataUnsafe.user.id.toString(), { expires: 1000 * 60 * 60 * 24 * 30 })
+        Cookies.set("user_id", params.initDataUnsafe.user.id.toString(), { path: "/", secure: true, expires: 1000 * 60 * 60 * 24 * 30 })
 
         this.tgWebApp = params.initDataUnsafe
         const endpoint =
