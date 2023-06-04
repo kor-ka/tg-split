@@ -13,7 +13,19 @@ const tryInit = () => {
   let { initData, initDataUnsafe, ready } = wa
   ready();
 
-  const MS = import('./view/MainScreen').then(({ AddExpenceScreen, AddTransferScreen, MainScreen, ModelContext, UserContext, UsersProvider }) => {
+  const goToAddExpense = () => {
+    window.history.replaceState({}, "", "/tg/addExpence");
+  }
+
+  wa.MainButton.onClick(goToAddExpense)
+  wa.MainButton.setParams({ is_active: true, is_visibe: true, text: "Add expense" })``
+
+  const model = new SessionModel(
+    { initData, initDataUnsafe }
+  );
+
+
+  import('./view/MainScreen').then(({ AddExpenceScreen, AddTransferScreen, MainScreen, ModelContext, UserContext, UsersProvider }) => {
     const router = createBrowserRouter([
       {
         path: "/tg",
@@ -29,12 +41,10 @@ const tryInit = () => {
       },
     ]);
 
-    const model = new SessionModel(
-      { initData, initDataUnsafe }
-    );
     const sub = model.balance.subscribe((b) => {
       if (b) {
         sub();
+        wa.MainButton.offClick(goToAddExpense)
         root.render(
           <ModelContext.Provider value={model}>
             <UserContext.Provider value={model.tgWebApp.user.id}>

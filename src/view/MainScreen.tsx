@@ -4,8 +4,7 @@ import { SessionModel } from "../model/SessionModel"
 import { UsersModule } from "../model/UsersModule";
 import { useVMvalue } from "../utils/vm/useVM"
 import {
-    useLocation as loc,
-    useNavigate as nav, useSearchParams
+    useNavigate as nav, useResolvedPath, useSearchParams
 } from "react-router-dom";
 
 export let __DEV__ = false
@@ -27,12 +26,11 @@ const useNav = () => {
     }
 }
 
-const useLoc = () => {
+const getPath = () => {
     if (typeof window !== "undefined") {
-        return loc()
-    } else {
-        return { key: "default" }
+        return window.location.pathname
     }
+    return ''
 }
 
 export const MainScreen = () => {
@@ -53,7 +51,7 @@ export const MainScreenView = ({ balance, log }: { balance?: Balance, log?: Log 
         <BalanceView balance={balance} />
         <LogView log={log} />
         {/* <button onClick={() => nav("/tg/addPayment")} >Add payment</button> */}
-        <MainButtopnController onClick={() => nav("/tg/addExpence")} text={"Add expence"} />
+        <MainButtopnController onClick={() => nav("/tg/addExpence")} text={"Add expense"} />
     </div>
 }
 
@@ -208,7 +206,7 @@ export const AddExpenceScreen = () => {
             <CardLight><ListItem subtitle="Split across: " /></CardLight>
             {[...usersModule.users.values()].map(u => <UserCheckListItem id={u.val.id} key={u.val.id} onUserClick={onUserClick} checked={checked.has(u.val.id)} />)}
         </div>
-        <MainButtopnController onClick={onClick} text={"Add expence"} progress={loading} />
+        <MainButtopnController onClick={onClick} text={"Add expense"} progress={loading} />
     </>
 }
 
@@ -251,11 +249,9 @@ export const AddTransferScreen = () => {
 export const BackButtopnController = () => {
     const nav = useNav()
     const bb = React.useMemo(() => WebApp?.BackButton, [])
-    const goBack = useCallback(() => nav(-1), [])
+    const goBack = useCallback(() => nav('/tg/'), [])
 
-    const location = useLoc();
-    const canGoBack = React.useMemo(() => location.key !== 'default', [location.key])
-
+    const canGoBack = getPath() !== '/tg/'
 
     React.useEffect(() => {
         if (canGoBack) {
