@@ -18,6 +18,9 @@ import { SplitModule } from "./modules/splitModule/SplitModule";
 import { savedOpsToApi, savedUserToApi } from "./api/ClientAPI";
 import { UsersModule as UsersClientModule } from "../../src/model/UsersModule";
 import { UserModule } from "./modules/userModule/UserModule";
+import { VM } from "../../src/utils/vm/VM";
+import { BalanceState, Operation } from "../../entity";
+import { optimiseBalance } from "../../src/model/optimiseBalance";
 
 var path = require("path");
 const PORT = process.env.PORT || 5001;
@@ -84,7 +87,7 @@ initMDB().then(() => {
       const userId = userIdString ? Number.parseInt(userIdString, 10) : undefined
 
       const { balance: balanceState } = await splitModule.getBalanceCached(chatId)
-      const balance = balanceState.balance
+      const balance = optimiseBalance(balanceState.balance)
         .filter(e => (userId !== undefined) && e.pair.includes(userId) && e.sum !== 0)
         .map(e => {
           if (e.pair[0] !== userId) {
@@ -93,13 +96,16 @@ initMDB().then(() => {
           }
           return e
         }).sort((a, b) => a.sum - b.sum)
+      const balanceStateVm = new VM<BalanceState | undefined>({ seq: balanceState.seq, balance })
 
       const { log: savedLog } = await splitModule.getLogCached(chatId)
-      const log = savedOpsToApi(savedLog);
+      const logMap = new Map<string, VM<Operation>>()
+      savedOpsToApi(savedLog).forEach(o => logMap.set(o.id, new VM(o)))
 
       const users = await container.resolve(UserModule).getUsersCached(chatId)
-      const usersProvider = new UsersClientModule()
+      const usersProvider = new UsersClientModule(userId)
       savedUserToApi(users, chatId).forEach(usersProvider.updateUser)
+
 
 
       // const app = ''
@@ -108,7 +114,7 @@ initMDB().then(() => {
           value={userId}
         >
           <UsersProvider.Provider value={usersProvider}>
-            <MainScreenView balance={balance} log={log} />
+            <MainScreenView balanceVM={balanceStateVm} logVM={new VM(logMap)} />
           </UsersProvider.Provider>
         </UserContext.Provider>
       );

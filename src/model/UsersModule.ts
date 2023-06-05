@@ -4,7 +4,7 @@ import { VM } from "../utils/vm/VM";
 export type UserClient = Partial<User> & Pick<User, 'id'> & { fullName: string, name: string }
 export class UsersModule {
 
-    constructor(private userId: number) {
+    constructor(private userId?: number) {
 
     }
 

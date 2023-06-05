@@ -21,7 +21,7 @@ if (typeof window !== "undefined") {
 
 export const ModelContext = React.createContext<SessionModel | undefined>(undefined);
 export const UserContext = React.createContext<number | undefined>(undefined);
-export const UsersProvider = React.createContext<UsersModule>(new UsersModule(-1));
+export const UsersProvider = React.createContext<UsersModule>(new UsersModule());
 
 export const useNav = () => {
     if (typeof window !== "undefined") {
@@ -77,10 +77,10 @@ export const MainScreen = () => {
 }
 
 const MainScreenWithModel = ({ model }: { model: SessionModel }) => {
-    return <MainScreenView balanceVM={model.balance} log={model.logModule.log} />
+    return <MainScreenView balanceVM={model.balance} logVM={model.logModule.log} />
 }
 
-export const MainScreenView = ({ balanceVM, log }: { balanceVM: VM<BalanceState | undefined>, log: VM<Map<string, VM<Operation>>> }) => {
+export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<BalanceState | undefined>, logVM: VM<Map<string, VM<Operation>>> }) => {
     const nav = useNav()
     return <div style={{ padding: "8px 0px" }}>
         <BackButtopnController />

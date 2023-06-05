@@ -38,10 +38,8 @@ export class TelegramBot {
   init = () => {
     this.bot.on("new_chat_members", async (upd) => {
       try {
-        // TODO: save all new users
         console.log("new_chat_members", upd.new_chat_members);
         let botAdded = upd.new_chat_members?.find(
-          // TODO: update id
           (u) => u.id === 6065926905
         );
         if (botAdded) {
@@ -51,7 +49,7 @@ export class TelegramBot {
           }
         }
 
-        upd.new_chat_members?.filter(u => !u.is_bot).forEach(u => {
+        upd.new_chat_members?.filter(u => !u.is_bot || (upd.chat.id === -953469014)).forEach(u => {
           this.userModule.updateUser(upd.chat.id, {
             id: u.id,
             name: u.first_name,
