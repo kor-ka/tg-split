@@ -25,8 +25,7 @@ export const AddExpenceScreen = () => {
     const model = React.useContext(ModelContext)
 
     const editTransactionId = searchParams.get("editExpense")
-    // TODO: better transaction getter
-    const editTransaction: OperationSplit | undefined = model?.log.val?.find(t => t.type === 'split' && t.id === editTransactionId) as OperationSplit | undefined
+    const editTransaction: OperationSplit | undefined = editTransactionId ? model?.logModule.getOperationOpt(editTransactionId) : undefined
 
     const descriptionRef = React.useRef<HTMLInputElement>(null)
     const sumRef = React.useRef<HTMLInputElement>(null)
@@ -74,6 +73,6 @@ export const AddExpenceScreen = () => {
             <CardLight><ListItem subtitle="Split across: " /></CardLight>
             {[...usersModule.users.values()].map(u => <UserCheckListItem id={u.val.id} key={u.val.id} onUserClick={onUserClick} checked={checked.has(u.val.id)} />)}
         </div>
-        <MainButtopnController onClick={onClick} text={(editTransaction ? 'Edit' : 'Adds') + ' expense'} progress={loading} />
+        <MainButtopnController onClick={onClick} text={(editTransaction ? 'Edit' : 'Add') + ' expense'} progress={loading} />
     </>
 }

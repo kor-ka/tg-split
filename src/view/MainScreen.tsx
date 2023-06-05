@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { Balance, Log, OperationSplit, OperationTransfer } from "../../entity"
+import { Balance, BalanceState, Log, Operation, OperationSplit, OperationTransfer } from "../../entity"
 import { SessionModel } from "../model/SessionModel"
 import { UsersModule } from "../model/UsersModule";
 import { useVMvalue } from "../utils/vm/useVM"
@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 import { AddExpenceScreen } from "./AddExpenceScreen";
 import { AddTransferScreen } from "./AddTransferScreen";
+import { VM } from "../utils/vm/VM";
 
 export let __DEV__ = false
 let WebApp: any = undefined
@@ -76,17 +77,15 @@ export const MainScreen = () => {
 }
 
 const MainScreenWithModel = ({ model }: { model: SessionModel }) => {
-    const balance = useVMvalue(model.balance)
-    const log = useVMvalue(model.log)
-    return <MainScreenView balance={balance?.balance} log={log} />
+    return <MainScreenView balanceVM={model.balance} log={model.logModule.log} />
 }
 
-export const MainScreenView = ({ balance, log }: { balance?: Balance, log?: Log }) => {
+export const MainScreenView = ({ balanceVM, log }: { balanceVM: VM<BalanceState | undefined>, log: VM<Map<string, VM<Operation>>> }) => {
     const nav = useNav()
     return <div style={{ padding: "8px 0px" }}>
         <BackButtopnController />
-        <BalanceView balance={balance} />
-        <LogView log={log} />
+        <BalanceView balanceVM={balanceVM} />
+        <LogView logVM={log} />
         {/* <button onClick={() => nav("/tg/addPayment")} >Add payment</button> */}
         <MainButtopnController onClick={() => nav("/tg/addExpence")} text={"Add expense"} />
     </div>
@@ -100,7 +99,7 @@ export const CardLight = ({ children }: { children: any }) => {
     return <div style={{ margin: '0px 20px', }}>{children}</div>
 }
 
-export const ListItem = ({ titile: title, subtitle, right }: { titile?: string, subtitle?: string, right?: React.ReactNode }) => {
+export const ListItem = React.memo(({ titile: title, subtitle, right }: { titile?: string, subtitle?: string, right?: React.ReactNode }) => {
     return <div style={{ display: 'flex', flexDirection: "row", justifyContent: 'space-between', padding: 4, alignItems: 'center' }}>
         <div style={{ display: 'flex', padding: '2px 0px', flexDirection: "column", flexShrink: 1, minWidth: 0 }}>
             {!!title && <div style={{ padding: '2px 4px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{title}</div>}
@@ -109,8 +108,8 @@ export const ListItem = ({ titile: title, subtitle, right }: { titile?: string, 
         <div style={{ padding: '4px 16px', flexShrink: 0, alignItems: 'center' }}>{right}</div>
     </div>
 }
-
-const BalanceEntry = ({ balance }: { balance: Balance[0] }) => {
+)
+const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
     const usersModule = React.useContext(UsersProvider)
     const user = useVMvalue(usersModule.getUser(balance.pair[1]))
     const title = React.useMemo(() => {
@@ -133,9 +132,11 @@ const BalanceEntry = ({ balance }: { balance: Balance[0] }) => {
             <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: balance.sum < 0 ? 'var(--text-destructive-color)' : 'var(--text-confirm-color)' }}>{(Math.abs(balance.sum)).toString()}</span>} />
         </Card>
     </div>
-}
+})
 
-const BalanceView = ({ balance }: { balance?: Balance }) => {
+const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | undefined> }) => {
+    const balance = useVMvalue(balanceVM)?.balance
+
     const userId = React.useContext(UserContext)
     if (userId === undefined) {
         return <Card> <ListItem titile={"Loading..."} subtitle="Figuring out the final details..." /> </Card>
@@ -148,9 +149,10 @@ const BalanceView = ({ balance }: { balance?: Balance }) => {
             <BalanceEntry key={e.pair.join('-')} balance={e} />
         )}
     </>
-}
+})
 
-const SplitLogItem = React.memo(({ op }: { op: OperationSplit }) => {
+const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
+    const op = useVMvalue(opVM)
     const userId = React.useContext(UserContext)
     const usersModule = React.useContext(UsersProvider)
     const actor = useVMvalue(usersModule.getUser(op.uid))
@@ -188,7 +190,8 @@ const SplitLogItem = React.memo(({ op }: { op: OperationSplit }) => {
     </div >
 })
 
-const TransferLogItem = React.memo(({ op }: { op: OperationTransfer }) => {
+const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) => {
+    const op = useVMvalue(opVM)
     const userId = React.useContext(UserContext)
     const usersModule = React.useContext(UsersProvider)
     const srcuser = useVMvalue(usersModule.getUser(op.uid))
@@ -197,7 +200,7 @@ const TransferLogItem = React.memo(({ op }: { op: OperationTransfer }) => {
 
     const nav = useNav()
     const onClick = React.useCallback(() => {
-        nav(`/tg/editTransfer?editTrasfer=${op.id}`)
+        nav(`/tg/editPayment?editPayment=${op.id}`)
     }, [])
 
     const sumColor = React.useMemo(() => {
@@ -208,18 +211,20 @@ const TransferLogItem = React.memo(({ op }: { op: OperationTransfer }) => {
         }
     }, [op.uid, op.dstUid, userId])
 
-    return <div onClick={(!op.corrected && (op.uid === userId)) ? onClick : undefined}>
+    return <div onClick={(!op.corrected && (op.uid === userId)) ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
         <CardLight>
             <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum).toString()}</span>} />
         </CardLight>
     </div>
 })
 
-const LogView = ({ log }: { log?: Log }) => {
-    return <>{log?.map(op => op.type === 'split' ? <SplitLogItem key={op.id} op={op} /> : op.type === 'transfer' ? <TransferLogItem key={op.id} op={op} /> : null)}</>
-}
+const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operation>>> }) => {
+    const logMap = useVMvalue(logVm)
+    const log = React.useMemo(() => [...logMap.values()].reverse(), [logMap])
+    return <>{log.map(op => op.val.type === 'split' ? <SplitLogItem key={op.val.id} opVM={op as VM<OperationSplit>} /> : op.val.type === 'transfer' ? <TransferLogItem key={op.val.id} opVM={op as VM<OperationTransfer>} /> : null)}</>
+}))
 
-export const BackButtopnController = () => {
+export const BackButtopnController = React.memo(() => {
     const nav = useNav()
     const bb = React.useMemo(() => WebApp?.BackButton, [])
     const goBack = useCallback(() => nav('/tg/'), [])
@@ -243,9 +248,9 @@ export const BackButtopnController = () => {
     }, [bb])
 
     return (canGoBack && __DEV__) ? <button style={{ position: 'absolute', top: 0, left: 0 }} onClick={goBack}>{"< back"}</button> : null
-}
+})
 
-export const MainButtopnController = ({ onClick, text, color, textColor, isActive, isVisible, progress }: { onClick: () => void, text?: string, color?: string, textColor?: string, isActive?: boolean, isVisible?: boolean, progress?: boolean }) => {
+export const MainButtopnController = React.memo(({ onClick, text, color, textColor, isActive, isVisible, progress }: { onClick: () => void, text?: string, color?: string, textColor?: string, isActive?: boolean, isVisible?: boolean, progress?: boolean }) => {
     const mb = React.useMemo(() => WebApp?.MainButton, [])
     React.useEffect(() => {
         console.log("configure mb", mb, { text, color, text_color: textColor, is_active: isActive ?? true, is_visible: isVisible ?? true })
@@ -267,4 +272,4 @@ export const MainButtopnController = ({ onClick, text, color, textColor, isActiv
     }, [progress])
 
     return (__DEV__ && isVisible !== false) ? <button style={{ position: 'absolute', top: 0, right: 0 }} disabled={isActive === true} onClick={onClick} >{text}{progress ? "⌛️" : ""}</button> : null
-}
+})

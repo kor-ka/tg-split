@@ -13,8 +13,8 @@ export const AddTransferScreen = () => {
 
     const usersModule = React.useContext(UsersProvider)
 
-    const editOpId = searchParams.get("editTrasfer")
-    const editOp: OperationTransfer | undefined = model?.log.val?.find(t => t.type === 'split' && t.id === editOpId) as OperationTransfer | undefined
+    const editOpId = searchParams.get("editPayment")
+    const editOp: OperationTransfer | undefined = editOpId ? model?.logModule.getOperationOpt(editOpId) : undefined
 
     const dst = useVMvalue(usersModule.getUser(editOp?.dstUid ?? Number(searchParams.get('uid'))))
     const initialSum = React.useMemo(() => editOp?.sum ?? Number(searchParams.get('sum')), [])
@@ -39,6 +39,6 @@ export const AddTransferScreen = () => {
             <CardLight><ListItem titile={`You → ${dst.fullName}`} /></CardLight>
             <input ref={sumRef} defaultValue={initialSum} autoFocus={true} type="number" inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
         </div>
-        <MainButtopnController onClick={onClick} text={"Add payment"} progress={loading} />
+        <MainButtopnController onClick={onClick} text={(editOp ? "Edit" : "Add") + " payment"} progress={loading} />
     </>
 }

@@ -6,6 +6,7 @@ import { Deffered } from "../utils/deffered";
 import { UsersModule } from "./UsersModule";
 import { OmitUnion } from "../utils/types";
 import { optimiseBalance } from "./optimiseBalance";
+import { LogModule } from "./LogModule";
 
 type TgWebAppInitData = { chat?: { id: number }, user: { id: number }, start_param?: string } & unknown;
 
@@ -13,8 +14,7 @@ type TgWebAppInitData = { chat?: { id: number }, user: { id: number }, start_par
 export class SessionModel {
     readonly tgWebApp: TgWebAppInitData;
     readonly balance = new VM<BalanceState | undefined>(undefined);
-    private logSet = new Set<string>()
-    readonly log = new VM<Log | undefined>(undefined);
+    readonly logModule = new LogModule()
     readonly users: UsersModule
 
     private localOprationId = Date.now()
@@ -72,15 +72,7 @@ export class SessionModel {
         });
 
         this.socket.on("opUpdate", (updated: Operation) => {
-            if (this.logSet.has(updated.id)) {
-                const log = [...this.log.val ?? []].map(op => {
-                    if (op.id === updated.id) {
-                        return updated
-                    }
-                    return op
-                })
-                this.log.next(log)
-            }
+            this.logModule.getOperationVm(updated).next(updated)
         });
 
     }
@@ -103,11 +95,7 @@ export class SessionModel {
     }
 
     private addOperation = (operation: Operation) => {
-        if (!this.logSet.has(operation.id)) {
-            this.logSet.add(operation.id)
-            let log = [operation, ...this.log.val ?? []]
-            this.log.next(log)
-        }
+        this.logModule.getOperationVm(operation).next(operation)
     }
 
     nextId = () => this.localOprationId++
