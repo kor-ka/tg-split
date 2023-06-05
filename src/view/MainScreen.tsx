@@ -9,6 +9,7 @@ import {
     useNavigate as nav, useResolvedPath, useSearchParams
 } from "react-router-dom";
 import { AddExpenceScreen } from "./AddExpenceScreen";
+import { AddTransferScreen } from "./AddTransferScreen";
 
 export let __DEV__ = false
 let WebApp: any = undefined
@@ -52,6 +53,10 @@ export const renderApp = (model: SessionModel) => {
         },
         {
             path: "/tg/addPayment",
+            element: <AddTransferScreen />,
+        },
+        {
+            path: "/tg/editPayment",
             element: <AddTransferScreen />,
         },
     ]);
@@ -176,7 +181,7 @@ const SplitLogItem = React.memo(({ op }: { op: OperationSplit }) => {
             return 'var(--text-confirm-color)'
         }
     }, [op.uid, op.uids, userId])
-    return <div onClick={(!op.corrected && op.uid === userId) ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
+    return <div onClick={(!op.corrected && (op.uid === userId)) ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
         <CardLight>
             <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{op.sum?.toString()}</span>} />
         </CardLight>
@@ -188,7 +193,12 @@ const TransferLogItem = React.memo(({ op }: { op: OperationTransfer }) => {
     const usersModule = React.useContext(UsersProvider)
     const srcuser = useVMvalue(usersModule.getUser(op.uid))
     const dstuser = useVMvalue(usersModule.getUser(op.dstUid))
-    const subtitle = React.useMemo(() => `${srcuser.fullName} payed ${op.sum} to ${dstuser.fullName}`, [srcuser, dstuser])
+    const subtitle = React.useMemo(() => `${srcuser.fullName} payed ${op.sum} to ${dstuser.fullName} ${op.correction ? '(edit)' : ''}`, [srcuser, dstuser])
+
+    const nav = useNav()
+    const onClick = React.useCallback(() => {
+        nav(`/tg/editTransfer?editTrasfer=${op.id}`)
+    }, [])
 
     const sumColor = React.useMemo(() => {
         if (op.uid === userId) {
@@ -198,49 +208,15 @@ const TransferLogItem = React.memo(({ op }: { op: OperationTransfer }) => {
         }
     }, [op.uid, op.dstUid, userId])
 
-    return <CardLight>
-        <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum).toString()}</span>} />
-    </CardLight>
+    return <div onClick={(!op.corrected && (op.uid === userId)) ? onClick : undefined}>
+        <CardLight>
+            <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum).toString()}</span>} />
+        </CardLight>
+    </div>
 })
 
 const LogView = ({ log }: { log?: Log }) => {
     return <>{log?.map(op => op.type === 'split' ? <SplitLogItem key={op.id} op={op} /> : op.type === 'transfer' ? <TransferLogItem key={op.id} op={op} /> : null)}</>
-}
-
-export const AddTransferScreen = () => {
-    const nav = useNav()
-    const sumRef = React.useRef<HTMLInputElement>(null)
-
-    let [searchParams] = useSearchParams();
-
-    const usersModule = React.useContext(UsersProvider)
-
-    const dst = useVMvalue(usersModule.getUser(Number(searchParams.get('uid'))))
-    const initialSum = React.useMemo(() => Number(searchParams.get('sum')), [])
-
-    const model = React.useContext(ModelContext)
-    const [loading, setLoading] = React.useState(false)
-    const onClick = React.useCallback(() => {
-        const sum = Number(sumRef.current?.value)
-        if (sum === 0) {
-            return
-        }
-        if (!loading) {
-            setLoading(true)
-            model?.commitOperation({ type: 'transfer', sum, id: model.nextId() + '', dstUid: dst.id })
-                .catch(e => console.error(e))
-                .then(() => nav(-1))
-                .finally(() => setLoading(false))
-        }
-    }, [loading])
-    return <>
-        <BackButtopnController />
-        <div style={{ display: 'flex', flexDirection: 'column', padding: '20px 0px' }}>
-            <CardLight><ListItem titile={`You → ${dst.fullName}`} /></CardLight>
-            <input ref={sumRef} defaultValue={initialSum} autoFocus={true} type="number" inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
-        </div>
-        <MainButtopnController onClick={onClick} text={"Add payment"} progress={loading} />
-    </>
 }
 
 export const BackButtopnController = () => {
