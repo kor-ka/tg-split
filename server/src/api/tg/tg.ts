@@ -36,6 +36,27 @@ export class TelegramBot {
   };
 
   init = () => {
+    this.bot.on("group_chat_created", async (upd) => {
+      try {
+        await this.createPin(upd.chat.id)
+        if (upd.chat.title) {
+          await this.chatMetaModule.updateName(upd.chat.id, upd.chat.title);
+        }
+
+        upd.new_chat_members?.filter(u => !u.is_bot).forEach(u => {
+          this.userModule.updateUser(upd.chat.id, {
+            id: u.id,
+            name: u.first_name,
+            lastname: u.last_name,
+            username: u.username,
+            disabled: false
+          }).catch(e => console.error(e))
+        })
+      } catch (e) {
+        console.error(e)
+      }
+    })
+
     this.bot.on("new_chat_members", async (upd) => {
       try {
         console.log("new_chat_members", upd.new_chat_members);
@@ -43,7 +64,7 @@ export class TelegramBot {
           (u) => u.id === 6065926905
         );
         if (botAdded) {
-          this.createPin(upd.chat.id).catch(((e) => console.log(e)));
+          await this.createPin(upd.chat.id)
           if (upd.chat.title) {
             await this.chatMetaModule.updateName(upd.chat.id, upd.chat.title);
           }
