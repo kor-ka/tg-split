@@ -264,11 +264,14 @@ export const MainButtopnController = React.memo(({ onClick, text, color, textCol
     }, [onClick])
     React.useEffect(() => {
         console.log("configure mb", mb, progress)
-        if (progress) {
-            mb.showProgress()
-        } else {
-            mb.hideProgress()
+        if (progress !== mb.isProgressVisible) {
+            if (progress) {
+                mb.showProgress()
+            } else {
+                mb.hideProgress()
+            }
         }
+
     }, [progress])
 
     return (__DEV__ && isVisible !== false) ? <button style={{ position: 'absolute', top: 0, right: 0 }} disabled={isActive === false} onClick={onClick} >{text}{progress ? "⌛️" : ""}</button> : null
