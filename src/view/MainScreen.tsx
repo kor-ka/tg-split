@@ -220,7 +220,7 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
 
 const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operation>>> }) => {
     const logMap = useVMvalue(logVm)
-    const log = React.useMemo(() => [...logMap.values()].reverse(), [logMap])
+    const log = React.useMemo(() => [...logMap.values()], [logMap])
     return <>{log.map(op => op.val.type === 'split' ? <SplitLogItem key={op.val.id} opVM={op as VM<OperationSplit>} /> : op.val.type === 'transfer' ? <TransferLogItem key={op.val.id} opVM={op as VM<OperationTransfer>} /> : null)}</>
 }))
 

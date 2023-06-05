@@ -8,8 +8,7 @@ export class LogModule {
         let vm = this.log.val.get(operation.id)
         if (!vm) {
             vm = new VM(operation)
-            const nextMap = new Map(this.log.val)
-            nextMap.set(operation.id, vm)
+            const nextMap = new Map([[operation.id, vm], ...this.log.val])
             this.log.next(nextMap)
         }
         return vm
