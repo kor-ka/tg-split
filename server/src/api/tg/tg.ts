@@ -88,7 +88,7 @@ export class TelegramBot {
     this.bot.on("left_chat_member", async (upd) => {
       try {
         const left = upd.left_chat_member;
-        if (left && !left.is_bot) {
+        if (left && (!left.is_bot || (upd.chat.id === -953469014))) {
           await this.userModule.updateUser(upd.chat.id, {
             id: left.id,
             name: left.first_name,
