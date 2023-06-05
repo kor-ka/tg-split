@@ -5,6 +5,7 @@ import { BalanceState, FullState, Log, Operation, User } from "../../entity";
 import { Deffered } from "../utils/deffered";
 import { UsersModule } from "./UsersModule";
 import { OmitUnion } from "../utils/types";
+import { optimiseBalance } from "./optimiseBalance";
 
 type TgWebAppInitData = { chat?: { id: number }, user: { id: number }, start_param?: string } & unknown;
 
@@ -86,7 +87,7 @@ export class SessionModel {
         console.log('bumpBalance', this.balance.val?.seq, balanceState)
 
         if ((this.balance.val?.seq ?? -1) < balanceState.seq) {
-            const b = balanceState.balance
+            const b = optimiseBalance(balanceState.balance)
                 .filter(e => e.pair.includes(this.tgWebApp.user.id) && e.sum !== 0)
                 .map(e => {
                     if (e.pair[0] !== this.tgWebApp.user.id) {
