@@ -15,7 +15,7 @@ export class SessionModel {
     readonly balance = new VM<BalanceState | undefined>(undefined);
     private logSet = new Set<string>()
     readonly log = new VM<Log | undefined>(undefined);
-    readonly users = new UsersModule()
+    readonly users: UsersModule
 
     private localOprationId = Date.now()
 
@@ -28,6 +28,8 @@ export class SessionModel {
 
     constructor(params: { initDataUnsafe: TgWebAppInitData, initData: string }) {
         Cookies.set("user_id", params.initDataUnsafe.user.id.toString(), { path: "/", secure: true, expires: 1000 * 60 * 60 * 24 * 30 })
+
+        this.users = new UsersModule(params.initDataUnsafe.user.id)
 
         this.tgWebApp = params.initDataUnsafe
         const endpoint =

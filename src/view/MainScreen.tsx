@@ -20,7 +20,7 @@ if (typeof window !== "undefined") {
 
 export const ModelContext = React.createContext<SessionModel | undefined>(undefined);
 export const UserContext = React.createContext<number | undefined>(undefined);
-export const UsersProvider = React.createContext<UsersModule>(new UsersModule());
+export const UsersProvider = React.createContext<UsersModule>(new UsersModule(-1));
 
 export const useNav = () => {
     if (typeof window !== "undefined") {
@@ -115,12 +115,12 @@ const BalanceEntry = ({ balance }: { balance: Balance[0] }) => {
     const user = useVMvalue(usersModule.getUser(balance.pair[1]))
     const title = React.useMemo(() => {
         const youOwe = balance.sum < 0;
-        return `${youOwe ? 'You' : user.name} → ${youOwe ? user.name : 'you'}`
+        return `${youOwe ? 'You' : user.name} → ${youOwe ? user.name : 'You'}`
 
     }, [balance])
     const subtitle = React.useMemo(() => {
         const youOwe = balance.sum < 0;
-        return `${youOwe ? 'You' : user.fullName} owe${youOwe ? '' : 's'} ${youOwe ? user.fullName : 'you'}`
+        return `${youOwe ? 'You' : user.fullName} owe${youOwe ? '' : 's'} ${youOwe ? user.fullName : 'You'}`
 
     }, [balance])
 

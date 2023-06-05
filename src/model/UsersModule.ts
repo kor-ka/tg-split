@@ -3,6 +3,11 @@ import { VM } from "../utils/vm/VM";
 
 export type UserClient = Partial<User> & Pick<User, 'id'> & { fullName: string, name: string }
 export class UsersModule {
+
+    constructor(private userId: number) {
+
+    }
+
     readonly users = new Map<number, VM<UserClient>>;
 
     readonly getUser = (id: number) => {
@@ -17,7 +22,7 @@ export class UsersModule {
     readonly updateUser = (user: User) => {
         user.name = user.name.replaceAll(" ", " ")
         user.lastname = user.lastname?.replaceAll(" ", " ")
-        const fullName = [user.name, user.lastname].filter(Boolean).join(' ')
-        this.getUser(user.id).next({ ...user, fullName })
+        const fullName = user.id === this.userId ? 'You' : [user.name, user.lastname].filter(Boolean).join(' ')
+        this.getUser(user.id).next({ ...user, name: user.id === this.userId ? 'You' : user.name, fullName })
     }
 }
