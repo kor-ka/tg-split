@@ -35,6 +35,9 @@ export class SplitModule {
 
         if (operation.correction) {
           srcOp = (await this.ops.findOne({ _id: new ObjectId(operation.correction) }))!
+          if (srcOp.uid !== uid) {
+            throw new Error("One can update only own operations")
+          }
           await this.ops.updateOne({ _id: srcOp._id }, { $set: { corrected: true } }, { session })
           srcOp.corrected = true
 

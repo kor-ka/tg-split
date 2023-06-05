@@ -176,7 +176,7 @@ const SplitLogItem = React.memo(({ op }: { op: OperationSplit }) => {
             return 'var(--text-confirm-color)'
         }
     }, [op.uid, op.uids, userId])
-    return <div onClick={!op.corrected ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
+    return <div onClick={(!op.corrected && op.uid === userId) ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
         <CardLight>
             <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{op.sum?.toString()}</span>} />
         </CardLight>
