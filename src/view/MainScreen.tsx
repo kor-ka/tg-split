@@ -166,7 +166,7 @@ const SplitLogItem = React.memo(({ op }: { op: OperationSplit }) => {
     const title = React.useMemo(() => `⚡️ ${actor.name} → ${op.description || namesShort}`, [])
 
     const subtitle = React.useMemo(() => {
-        return [op.description?.trim(), `Split among: ${fullNames}`, op.correction ? '(edit)' : ''].filter(Boolean).join('. ')
+        return [op.description && `${actor.name} paid for ${op.description.trim()}`, `Split among: ${fullNames}`, op.correction ? '(edit)' : ''].filter(Boolean).join('. ')
     }, [fullNames, op.description])
 
     const nav = useNav()
