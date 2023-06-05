@@ -183,7 +183,7 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
             return 'var(--text-confirm-color)'
         }
     }, [op.uid, op.uids, userId])
-    return <div onClick={(!op.corrected && (op.uid === userId)) ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
+    return <div onClick={(op.uid === userId) ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
         <CardLight>
             <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{op.sum?.toString()}</span>} />
         </CardLight>
@@ -211,7 +211,7 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
         }
     }, [op.uid, op.dstUid, userId])
 
-    return <div onClick={(!op.corrected && (op.uid === userId)) ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
+    return <div onClick={(op.uid === userId) ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
         <CardLight>
             <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum).toString()}</span>} />
         </CardLight>
@@ -271,5 +271,5 @@ export const MainButtopnController = React.memo(({ onClick, text, color, textCol
         }
     }, [progress])
 
-    return (__DEV__ && isVisible !== false) ? <button style={{ position: 'absolute', top: 0, right: 0 }} disabled={isActive === true} onClick={onClick} >{text}{progress ? "⌛️" : ""}</button> : null
+    return (__DEV__ && isVisible !== false) ? <button style={{ position: 'absolute', top: 0, right: 0 }} disabled={isActive === false} onClick={onClick} >{text}{progress ? "⌛️" : ""}</button> : null
 })
