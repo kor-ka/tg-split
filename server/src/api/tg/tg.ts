@@ -6,6 +6,11 @@ import { ChatMetaModule } from "../../modules/chatMetaModule/ChatMetaModule";
 import { SplitModule } from "../../modules/splitModule/SplitModule";
 import { UserModule } from "../../modules/userModule/UserModule";
 import { optimiseBalance } from "../../../../src/model/optimiseBalance";
+import { BALANCE, OP } from "../../modules/splitModule/splitStore";
+import { MDBClient } from "../../utils/MDB";
+import { PINS } from "../../modules/pinsModule/pinsStore";
+import { CHATMETA } from "../../modules/chatMetaModule/chatMetaStore";
+import { USER } from "../../modules/userModule/userStore";
 
 export class TelegramBot {
   private pinModule = container.resolve(PinsModule);
@@ -43,18 +48,38 @@ export class TelegramBot {
         if (upd.chat.title) {
           await this.chatMetaModule.updateName(upd.chat.id, upd.chat.title);
         }
-
-        upd.new_chat_members?.filter(u => !u.is_bot).forEach(u => {
-          this.userModule.updateUser(upd.chat.id, {
-            id: u.id,
-            name: u.first_name,
-            lastname: u.last_name,
-            username: u.username,
-            disabled: false
-          }).catch(e => console.error(e))
-        })
       } catch (e) {
         console.error(e)
+      }
+    })
+
+    this.bot.on("migrate_from_chat_id", async (upd) => {
+      try {
+        const fromId = upd.migrate_from_chat_id;
+        const toId = upd.chat.id;
+
+        if (fromId !== undefined) {
+          console.log("migrate_from_chat_id >>>", fromId, toId)
+          // yep, concurrent ops/corrections can get lost, whatever
+          const session = MDBClient.startSession();
+          try {
+            await session.withTransaction(async () => {
+              await BALANCE().updateOne({ chatId: fromId }, { $set: { chatId: toId } }, { session });
+              await OP().updateMany({ chatId: fromId }, { $set: { chatId: toId } }, { session });
+              await CHATMETA().updateOne({ chatId: fromId }, { $set: { chatId: toId } }, { session });
+              await USER().updateMany({ chatIds: fromId }, { $addToSet: { chatIds: toId } }, { session });
+              await USER().updateMany({ disabledChatIds: fromId }, { $addToSet: { disabledChatIds: toId } }, { session });
+            });
+          } finally {
+            await session.endSession();
+          }
+          await this.createPin(toId)
+
+          console.log("migrate_from_chat_id <<<", fromId, toId)
+
+        }
+      } catch (e) {
+        console.error(e);
       }
     })
 
@@ -71,7 +96,7 @@ export class TelegramBot {
           }
         }
 
-        upd.new_chat_members?.filter(u => !u.is_bot || (upd.chat.id === -953469014)).forEach(u => {
+        upd.new_chat_members?.filter(u => !u.is_bot || (upd.chat.title?.endsWith("__DEV__"))).forEach(u => {
           this.userModule.updateUser(upd.chat.id, {
             id: u.id,
             name: u.first_name,
@@ -89,7 +114,7 @@ export class TelegramBot {
     this.bot.on("left_chat_member", async (upd) => {
       try {
         const left = upd.left_chat_member;
-        if (left && (!left.is_bot || (upd.chat.id === -953469014))) {
+        if (left && (!left.is_bot || (upd.chat.title?.endsWith("__DEV__")))) {
           await this.userModule.updateUser(upd.chat.id, {
             id: left.id,
             name: left.first_name,
@@ -154,7 +179,7 @@ export class TelegramBot {
 
     this.bot.on("message", async (message) => {
       try {
-        if (message.from && !message.from.is_bot) {
+        if (message.from && (!message.from.is_bot || (message.chat.title?.endsWith("__DEV__")))) {
           await this.userModule.updateUser(message.chat.id, {
             id: message.from.id,
             name: message.from.first_name,
@@ -185,7 +210,7 @@ export class TelegramBot {
               const dstUser = await this.userModule.getUser(pair[dst]);
               const dstName = [dstUser?.name, dstUser?.lastname].filter(Boolean).join(' ') || '???';
 
-              return `${srcName} → ${dstName} ${Math.abs(sum)}`;
+              return `${srcName} → ${dstName} ${Math.abs(sum) / 100}`;
             } catch (e) {
               console.error(e);
               return '';
