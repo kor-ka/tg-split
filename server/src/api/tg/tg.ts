@@ -5,6 +5,7 @@ import { container } from "tsyringe";
 import { ChatMetaModule } from "../../modules/chatMetaModule/ChatMetaModule";
 import { SplitModule } from "../../modules/splitModule/SplitModule";
 import { UserModule } from "../../modules/userModule/UserModule";
+import { optimiseBalance } from "../../../../src/model/optimiseBalance";
 
 export class TelegramBot {
   private pinModule = container.resolve(PinsModule);
@@ -175,7 +176,7 @@ export class TelegramBot {
 
         if (pinned) {
           // TODO: move to render pin, no pin case?
-          const promieses = balanceState.balance.filter(({ sum }) => sum !== 0).map(async ({ pair, sum }) => {
+          const promieses = optimiseBalance(balanceState.balance).filter(({ sum }) => sum !== 0).map(async ({ pair, sum }) => {
             try {
               const src = sum < 0 ? 0 : 1
               const dst = sum < 0 ? 1 : 0
