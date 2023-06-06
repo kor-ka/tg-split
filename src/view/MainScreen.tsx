@@ -15,8 +15,8 @@ import { VM } from "../utils/vm/VM";
 export let __DEV__ = false
 export let WebApp: any = undefined
 if (typeof window !== "undefined") {
+    __DEV__ = window.location.hostname.indexOf("localhost") >= 0 || window.location.search.endsWith("_dev_=true")
     WebApp = (window as any).Telegram.WebApp
-    __DEV__ = !WebApp
 }
 export const showAlert = (message: string) => {
     WebApp?.showAlert(message)
