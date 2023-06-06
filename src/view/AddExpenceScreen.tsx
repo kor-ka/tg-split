@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { OperationSplit } from "../../entity";
 import { useVMvalue } from "../utils/vm/useVM";
-import { BackButtopnController, Card, CardLight, ListItem, MainButtopnController, ModelContext, useNav, UsersProvider } from "./MainScreen"
+import { BackButtopnController, Card, CardLight, ListItem, MainButtopnController, ModelContext, showAlert, useNav, UsersProvider, WebApp, __DEV__ } from "./MainScreen"
 
 const UserCheckListItem = React.memo(({ id, checked, onUserClick, disabled }: { id: number, checked: boolean, onUserClick: (id: number) => void, disabled: boolean }) => {
     const usersModule = React.useContext(UsersProvider)
@@ -60,8 +60,16 @@ export const AddExpenceScreen = () => {
         if (!loading) {
             setLoading(true)
             model?.commitOperation({ type: 'split', sum, id: model.nextId() + '', correction: editTransaction?.id, description: descriptionRef.current?.value, uids: [...checked.values()] })
-                .catch(e => console.error(e))
                 .then(() => nav(-1))
+                .catch(e => {
+                    console.error(e)
+                    if (e instanceof Error) {
+                        showAlert(e.message)
+                    } else {
+                        console.error(e)
+                    }
+
+                })
                 .finally(() => setLoading(false))
         }
     }, [loading, checked])

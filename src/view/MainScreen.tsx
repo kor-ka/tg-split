@@ -13,10 +13,16 @@ import { AddTransferScreen } from "./AddTransferScreen";
 import { VM } from "../utils/vm/VM";
 
 export let __DEV__ = false
-let WebApp: any = undefined
+export let WebApp: any = undefined
 if (typeof window !== "undefined") {
     __DEV__ = window.location.hostname.indexOf("localhost") >= 0
     WebApp = (window as any).Telegram.WebApp
+}
+export const showAlert = (message: string) => {
+    WebApp?.showAlert(message)
+    if (__DEV__) {
+        alert(message)
+    }
 }
 
 export const ModelContext = React.createContext<SessionModel | undefined>(undefined);

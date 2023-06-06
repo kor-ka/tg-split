@@ -2,7 +2,7 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { OperationTransfer } from "../../entity";
 import { useVMvalue } from "../utils/vm/useVM";
-import { useNav, UsersProvider, ModelContext, BackButtopnController, CardLight, ListItem, MainButtopnController } from "./MainScreen";
+import { useNav, UsersProvider, ModelContext, BackButtopnController, CardLight, ListItem, MainButtopnController, showAlert } from "./MainScreen";
 
 export const AddTransferScreen = () => {
     const model = React.useContext(ModelContext)
@@ -29,8 +29,14 @@ export const AddTransferScreen = () => {
         if (!loading) {
             setLoading(true)
             model?.commitOperation({ type: 'transfer', sum, id: model.nextId() + '', dstUid: dst.id, correction: editOp?.id })
-                .catch(e => console.error(e))
                 .then(() => nav(-1))
+                .catch(e => {
+                    if (e instanceof Error) {
+                        showAlert(e.message)
+                    } else {
+                        console.error(e)
+                    }
+                })
                 .finally(() => setLoading(false))
         }
     }, [loading])
