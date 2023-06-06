@@ -53,6 +53,7 @@ export const AddExpenceScreen = () => {
 
     const [loading, setLoading] = React.useState(false)
     const onClick = React.useCallback(() => {
+        console.log("submit click", sumRef.current?.value)
         const sum = Math.floor(Number(sumRef.current?.value.replace(',', '.')) * 100)
         if (sum === 0) {
             return
