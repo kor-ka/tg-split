@@ -80,7 +80,7 @@ export const AddExpenceScreen = () => {
         <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0px', whiteSpace: 'pre-wrap' }}>
             <textarea ref={descriptionRef} defaultValue={editTransaction?.description} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="Enter a description" />
             <input ref={sumRef} defaultValue={editTransaction ? editTransaction.sum / 100 : undefined} autoFocus={true} disabled={disable} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
-            <CardLight><ListItem subtitle="Split across: " /></CardLight>
+            <CardLight><ListItem subtitle="Split among: " /></CardLight>
             {[...usersModule.users.values()].map(u => <UserCheckListItem id={u.val.id} key={u.val.id} onUserClick={onUserClick} checked={checked.has(u.val.id)} disabled={disable} />)}
             <Card><ListItem subtitle={`Missing someone?\nIf there are some users not displayed here (but they are in the group), ask them to write a mesage to group or open this app.`} /></Card>
         </div>
