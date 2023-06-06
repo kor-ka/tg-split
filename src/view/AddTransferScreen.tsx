@@ -44,7 +44,7 @@ export const AddTransferScreen = () => {
         <BackButtopnController />
         <div style={{ display: 'flex', flexDirection: 'column', padding: '20px 0px' }}>
             <CardLight><ListItem titile={`You → ${dst.fullName}`} /></CardLight>
-            <input ref={sumRef} defaultValue={initialSum / 100} disabled={disable} autoFocus={true} type="number" inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
+            <input ref={sumRef} defaultValue={initialSum / 100} disabled={disable} autoFocus={true} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
         </div>
         <MainButtopnController onClick={onClick} text={(editOp ? "Edit" : "Add") + " payment"} progress={loading} isActive={!disable} />
     </>
