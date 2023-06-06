@@ -168,7 +168,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
             )}
             {balanceNegative.length > 1 && <div style={{ marginBottom: 8, color: "var(--tg-theme-hint-color)" }}>
                 <ListItem
-                    subtitle="You owe"
+                    subtitle="Total"
                     right={(Math.abs(sumNegative) / 100).toString()} />
             </div>}
         </Card>}
@@ -179,7 +179,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
             )}
             {balancePositive.length > 1 && <div style={{ marginBottom: 8, color: "var(--tg-theme-hint-color)" }}>
                 <ListItem
-                    subtitle="Others owe you"
+                    subtitle="Total"
                     right={(Math.abs(sumPosistive) / 100).toString()} />
             </div>}
         </Card>}
