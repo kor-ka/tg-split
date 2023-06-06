@@ -129,7 +129,7 @@ const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
     }, [nav, user.id])
     return <div onClick={balance.sum < 0 ? navigateToAddPayment : undefined}>
         <Card>
-            <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: balance.sum < 0 ? 'var(--text-destructive-color)' : 'var(--text-confirm-color)' }}>{(Math.abs(balance.sum)).toString()}</span>} />
+            <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: balance.sum < 0 ? 'var(--text-destructive-color)' : 'var(--text-confirm-color)' }}>{(Math.abs(balance.sum) / 100).toString()}</span>} />
         </Card>
     </div>
 })
@@ -185,7 +185,7 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
     }, [op.uid, op.uids, userId])
     return <div onClick={(op.uid === userId) ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
         <CardLight>
-            <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{op.sum?.toString()}</span>} />
+            <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum / 100).toString()}</span>} />
         </CardLight>
     </div >
 })
@@ -213,7 +213,7 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
 
     return <div onClick={(op.uid === userId) ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
         <CardLight>
-            <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum).toString()}</span>} />
+            <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum / 100).toString()}</span>} />
         </CardLight>
     </div>
 })

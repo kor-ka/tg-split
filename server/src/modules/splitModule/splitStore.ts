@@ -7,7 +7,7 @@ export type OmitUnion<T, K extends keyof any> = T extends any ? Omit<T, K> : nev
 export type Balance = {
   chatId: number,
   seq: number,
-  balance: { [acc: string]: number }
+  balance?: { [acc: string]: number }
 }
 export const BALANCE = () => MDB.collection<Balance>("balances");
 

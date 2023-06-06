@@ -17,8 +17,8 @@ export class SplitModule {
   readonly opUpdatedSubject = new Subject<{ chatId: number, operation: Operation }>;
 
   commitOperation = async (chatId: number, operation: Operation) => {
-    if (typeof operation.sum !== 'number') {
-      throw new Error("sum should be a number")
+    if (typeof operation.sum !== 'number' || operation.sum % 1 !== 0) {
+      throw new Error("sum should be an integer")
     }
     const session = MDBClient.startSession()
 
@@ -46,8 +46,8 @@ export class SplitModule {
         }
 
         const updateBalances = atoms.reduce((upd, [acc, incr]) => {
-          upd[`balance.${acc}`] = incr / 100;
-          console.log("upd balance", acc, incr / 100)
+          console.log(acc, incr)
+          upd[`balance.${acc}`] = incr;
           return upd
         }, {} as { [selector: string]: number })
 
@@ -128,10 +128,6 @@ const atom = (src: number, dst: number, sum: number): Atom => {
   return [account, sum * flip]
 }
 
-const sumToInt = (sum: number) => {
-  return Math.floor(sum * 100)
-}
-
 const opToAtoms = (op: SavedOp | Operation) => {
   let atoms: Atom[]
 
@@ -139,7 +135,7 @@ const opToAtoms = (op: SavedOp | Operation) => {
 
     atoms = splitOpToAtoms(op)
   } else if (op.type === 'transfer') {
-    atoms = [atom(op.uid, op.dstUid, sumToInt(op.sum))]
+    atoms = (op.uid !== op.dstUid) ? [atom(op.uid, op.dstUid, op.sum)] : []
   } else {
     throw new Error('unsupported opration')
   }
@@ -147,24 +143,24 @@ const opToAtoms = (op: SavedOp | Operation) => {
 }
 
 const splitOpToAtoms = (split: Omit<OperationSplit, 'id' | 'correction'>): Atom[] => {
-  const dst = split.uid;
+  const src = split.uid;
   const atoms: Atom[] = [];
-  
-  let sum = sumToInt(split.sum);
+
+  let sum = split.sum;
   console.log('int sum', sum);
-  
+
   const rem = sum % split.uids.length;
   console.log('rem', rem);
-  
+
   sum -= rem;
   console.log('sum-rem', rem);
-  
+
   sum /= split.uids.length
   console.log('sum/len', sum);
 
-  split.uids.forEach((src, i) => {
-    if (src !== dst) {
-      console.log('adding part', sum + (i < rem ? 1 : 0));
+  split.uids.forEach((dst, i) => {
+    if (dst !== src) {
+      console.log('adding part', dst, src, sum + (i < rem ? 1 : 0));
       atoms.push(atom(src, dst, sum + (i < rem ? 1 : 0)));
     }
   });
