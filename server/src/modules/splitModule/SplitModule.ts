@@ -46,7 +46,8 @@ export class SplitModule {
         }
 
         const updateBalances = atoms.reduce((upd, [acc, incr]) => {
-          upd[`balance.${acc}`] = incr / 100
+          upd[`balance.${acc}`] = incr / 100;
+          console.log("upd balance", acc, incr / 100)
           return upd
         }, {} as { [selector: string]: number })
 
@@ -150,12 +151,20 @@ const splitOpToAtoms = (split: Omit<OperationSplit, 'id' | 'correction'>): Atom[
   const atoms: Atom[] = [];
   
   let sum = sumToInt(split.sum);
+  console.log('int sum', sum);
+  
   const rem = sum % split.uids.length;
+  console.log('rem', rem);
+  
   sum -= rem;
+  console.log('sum-rem', rem);
+  
   sum /= split.uids.length
+  console.log('sum/len', sum);
 
   split.uids.forEach((src, i) => {
     if (src !== dst) {
+      console.log('adding part', sum + (i < rem ? 1 : 0));
       atoms.push(atom(src, dst, sum + (i < rem ? 1 : 0)));
     }
   });
