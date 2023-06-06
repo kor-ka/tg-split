@@ -46,7 +46,7 @@ export class SplitModule {
         }
 
         const updateBalances = atoms.reduce((upd, [acc, incr]) => {
-          upd[`balance.${acc}`] = incr
+          upd[`balance.${acc}`] = incr / 100
           return upd
         }, {} as { [selector: string]: number })
 
@@ -127,6 +127,10 @@ const atom = (src: number, dst: number, sum: number): Atom => {
   return [account, sum * flip]
 }
 
+const sumToInt = (sum: number) => {
+  return Math.floor(sum * 100)
+}
+
 const opToAtoms = (op: SavedOp | Operation) => {
   let atoms: Atom[]
 
@@ -134,7 +138,7 @@ const opToAtoms = (op: SavedOp | Operation) => {
 
     atoms = splitOpToAtoms(op)
   } else if (op.type === 'transfer') {
-    atoms = [atom(op.uid, op.dstUid, op.sum)]
+    atoms = [atom(op.uid, op.dstUid, sumToInt(op.sum))]
   } else {
     throw new Error('unsupported opration')
   }
@@ -142,17 +146,21 @@ const opToAtoms = (op: SavedOp | Operation) => {
 }
 
 const splitOpToAtoms = (split: Omit<OperationSplit, 'id' | 'correction'>): Atom[] => {
-  const dst = split.uid
-  const atoms: Atom[] = []
-  // TODO: use math sutable for finacial operations
-  const sum = -(split.sum / split.uids.length)
-  split.uids.forEach(src => {
-    if (src !== dst) {
-      atoms.push(atom(src, dst, sum))
-    }
-  })
+  const dst = split.uid;
+  const atoms: Atom[] = [];
+  
+  let sum = sumToInt(split.sum);
+  const rem = sum % split.uids.length;
+  sum -= rem;
+  sum /= split.uids.length
 
-  return atoms
+  split.uids.forEach((src, i) => {
+    if (src !== dst) {
+      atoms.push(atom(src, dst, sum + (i < rem ? 1 : 0)));
+    }
+  });
+
+  return atoms;
 }
 
 const sumAtoms = (atoms: Atom[]) => {
