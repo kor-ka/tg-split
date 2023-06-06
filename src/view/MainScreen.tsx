@@ -134,14 +134,24 @@ const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
         nav(`/tg/addPayment?uid=${user.id}&sum=${Math.abs(balance.sum)}`)
     }, [nav, user.id])
     return <div onClick={balance.sum < 0 ? navigateToAddPayment : undefined}>
-        <Card>
-            <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: balance.sum < 0 ? 'var(--text-destructive-color)' : 'var(--text-confirm-color)' }}>{(Math.abs(balance.sum) / 100).toString()}</span>} />
-        </Card>
+        <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: balance.sum < 0 ? 'var(--text-destructive-color)' : 'var(--text-confirm-color)' }}>{(Math.abs(balance.sum) / 100).toString()}</span>} />
     </div>
 })
 
 const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | undefined> }) => {
     const balance = useVMvalue(balanceVM)?.balance
+
+    let [balancePositive, sumPosistive] = React.useMemo(() => {
+        const b = balance?.filter(b => b.sum > 0) || []
+        const sum = b.reduce((acc, e) => acc + e.sum, 0)
+        return [b, sum]
+    }, [balance])
+
+    let [balanceNegative, sumNegative] = React.useMemo(() => {
+        const b = balance?.filter(b => b.sum < 0) || []
+        const sum = b.reduce((acc, e) => acc + e.sum, 0)
+        return [b, sum]
+    }, [balance])
 
     const userId = React.useContext(UserContext)
     if (userId === undefined) {
@@ -150,10 +160,29 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
     if (balance?.length === 0) {
         return <Card> <ListItem titile="✨ All settled up ✨" subtitle="You are awesome" /> </Card>
     }
+
     return <>
-        {balance?.map(e =>
-            <BalanceEntry key={e.pair.join('-')} balance={e} />
-        )}
+        {!!balanceNegative.length && <Card>
+            {balanceNegative?.map(e =>
+                <BalanceEntry key={e.pair.join('-')} balance={e} />
+            )}
+            {balanceNegative.length > 1 && <div style={{ marginBottom: 8, color: "var(--tg-theme-hint-color)" }}>
+                <ListItem
+                    subtitle="You owe"
+                    right={(Math.abs(sumNegative) / 100).toString()} />
+            </div>}
+        </Card>}
+
+        {!!balancePositive.length && <Card>
+            {balancePositive?.map(e =>
+                <BalanceEntry key={e.pair.join('-')} balance={e} />
+            )}
+            {balancePositive.length > 1 && <div style={{ marginBottom: 8, color: "var(--tg-theme-hint-color)" }}>
+                <ListItem
+                    subtitle="Others owe you"
+                    right={(Math.abs(sumPosistive) / 100).toString()} />
+            </div>}
+        </Card>}
     </>
 })
 
@@ -202,7 +231,7 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
     const usersModule = React.useContext(UsersProvider)
     const srcuser = useVMvalue(usersModule.getUser(op.uid))
     const dstuser = useVMvalue(usersModule.getUser(op.dstUid))
-    const subtitle = React.useMemo(() => `${srcuser.fullName} payed ${op.sum} to ${dstuser.fullName} ${op.correction ? '(edit)' : ''}`, [srcuser, dstuser])
+    const subtitle = React.useMemo(() => `${srcuser.fullName} payed ${op.sum / 100} to ${dstuser.fullName} ${op.correction ? '(edit)' : ''}`, [srcuser, dstuser])
 
     const nav = useNav()
     const onClick = React.useCallback(() => {
