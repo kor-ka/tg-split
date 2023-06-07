@@ -13,9 +13,9 @@ export class SplitModule {
   private balance = BALANCE();
   private ops = OP();
 
-  readonly stateSubject = new Subject<{ chatId: number, balanceState: BalanceState, operation: SavedOp, type: 'create' | 'update' | 'delete' }>;
+  readonly stateSubject = new Subject<{ chatId: number, threadId: number | undefined, balanceState: BalanceState, operation: SavedOp, type: 'create' | 'update' | 'delete' }>;
 
-  commitOperation = async (chatId: number, type: 'create' | 'update', operation: ClientAPICommandOperation & { uid: number }) => {
+  commitOperation = async (chatId: number, threadId: number | undefined, type: 'create' | 'update', operation: ClientAPICommandOperation & { uid: number }) => {
     if (typeof operation.sum !== 'number' || operation.sum % 1 !== 0 || operation.sum < 0) {
       throw new Error("Sum should be a positive integer")
     }
@@ -25,7 +25,7 @@ export class SplitModule {
       await session.withTransaction(async () => {
         // Write op
         const { id, uid, ...op } = operation;
-        const opData = { ...op, uid, chatId };
+        const opData = { ...op, uid, chatId, threadId };
 
         let atoms = opToAtoms(operation)
 
@@ -48,8 +48,7 @@ export class SplitModule {
             return upd
           }, {} as { [selector: string]: number })
 
-          await this.balance.updateOne({ chatId }, {
-            $set: { chatId },
+          await this.balance.updateOne({ chatId, threadId }, {
             $inc: { ...updateBalances, seq: 1 }
           }, { session })
 
@@ -70,21 +69,21 @@ export class SplitModule {
           return upd
         }, {} as { [selector: string]: number })
 
-        await this.balance.updateOne({ chatId }, {
+        await this.balance.updateOne({ chatId, threadId }, {
           $set: { chatId },
           $inc: { ...updateBalances, seq: 1 }
         }, { upsert: true, session })
 
       })
 
-      const balanceState = await this.getBalance(chatId)
+      const balanceState = await this.getBalance(chatId, threadId)
       const op = await this.ops.findOne({ _id })
       if (!op) {
         throw new Error("operation lost during " + type)
       }
 
       // notify all
-      this.stateSubject.next({ chatId, balanceState, operation: op, type })
+      this.stateSubject.next({ chatId, threadId, balanceState, operation: op, type })
       return { operation: op, balanceState }
 
 
@@ -99,10 +98,10 @@ export class SplitModule {
     if (!op) {
       throw new Error("Operation not found")
     }
-    const chatId = op.chatId;
+    const { chatId, threadId } = op;
     if (op?.deleted) {
       // already deleted - just return current state
-      const balanceState = await this.getBalance(chatId);
+      const balanceState = await this.getBalance(chatId, threadId);
       return { operation: op, balanceState };
     } else {
       const session = MDBClient.startSession();
@@ -115,8 +114,7 @@ export class SplitModule {
             return upd;
           }, {} as { [selector: string]: number });
 
-          await this.balance.updateOne({ chatId }, {
-            $set: { chatId },
+          await this.balance.updateOne({ chatId, threadId }, {
             $inc: { ...updateBalances, seq: 1 }
           }, { session });
 
@@ -134,18 +132,18 @@ export class SplitModule {
         await session.endSession();
       }
 
-      const balanceState = await this.getBalance(chatId);
+      const balanceState = await this.getBalance(chatId, threadId);
 
       // notify all
-      this.stateSubject.next({ chatId, balanceState, operation: op, type: 'delete' })
+      this.stateSubject.next({ chatId, threadId, balanceState, operation: op, type: 'delete' })
 
       return { operation: op, balanceState };
     }
   }
 
-  balanceCache = new Map<number, BalanceState>();
-  getBalance = async (chatId: number): Promise<BalanceState> => {
-    const savedBalance = (await this.balance.findOne({ chatId }))
+  balanceCache = new Map<string, BalanceState>();
+  getBalance = async (chatId: number, threadId: number | undefined): Promise<BalanceState> => {
+    const savedBalance = (await this.balance.findOne({ chatId, threadId }))
     let balance: Balance
     let seq = 0
     if (savedBalance?.balance) {
@@ -158,13 +156,13 @@ export class SplitModule {
       balance = []
     }
     const res = { seq, balance }
-    this.balanceCache.set(chatId, res)
+    this.balanceCache.set(`${chatId}_${threadId}`, res)
     return res
   }
 
-  getBalanceCached = async (chatId: number) => {
-    let balance = this.balanceCache.get(chatId)
-    const balancePromsie = this.getBalance(chatId)
+  getBalanceCached = async (chatId: number, threadId: number | undefined) => {
+    let balance = this.balanceCache.get(`${chatId}_${threadId}`)
+    const balancePromsie = this.getBalance(chatId, threadId)
     if (!balance) {
       balance = await balancePromsie
     }
@@ -172,15 +170,15 @@ export class SplitModule {
   }
 
   logCache = new Map<string, SavedOp[]>();
-  getLog = async (chatId: number, limit = 500): Promise<SavedOp[]> => {
-    const res = await this.ops.find({ chatId }, { limit, sort: { _id: -1 } }).toArray()
-    this.logCache.set(`${chatId}-${limit}`, res)
+  getLog = async (chatId: number, threadId: number | undefined, limit = 500): Promise<SavedOp[]> => {
+    const res = await this.ops.find({ chatId, threadId }, { limit, sort: { _id: -1 } }).toArray()
+    this.logCache.set(`${chatId}-${threadId}-${limit}`, res)
     return res
   }
 
-  getLogCached = async (chatId: number, limit = 500) => {
-    let log = this.logCache.get(`${chatId}-${limit}`)
-    const logPromise = this.getLog(chatId, limit)
+  getLogCached = async (chatId: number, threadId: number | undefined, limit = 500) => {
+    let log = this.logCache.get(`${chatId}-${threadId}-${limit}`)
+    const logPromise = this.getLog(chatId, threadId, limit)
     if (!log) {
       log = await logPromise
     }

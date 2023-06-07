@@ -5,27 +5,24 @@ import { singleton } from "tsyringe";
 export class PinsModule {
   private db = PINS();
 
-  updatePinMeta = async (chatId: number, options: {
+  updatePinMeta = async (chatId: number, threadId: number | undefined, options: {
     messageId?: number, chatInstance?: string
   }) => {
-    const {messageId, chatInstance} = options;
+    const { messageId, chatInstance } = options;
     return await this.db.updateOne(
-      { chatId },
-      { $set: { 
-        chatId,
-        ...messageId ? {messageId} : {},
-        ...chatInstance ? {chatInstance} : {}
-        } 
+      { chatId, threadId },
+      {
+        $set: {
+          chatId,
+          ...messageId ? { messageId } : {},
+          ...chatInstance ? { chatInstance } : {}
+        }
       },
       { upsert: true }
     );
   };
 
-  getPinMeta = async (chatId: number) => {
-    return await this.db.findOne({ chatId });
-  };
-
-  getPinMetaByInstance = async (chatInstance: string) => {
-    return await this.db.findOne({ chatInstance });
+  getPinMeta = async (chatId: number, threadId: number | undefined) => {
+    return await this.db.findOne({ chatId, threadId });
   };
 }

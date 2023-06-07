@@ -23,28 +23,30 @@ export class TelegramBot {
     polling: true,
   });
 
-  private createPin = async (chatId: number) => {
+  private createPin = async (chatId: number, threadId: number | undefined) => {
     console.log("createPin", chatId);
     let message: TB.Message;
 
-    let { text, buttonsRows } = renderPin(chatId, false);
+    let { text, buttonsRows } = renderPin(chatId, threadId);
     message = await this.bot.sendMessage(chatId, text, {
       reply_markup: { inline_keyboard: buttonsRows },
       parse_mode: "HTML",
+      message_thread_id: threadId
     });
 
     const { message_id: messageId } = message
-    this.pinModule.updatePinMeta(chatId, { messageId }).catch(((e) => console.log(e)));
+    this.pinModule.updatePinMeta(chatId, threadId, { messageId }).catch(((e) => console.log(e)));
     await this.bot.sendMessage(
       chatId,
-      "❗️Don't forget do pin it ☝️, so everyone can open app"
+      "❗️Don't forget do pin it ☝️, so everyone can open app",
+      { message_thread_id: threadId }
     );
   };
 
   init = () => {
     this.bot.on("group_chat_created", async (upd) => {
       try {
-        await this.createPin(upd.chat.id)
+        await this.createPin(upd.chat.id, upd.message_thread_id)
         if (upd.chat.title) {
           await this.chatMetaModule.updateName(upd.chat.id, upd.chat.title);
         }
@@ -73,7 +75,7 @@ export class TelegramBot {
           } finally {
             await session.endSession();
           }
-          await this.createPin(toId)
+          await this.createPin(toId, undefined)
 
           console.log("migrate_from_chat_id <<<", fromId, toId)
 
@@ -90,14 +92,14 @@ export class TelegramBot {
           (u) => u.id === 6065926905
         );
         if (botAdded) {
-          await this.createPin(upd.chat.id)
+          await this.createPin(upd.chat.id, undefined)
           if (upd.chat.title) {
             await this.chatMetaModule.updateName(upd.chat.id, upd.chat.title);
           }
         }
 
         upd.new_chat_members?.filter(u => !u.is_bot || (upd.chat.title?.endsWith("__DEV__"))).forEach(u => {
-          this.userModule.updateUser(upd.chat.id, {
+          this.userModule.updateUser(upd.chat.id, undefined, {
             id: u.id,
             name: u.first_name,
             lastname: u.last_name,
@@ -115,7 +117,7 @@ export class TelegramBot {
       try {
         const left = upd.left_chat_member;
         if (left && (!left.is_bot || (upd.chat.title?.endsWith("__DEV__")))) {
-          await this.userModule.updateUser(upd.chat.id, {
+          await this.userModule.updateUser(upd.chat.id, undefined, {
             id: left.id,
             name: left.first_name,
             lastname: left.last_name,
@@ -130,7 +132,7 @@ export class TelegramBot {
 
     this.bot.onText(/\/pin/, async (upd) => {
       try {
-        await this.createPin(upd.chat.id);
+        await this.createPin(upd.chat.id, upd.message_thread_id);
       } catch (e) {
         console.log(e);
       }
@@ -140,47 +142,18 @@ export class TelegramBot {
       try {
         await this.bot.sendMessage(
           upd.chat.id,
-          "https://bmc.link/korrrka"
+          "https://bmc.link/korrrka",
+          { message_thread_id: upd.message_thread_id }
         );
       } catch (e) {
         console.log(e);
       }
     });
 
-
-    // Buttons press handlers
-    this.bot.on("callback_query", async (q) => {
-      const { data: dataString, from, message, chat_instance: chatInstance } = q;
-      if (message) {
-        const { chat: { id: chatId } } = message
-        if (dataString) {
-          try {
-            let data = dataString.split("/");
-            console.log("callback_query", data);
-            if (data[0] === "a") {
-              await this.pinModule.updatePinMeta(chatId, { chatInstance })
-              const { text, buttonsRows } = renderPin(chatId, !!chatInstance);
-              await this.bot.editMessageText(text, {
-                chat_id: chatId,
-                message_id: message.message_id,
-                parse_mode: "HTML",
-                reply_markup: { inline_keyboard: buttonsRows },
-              });
-
-            }
-            await this.bot.answerCallbackQuery(q.id);
-          } catch (e) {
-            console.error(e);
-          }
-        }
-
-      }
-    });
-
     this.bot.on("message", async (message) => {
       try {
         if (message.from && (!message.from.is_bot || (message.chat.title?.endsWith("__DEV__")))) {
-          await this.userModule.updateUser(message.chat.id, {
+          await this.userModule.updateUser(message.chat.id, message.message_thread_id, {
             id: message.from.id,
             name: message.from.first_name,
             lastname: message.from.last_name,
@@ -196,8 +169,8 @@ export class TelegramBot {
     // TODO: this shit can race, add worker
     this.splitModule.stateSubject.subscribe(async (upd) => {
       try {
-        const { chatId, balanceState } = upd;
-        const pinned = await this.pinModule.getPinMeta(chatId);
+        const { chatId, threadId, balanceState } = upd;
+        const pinned = await this.pinModule.getPinMeta(chatId, threadId);
 
         if (pinned) {
           // TODO: move to render pin, no pin case?
@@ -219,7 +192,7 @@ export class TelegramBot {
 
           const lines = (await Promise.all(promieses)).join('\n').trim() || '✨ All settled up ✨';
 
-          const { buttonsRows } = renderPin(chatId, true);
+          const { buttonsRows } = renderPin(chatId, threadId);
 
           await this.bot.editMessageText(lines, {
             chat_id: chatId,

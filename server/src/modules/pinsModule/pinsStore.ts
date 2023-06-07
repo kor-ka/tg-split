@@ -3,6 +3,7 @@ import { MDB } from "../../utils/MDB";
 interface Pins {
   _id: ObjectId;
   chatId: number;
+  threadId: number | null;
   messageId: number;
   chatInstance?: string;
 }

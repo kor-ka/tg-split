@@ -81,12 +81,12 @@ initMDB().then(() => {
 
   app.use(compression()).get("/tg/", async (req, res) => {
     try {
-      const chatId = Number(req.query.tgWebAppStartParam)
+      const [chatId, threadId] = (req.query.tgWebAppStartParam as string).split('_').map(Number) ?? []
       const splitModule = container.resolve(SplitModule);
       const userIdString = req.cookies.user_id;
       const userId = userIdString ? Number.parseInt(userIdString, 10) : undefined
 
-      const { balance: balanceState } = await splitModule.getBalanceCached(chatId)
+      const { balance: balanceState } = await splitModule.getBalanceCached(chatId, threadId)
       const balance = optimiseBalance(balanceState.balance)
         .filter(e => (userId !== undefined) && e.pair.includes(userId) && e.sum !== 0)
         .map(e => {
@@ -98,7 +98,7 @@ initMDB().then(() => {
         }).sort((a, b) => a.sum - b.sum)
       const balanceStateVm = new VM<BalanceState | undefined>({ seq: balanceState.seq, balance })
 
-      const { log: savedLog } = await splitModule.getLogCached(chatId)
+      const { log: savedLog } = await splitModule.getLogCached(chatId, threadId)
       const logMap = new Map<string, VM<Operation>>()
       savedOpsToApi(savedLog).forEach(o => logMap.set(o.id, new VM(o)))
 

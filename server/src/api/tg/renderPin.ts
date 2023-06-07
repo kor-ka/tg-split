@@ -9,26 +9,18 @@ export function htmlEntities(str: string) {
     .replace(/"/g, "&quot;");
 }
 
-export const renderPin = (chatId: number, activated: boolean) => {
+export const renderPin = (chatId: number, threadId: number | undefined) => {
   const textRows: string[] = [];
   textRows.push(`⚡️Split⚡️`);
 
+  const key = [chatId, threadId].filter(Boolean).join('_');
   let buttonsRows: TB.InlineKeyboardButton[][] = [];
-  if (activated) {
-    buttonsRows.push([
-      {
-        text: "Split",
-        url: `https://t.me/splitsimplebot/split?startapp=${chatId}&startApp=${chatId}`,
-      },
-    ]);
-  } else {
-    buttonsRows.push([
-      {
-        text: "Activate",
-        callback_data: "a"
-      },
-    ]);
-  }
+  buttonsRows.push([
+    {
+      text: "Split",
+      url: `https://t.me/splitsimplebot/split?startapp=${key}&startApp=${key}`,
+    },
+  ]);
 
 
   return { text: textRows.join("\n"), buttonsRows };

@@ -9,10 +9,11 @@ export class UserModule {
 
   readonly userUpdated = new Subject<{ chatId: number, user: User }>();
   private usersCache = new Map<number, SavedUser[]>;
-  
+
 
   updateUser = async (
     chatId: number,
+    threadId: number | undefined,
     user: User
   ) => {
     const { id, disabled, ...updateFields } = user
@@ -27,17 +28,17 @@ export class UserModule {
         $set: {
           ...update,
         },
-        $addToSet: { ...disabled ? { disabledChatIds: chatId } : {}, chatIds: chatId },
+        $addToSet: { ...disabled ? { disabledChatIds: chatId } : {}, chatIds: chatId, threadIds: threadId },
         $pull: { ...disabled ? {} : { disabledChatIds: chatId } }
       },
       { upsert: true }
     );
 
     this.userUpdated.next({ chatId, user });
-    
+
     // TODO: better cahce update     
     await this.getUsers(chatId)
-    
+
     return res;
   };
 

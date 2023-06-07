@@ -19,29 +19,16 @@ export class ClientAPI {
         this.io = socket
     }
 
-    // TODO: remove as soom as tgWebAppStartParam/start_param will be fixed
-    resolveChatId = async (chatId?: number, chat_instance?: string) => {
-        if (chatId) {
-            return chatId
-        } else if (chat_instance) {
-            const meta = await this.pinModule.getPinMetaByInstance(chat_instance)
-            if (meta?.chatId) {
-                return meta?.chatId
-            }
-        }
-        throw new Error('unable to resolve chatId')
-    }
-
     readonly init = () => {
         this.splitModule.stateSubject.subscribe(state => {
-            const { chatId, balanceState, operation, type } = state
+            const { chatId, threadId, balanceState, operation, type } = state
             const upd: StateUpdate = { balanceState, operation: savedOpToApi(operation), type }
-            this.io.to('chatClient_' + chatId).emit('update', upd)
+            this.io.to('chatClient_' + [chatId, threadId].filter(Boolean).join('_')).emit('update', upd)
         })
 
         this.userModule.userUpdated.subscribe(({ user, chatId }) => {
             const upd: User = user
-            this.io.to('chatClient_' + chatId).emit('user', upd)
+            this.io.to('chatUsersClient_' + chatId).emit('user', upd)
         })
 
         this.io.on('connection', (socket) => {
@@ -59,18 +46,21 @@ export class ClientAPI {
                     return
                 }
                 sw.lap("tgAuth");
-                let chatId = tgData.start_param ? Number(tgData.start_param) : undefined;
+                const [chatId, threadId] = tgData.start_param?.split('_').map(Number) ?? []
+                if (chatId === undefined) {
+                    return
+                }
+
                 socket.on("op", async (
                     command: ClientAPICommand,
                     ack: (res: { patch: StateUpdate, error?: never } | { error: string, patch?: never }) => void) => {
                     try {
                         // TODO: sanitise op
                         const { type } = command
-                        const cid = await this.resolveChatId(chatId, chat_instance);
                         if (type === 'create' || type === 'update') {
                             const { operation } = command
                             const op = { ...operation, uid: tgData.user.id } as Operation
-                            const { operation: updatedOp, balanceState } = await this.splitModule.commitOperation(cid, type, op)
+                            const { operation: updatedOp, balanceState } = await this.splitModule.commitOperation(chatId, threadId, type, op)
                             ack({ patch: { type, balanceState, operation: savedOpToApi(updatedOp) } })
                         } else if (type === 'delete') {
                             const { operation: updatedOp, balanceState } = await this.splitModule.deleteOperation(command.id)
@@ -88,14 +78,14 @@ export class ClientAPI {
                 });
                 (async () => {
                     try {
-                        const cid = await this.resolveChatId(chatId, chat_instance);
-                        socket.join("chatClient_" + cid);
+                        socket.join(`chatClient_${tgData.start_param}`);
+                        socket.join(`chatUsersClient_${chatId}`);
 
-                        this.userModule.updateUser(cid, { id: tgData.user.id, name: tgData.user.first_name, lastname: tgData.user.last_name, username: tgData.user.username, disabled: false })
+                        this.userModule.updateUser(chatId, threadId, { id: tgData.user.id, name: tgData.user.first_name, lastname: tgData.user.last_name, username: tgData.user.username, disabled: false })
 
-                        const users = savedUserToApi(await this.userModule.getUsersCached(cid), cid)
-                        const { balance, balancePromsie } = await this.splitModule.getBalanceCached(cid)
-                        const { log, logPromise } = await this.splitModule.getLogCached(cid)
+                        const users = savedUserToApi(await this.userModule.getUsersCached(chatId), chatId, threadId)
+                        const { balance, balancePromsie } = await this.splitModule.getBalanceCached(chatId, threadId)
+                        const { log, logPromise } = await this.splitModule.getLogCached(chatId, threadId)
                         // emit cached
                         const upd: FullState = { balanceState: balance, log: savedOpsToApi(log), users }
                         socket.emit("state", upd)
@@ -127,9 +117,9 @@ export const savedOpsToApi = (saved: SavedOp[]): Log => {
     return saved.map(savedOpToApi)
 }
 
-export const savedUserToApi = (saved: SavedUser[], chatId: number): User[] => {
+export const savedUserToApi = (saved: SavedUser[], chatId: number, threadId?: number): User[] => {
     return saved.map(s => {
-        const { _id, chatIds, disabledChatIds, ...u } = s
-        return { ...u, disabled: !!disabledChatIds?.includes(chatId) }
+        const { _id, chatIds, disabledChatIds, threadIds, ...u } = s
+        return { ...u, disabled: !!disabledChatIds?.includes(chatId) || (!!threadId && !threadIds?.includes(threadId)) }
     })
 }

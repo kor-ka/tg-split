@@ -40,7 +40,7 @@ const _initMDB = async () => {
     });
 
     await MDB.collection("balances").createIndex(
-      { chatId: 1 },
+      { chatId: 1, threadId: 1 },
       {
         name: "balances:chatUnique",
         unique: true,
@@ -48,19 +48,10 @@ const _initMDB = async () => {
     );
 
     await MDB.collection("ops").createIndex(
-      { chatId: 1, idempotencyKey: 1 },
+      { chatId: 1, threadId: 1, idempotencyKey: 1 },
       {
         name: "ops:idempotencyUnique",
         unique: true,
-      }
-    );
-
-    await MDB.collection("ops").createIndex(
-      { correction: 1 },
-      {
-        name: "ops:corectionUnique",
-        unique: true,
-        partialFilterExpression: { correction: { $type: "objectId" } },
       }
     );
 
