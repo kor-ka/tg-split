@@ -254,7 +254,7 @@ const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operat
     const log = React.useMemo(() => [...logMap.values()], [logMap])
     let prevDate = ""
     return <CardLight>{log.map((op, i, array) => {
-        const date = new Date(array[i].val.date).toLocaleString('default', { month: 'short', day: 'numeric' });
+        const date = new Date(array[i].val.date).toLocaleString('en', { month: 'short', day: 'numeric' });
         const show = date !== prevDate
         prevDate = date
         return <>
