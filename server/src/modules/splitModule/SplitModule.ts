@@ -70,7 +70,7 @@ export class SplitModule {
         }, {} as { [selector: string]: number })
 
         await this.balance.updateOne({ chatId, threadId }, {
-          $set: { chatId },
+          $set: { chatId, threadId },
           $inc: { ...updateBalances, seq: 1 }
         }, { upsert: true, session })
 
