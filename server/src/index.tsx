@@ -143,7 +143,7 @@ initMDB().then(() => {
   });
 
   new SocketApi(io).init();
-  // new TelegramBot().init();
+  new TelegramBot().init();
 
   server.listen(PORT, () => console.log(`lll- on ${PORT}`));
 }).catch(e => console.error(e));
