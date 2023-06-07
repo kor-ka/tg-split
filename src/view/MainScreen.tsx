@@ -105,13 +105,13 @@ export const CardLight = ({ children, style }: { children: any, style?: any }) =
     return <div style={{ display: 'flex', flexDirection: 'column', margin: '0px 20px', ...style }}>{children}</div>
 }
 
-export const ListItem = React.memo(({ titile: title, subtitle, right, style }: { titile?: string, subtitle?: string, right?: React.ReactNode, style?: any }) => {
+export const ListItem = React.memo(({ titile: title, subtitle, right, style, titleStyle, subTitleStyle, rightStyle, leftStyle }: { titile?: string, subtitle?: string, right?: React.ReactNode, style?: any, titleStyle?: any, subTitleStyle?: any, rightStyle?: any, leftStyle?: any }) => {
     return <div style={{ display: 'flex', flexDirection: "row", justifyContent: 'space-between', padding: 4, alignItems: 'center', ...style }}>
-        <div style={{ display: 'flex', padding: '2px 0px', flexDirection: "column", flexGrow: 1, flexShrink: 1, minWidth: 0 }}>
-            {!!title && <div style={{ padding: '2px 4px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{title}</div>}
-            {!!subtitle && <div style={{ padding: '2px 4px', fontSize: '0.8em', color: "var(--tg-theme-hint-color)" }}>{subtitle}</div>}
+        <div style={{ display: 'flex', padding: '2px 0px', flexDirection: "column", flexGrow: 1, flexShrink: 1, minWidth: 0, ...leftStyle }}>
+            {!!title && <div style={{ padding: '2px 4px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', ...titleStyle }}>{title}</div>}
+            {!!subtitle && <div style={{ padding: '2px 4px', fontSize: '0.8em', color: "var(--tg-theme-hint-color)", ...subTitleStyle }}>{subtitle}</div>}
         </div>
-        {!!right && <div style={{ padding: '4px 16px', flexShrink: 0, alignItems: 'center' }}>{right}</div>}
+        {!!right && <div style={{ padding: '4px 16px', flexShrink: 0, alignItems: 'center', ...rightStyle }}>{right}</div>}
     </div>
 }
 )
@@ -259,7 +259,7 @@ const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operat
         const show = date !== prevDate
         prevDate = date
         return <React.Fragment key={op.val.id}>
-            {show && <Card key={'date'} style={{ alignSelf: 'center', margin: 0, padding: 0 }}><ListItem subtitle={date} /></Card>}
+            {show && <Card key={'date'} style={{ alignSelf: 'center', margin: 0, padding: 0, fontSize: '0.6em', borderRadius: 12, position: 'sticky', top: 16 }}><ListItem titile={date} titleStyle={{ padding: 0, fontWeight: 500 }} leftStyle={{ padding: '0 2px' }} /></Card>}
             {op.val.type === 'split' ? <SplitLogItem key={op.val.id} opVM={op as VM<OperationSplit>} /> : op.val.type === 'transfer' ? <TransferLogItem key={op.val.id} opVM={op as VM<OperationTransfer>} /> : null}
         </React.Fragment>
     })}</CardLight>
