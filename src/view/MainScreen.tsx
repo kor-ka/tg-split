@@ -191,8 +191,7 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
     const userId = React.useContext(UserContext)
     const usersModule = React.useContext(UsersProvider)
     const actor = useVMvalue(usersModule.getUser(op.uid))
-    // extract as components? 
-    // TODO: test many - should not affect summ
+    // extract as components? (make names reactive)
     const fullNames = React.useMemo(() => {
         return op.uids.map((uid) => usersModule.getUser(uid).val.fullName).join(', ')
     }, [...op.uids])
@@ -200,11 +199,11 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
         return op.uids.length > 2 ? `${op.uids.length} persons` : op.uids.map((uid) => usersModule.getUser(uid).val.name).join(', ')
     }, [...op.uids])
 
-    const title = React.useMemo(() => `⚡️ ${actor.name} → ${op.description || namesShort}`, [])
+    const title = React.useMemo(() => `⚡️ ${actor.name} → ${op.description || namesShort}`, [actor.name, op.description, namesShort])
 
     const subtitle = React.useMemo(() => {
         return [op.description && `${actor.name} paid for ${op.description.trim()}`, `Split among: ${fullNames}`, op.edited ? '(edited)' : ''].filter(Boolean).join('. ')
-    }, [fullNames, op.description])
+    }, [fullNames, op.description, actor.name, op.edited])
 
     const nav = useNav()
     const onClick = React.useCallback(() => {
@@ -229,7 +228,7 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
     const usersModule = React.useContext(UsersProvider)
     const srcuser = useVMvalue(usersModule.getUser(op.uid))
     const dstuser = useVMvalue(usersModule.getUser(op.dstUid))
-    const subtitle = React.useMemo(() => `${srcuser.fullName} payed ${op.sum / 100} to ${dstuser.fullName} ${op.edited ? '(edited)' : ''}`, [srcuser, dstuser])
+    const subtitle = React.useMemo(() => `${srcuser.fullName} payed ${op.sum / 100} to ${dstuser.fullName} ${op.edited ? '(edited)' : ''}`, [srcuser.fullName, dstuser.fullName, op.sum, op.edited])
 
     const nav = useNav()
     const onClick = React.useCallback(() => {
