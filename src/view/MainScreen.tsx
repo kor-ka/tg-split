@@ -259,7 +259,7 @@ const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operat
         const show = date !== prevDate
         prevDate = date
         return <React.Fragment key={op.val.id}>
-            {show && <Card key={'date'} style={{ alignSelf: 'center', margin: 0, padding: 0, fontSize: '0.6em', borderRadius: 12, position: 'sticky', top: 16 }}><ListItem titile={date} titleStyle={{ padding: 0, fontWeight: 500 }} leftStyle={{ padding: '0 2px' }} /></Card>}
+            {show && <Card key={'date'} style={{ alignSelf: 'center', margin: 0, padding: 0, fontSize: '0.7em', borderRadius: 12, position: 'sticky', top: 16 }}><ListItem titile={date} titleStyle={{ padding: 0, fontWeight: 500, marginTop: -1 }} leftStyle={{ padding: '0 4px' }} /></Card>}
             {op.val.type === 'split' ? <SplitLogItem key={op.val.id} opVM={op as VM<OperationSplit>} /> : op.val.type === 'transfer' ? <TransferLogItem key={op.val.id} opVM={op as VM<OperationTransfer>} /> : null}
         </React.Fragment>
     })}</CardLight>
