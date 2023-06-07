@@ -102,12 +102,12 @@ export const Card = ({ children, style }: { children: any, style?: any }) => {
 }
 
 export const CardLight = ({ children, style }: { children: any, style?: any }) => {
-    return <div style={{ display: 'flex', margin: '0px 20px', ...style }}>{children}</div>
+    return <div style={{ display: 'flex', flexDirection: 'column', margin: '0px 20px', ...style }}>{children}</div>
 }
 
 export const ListItem = React.memo(({ titile: title, subtitle, right, style }: { titile?: string, subtitle?: string, right?: React.ReactNode, style?: any }) => {
     return <div style={{ display: 'flex', flexDirection: "row", justifyContent: 'space-between', padding: 4, alignItems: 'center', ...style }}>
-        <div style={{ display: 'flex', padding: '2px 0px', flexDirection: "column", flexShrink: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', padding: '2px 0px', flexDirection: "column", flexGrow: 1, flexShrink: 1, minWidth: 0 }}>
             {!!title && <div style={{ padding: '2px 4px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{title}</div>}
             {!!subtitle && <div style={{ padding: '2px 4px', fontSize: '0.8em', color: "var(--tg-theme-hint-color)" }}>{subtitle}</div>}
         </div>
@@ -219,9 +219,7 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
         }
     }, [op.uid, op.uids, userId])
     return <div onClick={(op.uid === userId) ? onClick : undefined} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
-        <CardLight>
-            <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum / 100).toString()}</span>} />
-        </CardLight>
+        <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum / 100).toString()}</span>} />
     </div >
 })
 
@@ -247,9 +245,7 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
     }, [op.uid, op.dstUid, userId])
 
     return <div onClick={(op.uid === userId) ? onClick : undefined} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
-        <CardLight>
-            <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum / 100).toString()}</span>} />
-        </CardLight>
+        <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum / 100).toString()}</span>} />
     </div>
 })
 
@@ -257,7 +253,7 @@ const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operat
     const logMap = useVMvalue(logVm)
     const log = React.useMemo(() => [...logMap.values()], [logMap])
     let prevDate = ""
-    return <>{log.map((op, i, array) => {
+    return <CardLight>{log.map((op, i, array) => {
         const date = new Date(array[i].val.date).toLocaleString('default', { month: 'short', day: 'numeric' });
         const show = date !== prevDate
         prevDate = date
@@ -265,7 +261,7 @@ const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operat
             {show && <Card style={{ alignSelf: 'center', margin: 0, padding: 0 }}><ListItem subtitle={date} /></Card>}
             {op.val.type === 'split' ? <SplitLogItem key={op.val.id} opVM={op as VM<OperationSplit>} /> : op.val.type === 'transfer' ? <TransferLogItem key={op.val.id} opVM={op as VM<OperationTransfer>} /> : null}
         </>
-    })}</>
+    })}</CardLight>
 }))
 
 export const BackButtopnController = React.memo(() => {
