@@ -98,7 +98,7 @@ export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<Balanc
 }
 
 export const Card = ({ children, style }: { children: any, style?: any }) => {
-    return <div style={{ display: 'flex', flexDirection: 'column', margin: '8px 16px', padding: 4, backgroundColor: "var(--tg-theme-bg-color)", borderRadius: 16, ...style }}>{children}</div>
+    return <div style={{ display: 'flex', flexDirection: 'column', margin: '8px 16px', padding: 4, backgroundColor: "var(--tg-theme-secondary-bg-color)", borderRadius: 16, ...style }}>{children}</div>
 }
 
 export const CardLight = ({ children, style }: { children: any, style?: any }) => {
