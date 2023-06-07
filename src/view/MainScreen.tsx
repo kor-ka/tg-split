@@ -162,23 +162,25 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
     }
 
     return <>
-        {!!balanceNegative.length && <Card>
+        {!!balanceNegative.length && <Card key="negative">
             {balanceNegative?.map(e =>
                 <BalanceEntry key={e.pair.join('-')} balance={e} />
             )}
             {balanceNegative.length > 1 && <div style={{ marginBottom: 8, color: "var(--tg-theme-hint-color)" }}>
                 <ListItem
+                    key="negative-total"
                     titile="Total"
                     right={(Math.abs(sumNegative) / 100).toString()} />
             </div>}
         </Card>}
 
-        {!!balancePositive.length && <Card>
+        {!!balancePositive.length && <Card key="positive">
             {balancePositive?.map(e =>
                 <BalanceEntry key={e.pair.join('-')} balance={e} />
             )}
             {balancePositive.length > 1 && <div style={{ marginBottom: 8, color: "var(--tg-theme-hint-color)" }}>
                 <ListItem
+                    key="positive-total"
                     titile="Total"
                     right={(Math.abs(sumPosistive) / 100).toString()} />
             </div>}
@@ -252,14 +254,14 @@ const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operat
     const logMap = useVMvalue(logVm)
     const log = React.useMemo(() => [...logMap.values()], [logMap])
     let prevDate = ""
-    return <CardLight>{log.map((op, i, array) => {
+    return <CardLight key="log">{log.map((op, i, array) => {
         const date = new Date(array[i].val.date).toLocaleString('en', { month: 'short', day: 'numeric' });
         const show = date !== prevDate
         prevDate = date
-        return <>
-            {show && <Card style={{ alignSelf: 'center', margin: 0, padding: 0 }}><ListItem subtitle={date} /></Card>}
+        return <React.Fragment key={op.val.id}>
+            {show && <Card key={'date'} style={{ alignSelf: 'center', margin: 0, padding: 0 }}><ListItem subtitle={date} /></Card>}
             {op.val.type === 'split' ? <SplitLogItem key={op.val.id} opVM={op as VM<OperationSplit>} /> : op.val.type === 'transfer' ? <TransferLogItem key={op.val.id} opVM={op as VM<OperationTransfer>} /> : null}
-        </>
+        </React.Fragment>
     })}</CardLight>
 }))
 
