@@ -203,7 +203,7 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
     const title = React.useMemo(() => `⚡️ ${actor.name} → ${op.description || namesShort}`, [])
 
     const subtitle = React.useMemo(() => {
-        return [op.description && `${actor.name} paid for ${op.description.trim()}`, `Split among: ${fullNames}`, op.correction ? '(edit)' : ''].filter(Boolean).join('. ')
+        return [op.description && `${actor.name} paid for ${op.description.trim()}`, `Split among: ${fullNames}`, op.edited ? '(edited)' : ''].filter(Boolean).join('. ')
     }, [fullNames, op.description])
 
     const nav = useNav()
@@ -218,7 +218,7 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
             return 'var(--text-confirm-color)'
         }
     }, [op.uid, op.uids, userId])
-    return <div onClick={(op.uid === userId) ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
+    return <div onClick={(op.uid === userId) ? onClick : undefined} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
         <CardLight>
             <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum / 100).toString()}</span>} />
         </CardLight>
@@ -231,7 +231,7 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
     const usersModule = React.useContext(UsersProvider)
     const srcuser = useVMvalue(usersModule.getUser(op.uid))
     const dstuser = useVMvalue(usersModule.getUser(op.dstUid))
-    const subtitle = React.useMemo(() => `${srcuser.fullName} payed ${op.sum / 100} to ${dstuser.fullName} ${op.correction ? '(edit)' : ''}`, [srcuser, dstuser])
+    const subtitle = React.useMemo(() => `${srcuser.fullName} payed ${op.sum / 100} to ${dstuser.fullName} ${op.edited ? '(edited)' : ''}`, [srcuser, dstuser])
 
     const nav = useNav()
     const onClick = React.useCallback(() => {
@@ -246,7 +246,7 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
         }
     }, [op.uid, op.dstUid, userId])
 
-    return <div onClick={(op.uid === userId) ? onClick : undefined} style={op.corrected ? { textDecoration: 'line-through' } : undefined}>
+    return <div onClick={(op.uid === userId) ? onClick : undefined} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
         <CardLight>
             <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum / 100).toString()}</span>} />
         </CardLight>

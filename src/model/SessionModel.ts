@@ -1,7 +1,7 @@
 import { io, Socket } from "socket.io-client";
 import { VM } from "../utils/vm/VM";
 import Cookies from "js-cookie";
-import { BalanceState, FullState, Log, Operation, User } from "../../entity";
+import { BalanceState, ClientAPICommand, FullState, Log, Operation, StateUpdate, User } from "../../entity";
 import { Deffered } from "../utils/deffered";
 import { UsersModule } from "./UsersModule";
 import { OmitUnion } from "../utils/types";
@@ -71,8 +71,11 @@ export class SessionModel {
             this.users.updateUser(user)
         });
 
-        this.socket.on("opUpdate", (updated: Operation) => {
-            this.logModule.getOperationVm(updated).next(updated)
+        this.socket.on("update", (update: StateUpdate) => {
+            this.bumpBalance(update.balanceState)
+            if ((update.type === 'create') || this.logModule.log.val.has(update.operation.id)) {
+                this.addOperation(update.operation)
+            }
         });
 
     }
@@ -99,14 +102,16 @@ export class SessionModel {
     }
 
     nextId = () => this.localOprationId++
-    commitOperation = (operation: OmitUnion<Operation, 'uid'>): Promise<Operation> => {
+    commitOperation = (operation: ClientAPICommand): Promise<Operation> => {
         const d = new Deffered<Operation>()
-        this.emit("op", operation, (res: { patch: { operation: Operation, balanceState: BalanceState }, error: never } | { error: string, patch: never }) => {
+        this.emit("op", operation, (res: { patch: StateUpdate, error: never } | { error: string, patch: never }) => {
             console.log("on_op_ack", res)
             const { patch, error } = res
             if (patch) {
                 this.bumpBalance(patch.balanceState)
-                this.addOperation(patch.operation)
+                if ((patch.type === 'create') || this.logModule.log.val.has(patch.operation.id)) {
+                    this.addOperation(patch.operation)
+                }
                 d.resolve(patch.operation)
             } else {
                 d.reject(new Error(error))

@@ -1,7 +1,6 @@
-import { ObjectId } from "mongodb";
 import * as socketIo from "socket.io";
 import { container } from "tsyringe";
-import { BalanceState, FullState, Log, Operation, User } from "../../../entity";
+import { ClientAPICommand, FullState, Log, Operation, StateUpdate, User } from "../../../entity";
 import { PinsModule } from "../modules/pinsModule/PinsModule";
 import { SplitModule } from "../modules/splitModule/SplitModule";
 import { SavedOp } from "../modules/splitModule/splitStore";
@@ -35,14 +34,9 @@ export class ClientAPI {
 
     readonly init = () => {
         this.splitModule.stateSubject.subscribe(state => {
-            const { chatId, balanceState, operation } = state
-            const upd: Partial<FullState> = { balanceState, log: [operation] }
-            this.io.to('chatClient_' + chatId).emit('state', upd)
-        })
-
-        this.splitModule.opUpdatedSubject.subscribe(({ chatId, operation }) => {
-            const upd: Operation = operation
-            this.io.to('chatClient_' + chatId).emit('opUpdate', upd)
+            const { chatId, balanceState, operation, type } = state
+            const upd: StateUpdate = { balanceState, operation, type }
+            this.io.to('chatClient_' + chatId).emit('update', upd)
         })
 
         this.userModule.userUpdated.subscribe(({ user, chatId }) => {
@@ -66,12 +60,22 @@ export class ClientAPI {
                 }
                 sw.lap("tgAuth");
                 let chatId = tgData.start_param ? Number(tgData.start_param) : undefined;
-                socket.on("op", async (operation: Omit<Operation, 'uid'>, ack: (res: { patch: { operation: Operation, balanceState: BalanceState }, error?: never } | { error: string, patch?: never }) => void) => {
+                socket.on("op", async (
+                    command: ClientAPICommand,
+                    ack: (res: { patch: StateUpdate, error?: never } | { error: string, patch?: never }) => void) => {
                     try {
+                        const { type } = command
                         const cid = await this.resolveChatId(chatId, chat_instance);
-                        const op = { ...operation, uid: tgData.user.id } as Operation
-                        const patch = await this.splitModule.commitOperation(cid, op)
-                        ack({ patch })
+                        if (type === 'create' || type === 'update') {
+                            const { operation } = command
+                            const op = { ...operation, uid: tgData.user.id } as Operation
+                            const patch = await this.splitModule.commitOperation(cid, type, op)
+                            ack({ patch: { type, ...patch } })
+                        } else if (type === 'delete') {
+                            const patch = await this.splitModule.deleteOperation(command.id)
+                            ack({ patch: { type, ...patch } })
+                        }
+
                     } catch (e) {
                         console.error(e)
                         let message = 'unknown error'
@@ -114,8 +118,8 @@ export class ClientAPI {
 }
 
 export const savedOpToApi = (saved: SavedOp): Operation => {
-    const { _id, correction, ...op } = saved
-    return { ...op, id: _id.toHexString(), correction: correction?.toHexString() }
+    const { _id, seq, ...op } = saved
+    return { ...op, id: _id.toHexString(), edited: seq > 0 }
 }
 
 export const savedOpsToApi = (saved: SavedOp[]): Log => {

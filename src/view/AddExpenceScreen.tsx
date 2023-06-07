@@ -26,7 +26,7 @@ export const AddExpenceScreen = () => {
 
     const editTransactionId = searchParams.get("editExpense")
     const editTransaction: OperationSplit | undefined = editTransactionId ? model?.logModule.getOperationOpt(editTransactionId) : undefined
-    const disable = !!editTransaction?.corrected
+    const disable = !!editTransaction?.deleted
 
     const descriptionRef = React.useRef<HTMLTextAreaElement>(null)
     const sumRef = React.useRef<HTMLInputElement>(null)
@@ -60,7 +60,7 @@ export const AddExpenceScreen = () => {
         }
         if (!loading) {
             setLoading(true)
-            model?.commitOperation({ type: 'split', sum, id: model.nextId() + '', correction: editTransaction?.id, description: descriptionRef.current?.value, uids: [...checked.values()] })
+            model?.commitOperation({ type: editTransaction ? 'update' : 'create', operation: { type: 'split', sum, id: editTransaction?.id ?? model.nextId() + '', description: descriptionRef.current?.value, uids: [...checked.values()] } })
                 .then(() => nav(-1))
                 .catch(e => {
                     console.error(e)

@@ -15,7 +15,7 @@ export const AddTransferScreen = () => {
 
     const editOpId = searchParams.get("editPayment")
     const editOp: OperationTransfer | undefined = editOpId ? model?.logModule.getOperationOpt(editOpId) : undefined
-    const disable = !!editOp?.corrected
+    const disable = !!editOp?.deleted
 
     const dst = useVMvalue(usersModule.getUser(editOp?.dstUid ?? Number(searchParams.get('uid'))))
     const initialSum = React.useMemo(() => editOp?.sum ?? Number(searchParams.get('sum')), [])
@@ -28,7 +28,7 @@ export const AddTransferScreen = () => {
         }
         if (!loading) {
             setLoading(true)
-            model?.commitOperation({ type: 'transfer', sum, id: model.nextId() + '', dstUid: dst.id, correction: editOp?.id })
+            model?.commitOperation({ type: editOp ? 'update' : 'create', operation: { type: 'transfer', sum, id: editOp?.id ?? model.nextId() + '', dstUid: dst.id } })
                 .then(() => nav(-1))
                 .catch(e => {
                     if (e instanceof Error) {

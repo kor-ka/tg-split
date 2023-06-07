@@ -1,3 +1,5 @@
+import { OmitUnion } from "./src/utils/types";
+
 export type User = {
     id: number;
     name: string;
@@ -11,7 +13,7 @@ export type Balance = { pair: [number, number], sum: number }[]
 
 export type BalanceState = { balance: Balance, seq: number }
 
-export type OperationBase = { id: string, uid: number, correction?: string, corrected?: boolean }
+export type OperationBase = { id: string, uid: number, edited?: boolean, deleted?: boolean }
 
 export type OperationSplit = OperationBase & {
     type: 'split',
@@ -35,3 +37,13 @@ export type FullState = {
     log: Log,
     users: User[]
 }
+
+export type StateUpdate = {
+    type: 'create' | 'update' | 'delete'
+    balanceState: BalanceState,
+    operation: Operation,
+}
+
+export type ClientAPICommand =
+    { type: 'create' | 'update', operation: OmitUnion<Operation, 'uid'> } |
+    { type: 'delete', id: string };

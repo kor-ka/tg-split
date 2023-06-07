@@ -13,10 +13,9 @@ export class SplitModule {
   private balance = BALANCE();
   private ops = OP();
 
-  readonly stateSubject = new Subject<{ chatId: number, balanceState: BalanceState, operation: Operation }>;
-  readonly opUpdatedSubject = new Subject<{ chatId: number, operation: Operation }>;
+  readonly stateSubject = new Subject<{ chatId: number, balanceState: BalanceState, operation: Operation, type: 'create' | 'update' | 'delete' }>;
 
-  commitOperation = async (chatId: number, operation: Operation) => {
+  commitOperation = async (chatId: number, type: 'create' | 'update', operation: Operation) => {
     if (typeof operation.sum !== 'number' || operation.sum % 1 !== 0 || operation.sum < 0) {
       throw new Error("Sum should be a positive integer")
     }
@@ -26,25 +25,47 @@ export class SplitModule {
     try {
       await session.withTransaction(async () => {
         // Write op
-        const { id, uid, correction, ...op } = operation;
-        const insertedId = (await this.ops.insertOne({ ...op, uid, idempotencyKey: `${uid}_${id}`, chatId, correction: correction ? new ObjectId(correction) : undefined }, { session })).insertedId
-        operation.id = insertedId.toHexString()
+        const { id, uid, ...op } = operation;
+        const opData = { ...op, uid, chatId };
 
-        // Update balance
         let atoms = opToAtoms(operation)
 
-        if (operation.correction) {
-          srcOp = (await this.ops.findOne({ _id: new ObjectId(operation.correction) }))!
-          if (srcOp.uid !== uid) {
-            throw new Error("One can update only own operations")
+        if (type === 'create') {
+          // create new op
+          const insertedId = (await this.ops.insertOne({ ...opData, seq: 0, idempotencyKey: `${uid}_${id}` }, { session })).insertedId
+          operation.id = insertedId.toHexString()
+        } else if (type === 'update') {
+          // update op
+          const op = (await this.ops.findOne({ _id: new ObjectId(id), deleted: { $ne: true } }))
+          if (!op) {
+            throw new Error("Operation not found")
           }
-          await this.ops.updateOne({ _id: srcOp._id }, { $set: { corrected: true } }, { session })
-          srcOp.corrected = true
 
-          const origAtoms = opToAtoms(srcOp)
-          atoms = sumAtoms([...atoms, ...invertAtoms(origAtoms)])
+          // revert balance
+          const invertedAtoms = invertAtoms(opToAtoms(op))
+          const updateBalances = invertedAtoms.reduce((upd, [acc, incr]) => {
+            console.log(acc, incr)
+            upd[`balance.${acc}`] = incr;
+            return upd
+          }, {} as { [selector: string]: number })
+
+          await this.balance.updateOne({ chatId }, {
+            $set: { chatId },
+            $inc: { ...updateBalances, seq: 1 }
+          }, { session })
+
+          // update after balance - check seq not changed
+          const res = await this.ops.updateOne({ _id: new ObjectId(id), seq: op.seq }, { $set: opData, $inc: { seq: 1 } }, { session })
+          if (res.modifiedCount === 0) {
+            // propbably seq updated concurrently - throw
+            throw new Error("Error occured, try again later")
+          }
+          operation.edited = true
+        } else {
+          throw new Error('Unknown operation modification type')
         }
 
+        // Update balance
         const updateBalances = atoms.reduce((upd, [acc, incr]) => {
           console.log(acc, incr)
           upd[`balance.${acc}`] = incr;
@@ -66,15 +87,62 @@ export class SplitModule {
 
     const balanceState = await this.getBalance(chatId)
 
-    // notify
-    this.stateSubject.next({ chatId, balanceState, operation })
-    if (srcOp) {
-      // TODO: notify in one event?
-      this.opUpdatedSubject.next({ chatId, operation: savedOpToApi(srcOp) })
-    }
+    // notify all
+    this.stateSubject.next({ chatId, balanceState, operation, type })
     return { operation, balanceState }
 
   };
+
+  deleteOperation = async (id: string) => {
+    const _id = new ObjectId(id);
+    const op = await this.ops.findOne({ _id });
+    if (!op) {
+      throw new Error("Operation not found")
+    }
+    const chatId = op.chatId;
+    if (op?.deleted) {
+      // already deleted - just return current state
+      const balanceState = await this.getBalance(chatId);
+      return { operation: savedOpToApi(op), balanceState };
+    } else {
+      const session = MDBClient.startSession();
+      try {
+        await session.withTransaction(async () => {
+          // revert balance
+          const atoms = invertAtoms(opToAtoms(op));
+          const updateBalances = atoms.reduce((upd, [acc, incr]) => {
+            upd[`balance.${acc}`] = incr;
+            return upd;
+          }, {} as { [selector: string]: number });
+
+          await this.balance.updateOne({ chatId }, {
+            $set: { chatId },
+            $inc: { ...updateBalances, seq: 1 }
+          }, { session });
+
+          // update after balance - check seq not changed
+          const res = await this.ops.updateOne({ _id, seq: op.seq }, { $set: { deleted: true }, inc: { seq: 1 } }, { session })
+          if (res.modifiedCount === 0) {
+            // propbably seq updated concurrently - throw
+            throw new Error("Error occured, try again later")
+          }
+          op.deleted = true;
+          op.seq += 1;
+
+        });
+      } finally {
+        await session.endSession();
+      }
+
+      const balanceState = await this.getBalance(chatId);
+      const operation = savedOpToApi(op)
+
+      // notify all
+      this.stateSubject.next({ chatId, balanceState, operation, type: 'delete' })
+
+      return { operation: operation, balanceState };
+    }
+  }
 
   balanceCache = new Map<number, BalanceState>();
   getBalance = async (chatId: number): Promise<BalanceState> => {
