@@ -1,6 +1,6 @@
 import { Balance as SavedBalance, BALANCE, OP, SavedOp, OmitUnion, ServerOp } from "./splitStore";
 import { singleton } from "tsyringe";
-import { Operation, OperationSplit, BalanceState, Balance } from "../../../../entity";
+import { Operation, OperationSplit, BalanceState, Balance, ClientAPICommandOperation } from "../../../../entity";
 import { MDBClient } from "../../utils/MDB";
 import { ObjectId, WithId } from "mongodb";
 import { Subject } from "../../utils/subject";
@@ -13,15 +13,14 @@ export class SplitModule {
   private balance = BALANCE();
   private ops = OP();
 
-  readonly stateSubject = new Subject<{ chatId: number, balanceState: BalanceState, operation: Operation, type: 'create' | 'update' | 'delete' }>;
+  readonly stateSubject = new Subject<{ chatId: number, balanceState: BalanceState, operation: SavedOp, type: 'create' | 'update' | 'delete' }>;
 
-  commitOperation = async (chatId: number, type: 'create' | 'update', operation: Operation) => {
+  commitOperation = async (chatId: number, type: 'create' | 'update', operation: ClientAPICommandOperation & { uid: number }) => {
     if (typeof operation.sum !== 'number' || operation.sum % 1 !== 0 || operation.sum < 0) {
       throw new Error("Sum should be a positive integer")
     }
     const session = MDBClient.startSession()
-
-    let srcOp: WithId<ServerOp> | undefined
+    let _id: ObjectId | undefined
     try {
       await session.withTransaction(async () => {
         // Write op
@@ -32,11 +31,11 @@ export class SplitModule {
 
         if (type === 'create') {
           // create new op
-          const insertedId = (await this.ops.insertOne({ ...opData, seq: 0, idempotencyKey: `${uid}_${id}` }, { session })).insertedId
-          operation.id = insertedId.toHexString()
+          _id = (await this.ops.insertOne({ ...opData, seq: 0, idempotencyKey: `${uid}_${id}` }, { session })).insertedId
         } else if (type === 'update') {
+          _id = new ObjectId(id)
           // update op
-          const op = (await this.ops.findOne({ _id: new ObjectId(id), deleted: { $ne: true } }))
+          const op = (await this.ops.findOne({ _id, deleted: { $ne: true } }))
           if (!op) {
             throw new Error("Operation not found")
           }
@@ -55,12 +54,11 @@ export class SplitModule {
           }, { session })
 
           // update after balance - check seq not changed
-          const res = await this.ops.updateOne({ _id: new ObjectId(id), seq: op.seq }, { $set: opData, $inc: { seq: 1 } }, { session })
+          const res = await this.ops.updateOne({ _id, seq: op.seq }, { $set: opData, $inc: { seq: 1 } }, { session })
           if (res.modifiedCount === 0) {
             // propbably seq updated concurrently - throw
             throw new Error("Error occured, try again later")
           }
-          operation.edited = true
         } else {
           throw new Error('Unknown operation modification type')
         }
@@ -79,18 +77,20 @@ export class SplitModule {
 
       })
 
+      const balanceState = await this.getBalance(chatId)
+      const op = await this.ops.findOne({ _id })
+      if (!op) {
+        throw new Error("operation lost during " + type)
+      }
+
+      // notify all
+      this.stateSubject.next({ chatId, balanceState, operation: op, type })
+      return { operation: op, balanceState }
 
 
     } finally {
       await session.endSession()
     }
-
-    const balanceState = await this.getBalance(chatId)
-
-    // notify all
-    this.stateSubject.next({ chatId, balanceState, operation, type })
-    return { operation, balanceState }
-
   };
 
   deleteOperation = async (id: string) => {
@@ -103,7 +103,7 @@ export class SplitModule {
     if (op?.deleted) {
       // already deleted - just return current state
       const balanceState = await this.getBalance(chatId);
-      return { operation: savedOpToApi(op), balanceState };
+      return { operation: op, balanceState };
     } else {
       const session = MDBClient.startSession();
       try {
@@ -135,12 +135,11 @@ export class SplitModule {
       }
 
       const balanceState = await this.getBalance(chatId);
-      const operation = savedOpToApi(op)
 
       // notify all
-      this.stateSubject.next({ chatId, balanceState, operation, type: 'delete' })
+      this.stateSubject.next({ chatId, balanceState, operation: op, type: 'delete' })
 
-      return { operation: operation, balanceState };
+      return { operation: op, balanceState };
     }
   }
 
@@ -196,7 +195,7 @@ const atom = (src: number, dst: number, sum: number): Atom => {
   return [account, sum * flip]
 }
 
-const opToAtoms = (op: SavedOp | Operation) => {
+const opToAtoms = (op: SavedOp | (ClientAPICommandOperation & { uid: number })) => {
   let atoms: Atom[]
 
   if (op.type === 'split') {
@@ -210,7 +209,7 @@ const opToAtoms = (op: SavedOp | Operation) => {
   return atoms
 }
 
-const splitOpToAtoms = (split: Omit<OperationSplit, 'id' | 'correction'>): Atom[] => {
+const splitOpToAtoms = (split: Omit<OperationSplit, 'id' | 'date'>): Atom[] => {
   const src = split.uid;
   const atoms: Atom[] = [];
 

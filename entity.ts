@@ -13,7 +13,7 @@ export type Balance = { pair: [number, number], sum: number }[]
 
 export type BalanceState = { balance: Balance, seq: number }
 
-export type OperationBase = { id: string, uid: number, edited?: boolean, deleted?: boolean }
+export type OperationBase = { id: string, uid: number, date: number, edited?: boolean, deleted?: boolean }
 
 export type OperationSplit = OperationBase & {
     type: 'split',
@@ -44,6 +44,7 @@ export type StateUpdate = {
     operation: Operation,
 }
 
+export type ClientAPICommandOperation = OmitUnion<Operation, 'uid' | 'edited' | 'deleted' | 'date'>
 export type ClientAPICommand =
-    { type: 'create' | 'update', operation: OmitUnion<Operation, 'uid'> } |
+    { type: 'create' | 'update', operation: ClientAPICommandOperation } |
     { type: 'delete', id: string };

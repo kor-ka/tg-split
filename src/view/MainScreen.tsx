@@ -88,7 +88,7 @@ const MainScreenWithModel = ({ model }: { model: SessionModel }) => {
 
 export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<BalanceState | undefined>, logVM: VM<Map<string, VM<Operation>>> }) => {
     const nav = useNav()
-    return <div style={{ padding: "8px 0px" }}>
+    return <div style={{ display: 'flex', flexDirection: 'column', padding: "8px 0px" }}>
         <BackButtopnController />
         <BalanceView balanceVM={balanceVM} />
         <LogView logVM={log} />
@@ -97,21 +97,21 @@ export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<Balanc
     </div>
 }
 
-export const Card = ({ children }: { children: any }) => {
-    return <div style={{ margin: '8px 16px', padding: 4, backgroundColor: "var(--tg-theme-secondary-bg-color)", borderRadius: 16 }}>{children}</div>
+export const Card = ({ children, style }: { children: any, style?: any }) => {
+    return <div style={{ display: 'flex', flexDirection: 'column', margin: '8px 16px', padding: 4, backgroundColor: "var(--tg-theme-secondary-bg-color)", borderRadius: 16, ...style }}>{children}</div>
 }
 
-export const CardLight = ({ children }: { children: any }) => {
-    return <div style={{ margin: '0px 20px', }}>{children}</div>
+export const CardLight = ({ children, style }: { children: any, style?: any }) => {
+    return <div style={{ display: 'flex', margin: '0px 20px', ...style }}>{children}</div>
 }
 
-export const ListItem = React.memo(({ titile: title, subtitle, right }: { titile?: string, subtitle?: string, right?: React.ReactNode }) => {
-    return <div style={{ display: 'flex', flexDirection: "row", justifyContent: 'space-between', padding: 4, alignItems: 'center' }}>
+export const ListItem = React.memo(({ titile: title, subtitle, right, style }: { titile?: string, subtitle?: string, right?: React.ReactNode, style?: any }) => {
+    return <div style={{ display: 'flex', flexDirection: "row", justifyContent: 'space-between', padding: 4, alignItems: 'center', ...style }}>
         <div style={{ display: 'flex', padding: '2px 0px', flexDirection: "column", flexShrink: 1, minWidth: 0 }}>
             {!!title && <div style={{ padding: '2px 4px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{title}</div>}
             {!!subtitle && <div style={{ padding: '2px 4px', fontSize: '0.8em', color: "var(--tg-theme-hint-color)" }}>{subtitle}</div>}
         </div>
-        <div style={{ padding: '4px 16px', flexShrink: 0, alignItems: 'center' }}>{right}</div>
+        {!!right && <div style={{ padding: '4px 16px', flexShrink: 0, alignItems: 'center' }}>{right}</div>}
     </div>
 }
 )
@@ -256,7 +256,16 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
 const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operation>>> }) => {
     const logMap = useVMvalue(logVm)
     const log = React.useMemo(() => [...logMap.values()], [logMap])
-    return <>{log.map(op => op.val.type === 'split' ? <SplitLogItem key={op.val.id} opVM={op as VM<OperationSplit>} /> : op.val.type === 'transfer' ? <TransferLogItem key={op.val.id} opVM={op as VM<OperationTransfer>} /> : null)}</>
+    let prevDate = ""
+    return <>{log.map((op, i, array) => {
+        const date = new Date(array[i].val.date).toLocaleString('default', { month: 'short', day: 'numeric' });
+        const show = date !== prevDate
+        prevDate = date
+        return <>
+            {show && <Card style={{ alignSelf: 'center', margin: 0, padding: 0 }}><ListItem subtitle={date} /></Card>}
+            {op.val.type === 'split' ? <SplitLogItem key={op.val.id} opVM={op as VM<OperationSplit>} /> : op.val.type === 'transfer' ? <TransferLogItem key={op.val.id} opVM={op as VM<OperationTransfer>} /> : null}
+        </>
+    })}</>
 }))
 
 export const BackButtopnController = React.memo(() => {

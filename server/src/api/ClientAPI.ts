@@ -35,7 +35,7 @@ export class ClientAPI {
     readonly init = () => {
         this.splitModule.stateSubject.subscribe(state => {
             const { chatId, balanceState, operation, type } = state
-            const upd: StateUpdate = { balanceState, operation, type }
+            const upd: StateUpdate = { balanceState, operation: savedOpToApi(operation), type }
             this.io.to('chatClient_' + chatId).emit('update', upd)
         })
 
@@ -64,16 +64,17 @@ export class ClientAPI {
                     command: ClientAPICommand,
                     ack: (res: { patch: StateUpdate, error?: never } | { error: string, patch?: never }) => void) => {
                     try {
+                        // TODO: sanitise op
                         const { type } = command
                         const cid = await this.resolveChatId(chatId, chat_instance);
                         if (type === 'create' || type === 'update') {
                             const { operation } = command
                             const op = { ...operation, uid: tgData.user.id } as Operation
-                            const patch = await this.splitModule.commitOperation(cid, type, op)
-                            ack({ patch: { type, ...patch } })
+                            const { operation: updatedOp, balanceState } = await this.splitModule.commitOperation(cid, type, op)
+                            ack({ patch: { type, balanceState, operation: savedOpToApi(updatedOp) } })
                         } else if (type === 'delete') {
-                            const patch = await this.splitModule.deleteOperation(command.id)
-                            ack({ patch: { type, ...patch } })
+                            const { operation: updatedOp, balanceState } = await this.splitModule.deleteOperation(command.id)
+                            ack({ patch: { type, balanceState, operation: savedOpToApi(updatedOp) } })
                         }
 
                     } catch (e) {
@@ -119,7 +120,7 @@ export class ClientAPI {
 
 export const savedOpToApi = (saved: SavedOp): Operation => {
     const { _id, seq, ...op } = saved
-    return { ...op, id: _id.toHexString(), edited: seq > 0 }
+    return { ...op, id: _id.toHexString(), date: _id.getTimestamp().getTime(), edited: seq > 0 }
 }
 
 export const savedOpsToApi = (saved: SavedOp[]): Log => {
