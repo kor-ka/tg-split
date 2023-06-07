@@ -219,7 +219,7 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
             return 'var(--text-confirm-color)'
         }
     }, [op.uid, op.uids, userId])
-    return <div onClick={(op.uid === userId) ? onClick : undefined} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
+    return <div onClick={onClick} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
         <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum / 100).toString()}</span>} />
     </div >
 })
@@ -245,7 +245,7 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
         }
     }, [op.uid, op.dstUid, userId])
 
-    return <div onClick={(op.uid === userId) ? onClick : undefined} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
+    return <div onClick={onClick} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
         <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum / 100).toString()}</span>} />
     </div>
 })

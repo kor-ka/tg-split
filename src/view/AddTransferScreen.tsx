@@ -2,10 +2,11 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { OperationTransfer } from "../../entity";
 import { useVMvalue } from "../utils/vm/useVM";
-import { useNav, UsersProvider, ModelContext, BackButtopnController, CardLight, ListItem, MainButtopnController, showAlert } from "./MainScreen";
+import { useNav, UsersProvider, ModelContext, BackButtopnController, CardLight, ListItem, MainButtopnController, showAlert, UserContext } from "./MainScreen";
 
 export const AddTransferScreen = () => {
     const model = React.useContext(ModelContext)
+    const userId = React.useContext(UserContext)
     const nav = useNav()
     const sumRef = React.useRef<HTMLInputElement>(null)
 
@@ -15,7 +16,8 @@ export const AddTransferScreen = () => {
 
     const editOpId = searchParams.get("editPayment")
     const editOp: OperationTransfer | undefined = editOpId ? model?.logModule.getOperationOpt(editOpId) : undefined
-    const disable = !!editOp?.deleted
+
+    const disable = !!editOp?.deleted || (!!editOp && editOp.uid !== userId)
 
     const dst = useVMvalue(usersModule.getUser(editOp?.dstUid ?? Number(searchParams.get('uid'))))
     const initialSum = React.useMemo(() => editOp?.sum ?? Number(searchParams.get('sum')), [])

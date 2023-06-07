@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { OperationSplit } from "../../entity";
 import { useVMvalue } from "../utils/vm/useVM";
-import { BackButtopnController, Card, CardLight, ListItem, MainButtopnController, ModelContext, showAlert, useNav, UsersProvider, WebApp, __DEV__ } from "./MainScreen"
+import { BackButtopnController, Card, CardLight, ListItem, MainButtopnController, ModelContext, showAlert, useNav, UserContext, UsersProvider, WebApp, __DEV__ } from "./MainScreen"
 
 const UserCheckListItem = React.memo(({ id, checked, onUserClick, disabled }: { id: number, checked: boolean, onUserClick: (id: number) => void, disabled: boolean }) => {
     const usersModule = React.useContext(UsersProvider)
@@ -23,10 +23,12 @@ export const AddExpenceScreen = () => {
     const nav = useNav()
     const [searchParams] = useSearchParams();
     const model = React.useContext(ModelContext)
+    const userId = React.useContext(UserContext)
 
     const editTransactionId = searchParams.get("editExpense")
     const editTransaction: OperationSplit | undefined = editTransactionId ? model?.logModule.getOperationOpt(editTransactionId) : undefined
-    const disable = !!editTransaction?.deleted
+
+    const disable = !!editTransaction?.deleted || (!!editTransaction && editTransaction.uid !== userId)
 
     const descriptionRef = React.useRef<HTMLTextAreaElement>(null)
     const sumRef = React.useRef<HTMLInputElement>(null)
@@ -78,7 +80,7 @@ export const AddExpenceScreen = () => {
     return <>
         <BackButtopnController />
         <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0px', whiteSpace: 'pre-wrap' }}>
-            <textarea ref={descriptionRef} defaultValue={editTransaction?.description} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="Enter a description" />
+            <textarea ref={descriptionRef} defaultValue={editTransaction?.description} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder={disable ? "No description" : "Enter a description"} />
             <input ref={sumRef} defaultValue={editTransaction ? editTransaction.sum / 100 : undefined} autoFocus={true} disabled={disable} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
             <CardLight><ListItem subtitle="Split among: " /></CardLight>
             {[...usersModule.users.values()].map(u => <UserCheckListItem id={u.val.id} key={u.val.id} onUserClick={onUserClick} checked={checked.has(u.val.id)} disabled={disable} />)}
