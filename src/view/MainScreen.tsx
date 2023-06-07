@@ -268,7 +268,7 @@ const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operat
 export const BackButtopnController = React.memo(() => {
     const nav = useNav()
     const bb = React.useMemo(() => WebApp?.BackButton, [])
-    const goBack = useCallback(() => nav('/tg/'), [])
+    const goBack = useCallback(() => nav(-1), [])
 
     const canGoBack = getPath() !== '/tg/'
 
