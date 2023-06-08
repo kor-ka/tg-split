@@ -43,39 +43,44 @@ export const AddExpenceScreen = () => {
 
     const onUserClick = React.useCallback((id: number) => {
         setChecked(checked => {
-            const res = new Set(checked)
+            const res = new Set(checked);
             if (res.has(id)) {
-                res.delete(id)
+                res.delete(id);
             } else {
-                res.add(id)
+                res.add(id);
             }
-            return res
+            WebApp?.HapticFeedback.selectionChanged()
+            return res;
         })
-    }, [])
+    }, []);
 
-    const [loading, setLoading] = React.useState(false)
+    const [loading, setLoading] = React.useState(false);
     const onClick = React.useCallback(() => {
-        console.log("submit click", sumRef.current?.value)
-        const sum = Math.floor(Number(sumRef.current?.value.replace(',', '.')) * 100)
+        console.log("submit click", sumRef.current?.value);
+        const sum = Math.floor(Number(sumRef.current?.value.replace(',', '.')) * 100);
         if (sum === 0) {
-            return
+            return;
         }
         if (!loading) {
-            setLoading(true)
+            setLoading(true);
             model?.commitOperation({ type: editTransaction ? 'update' : 'create', operation: { type: 'split', sum, id: editTransaction?.id ?? model.nextId() + '', description: descriptionRef.current?.value, uids: [...checked.values()] } })
-                .then(() => nav(-1))
+                .then(() => {
+                    WebApp?.HapticFeedback.notificationOccurred("success");
+                    nav(-1);
+                })
                 .catch(e => {
-                    console.error(e)
+                    console.error(e);
+                    WebApp?.HapticFeedback.notificationOccurred("error");
                     if (e instanceof Error) {
-                        showAlert(e.message)
+                        showAlert(e.message);
                     } else {
-                        console.error(e)
+                        console.error(e);
                     }
 
                 })
-                .finally(() => setLoading(false))
+                .finally(() => setLoading(false));
         }
-    }, [loading, checked])
+    }, [loading, checked]);
 
     return <>
         <BackButtopnController />

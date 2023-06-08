@@ -2,46 +2,50 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { OperationTransfer } from "../../entity";
 import { useVMvalue } from "../utils/vm/useVM";
-import { useNav, UsersProvider, ModelContext, BackButtopnController, CardLight, ListItem, MainButtopnController, showAlert, UserContext } from "./MainScreen";
+import { useNav, UsersProvider, ModelContext, BackButtopnController, CardLight, ListItem, MainButtopnController, showAlert, UserContext, WebApp } from "./MainScreen";
 
 export const AddTransferScreen = () => {
-    const model = React.useContext(ModelContext)
-    const userId = React.useContext(UserContext)
-    const nav = useNav()
-    const sumRef = React.useRef<HTMLInputElement>(null)
+    const model = React.useContext(ModelContext);
+    const userId = React.useContext(UserContext);
+    const nav = useNav();
+    const sumRef = React.useRef<HTMLInputElement>(null);
 
     let [searchParams] = useSearchParams();
 
-    const usersModule = React.useContext(UsersProvider)
+    const usersModule = React.useContext(UsersProvider);
 
-    const editOpId = searchParams.get("editPayment")
-    const editOp: OperationTransfer | undefined = editOpId ? model?.logModule.getOperationOpt(editOpId) : undefined
+    const editOpId = searchParams.get("editPayment");
+    const editOp: OperationTransfer | undefined = editOpId ? model?.logModule.getOperationOpt(editOpId) : undefined;
 
-    const disable = !!editOp?.deleted || (!!editOp && editOp.uid !== userId)
+    const disable = !!editOp?.deleted || (!!editOp && editOp.uid !== userId);
 
-    const dst = useVMvalue(usersModule.getUser(editOp?.dstUid ?? Number(searchParams.get('uid'))))
-    const initialSum = React.useMemo(() => editOp?.sum ?? Number(searchParams.get('sum')), [])
+    const dst = useVMvalue(usersModule.getUser(editOp?.dstUid ?? Number(searchParams.get('uid'))));
+    const initialSum = React.useMemo(() => editOp?.sum ?? Number(searchParams.get('sum')), []);
 
-    const [loading, setLoading] = React.useState(false)
+    const [loading, setLoading] = React.useState(false);
     const onClick = React.useCallback(() => {
-        const sum = Math.floor(Number(sumRef.current?.value.replace(',', '.')) * 100)
+        const sum = Math.floor(Number(sumRef.current?.value.replace(',', '.')) * 100);
         if (sum === 0) {
-            return
+            return;
         }
         if (!loading) {
-            setLoading(true)
+            setLoading(true);
             model?.commitOperation({ type: editOp ? 'update' : 'create', operation: { type: 'transfer', sum, id: editOp?.id ?? model.nextId() + '', dstUid: dst.id } })
-                .then(() => nav(-1))
+                .then(() => {
+                    WebApp?.HapticFeedback.notificationOccurred("success");
+                    nav(-1);
+                })
                 .catch(e => {
+                    WebApp?.HapticFeedback.notificationOccurred("error");
                     if (e instanceof Error) {
-                        showAlert(e.message)
+                        showAlert(e.message);
                     } else {
-                        console.error(e)
+                        console.error(e);
                     }
                 })
-                .finally(() => setLoading(false))
+                .finally(() => setLoading(false));
         }
-    }, [loading])
+    }, [loading]);
     return <>
         <BackButtopnController />
         <div style={{ display: 'flex', flexDirection: 'column', padding: '20px 0px' }}>
