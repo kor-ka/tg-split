@@ -151,7 +151,9 @@ const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
     </div>
 })
 
+let animateBalanceOnce = true;
 const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | undefined> }) => {
+    const model = React.useContext(ModelContext)
     const balance = useVMvalue(balanceVM)?.balance
 
     let [balancePositive, sumPosistive] = React.useMemo(() => {
@@ -168,14 +170,20 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
 
     const userId = React.useContext(UserContext)
 
-    // if ssr missing user, maxHeight to 0, 750 on client to animate 
-    const [maxHeight, setMaxHeight] = React.useState(userId ? 750 : 58.5)
+    const shouldAnimate = React.useMemo(() => model && !model.ssrUserId() && animateBalanceOnce, [])
+    // if ssr missing user, maxHeight to 1 line, 750 on client to animate 
+    const [maxHeight, setMaxHeight] = React.useState(shouldAnimate ? 58.5 : 750)
     React.useEffect(() => {
-        // expand to "no limit" after animation
+        animateBalanceOnce = false;
         setTimeout(() => {
-            setMaxHeight(9000)
-        }, 301);
-    }, [])
+            setMaxHeight(750)
+            // expand to "no limit" after animation
+            setTimeout(() => {
+                setMaxHeight(9000)
+            }, 301);
+        }, 10)
+
+    }, [shouldAnimate])
 
     if (userId === undefined) {
         return <Card key="first" style={{ transition: "max-height ease-in 300ms", maxHeight }}>
@@ -283,9 +291,9 @@ const DateView = React.memo(({ date }: { date: string }) => {
     const shouldAnimate = React.useMemo(() => model && !model.ssrTimeSone() && amimateDateOnce, [])
     const [maxHeight, setMaxHeight] = React.useState(shouldAnimate ? 0 : 50)
     React.useEffect(() => {
+        amimateDateOnce = false
         setTimeout(() => {
             setMaxHeight(50)
-            amimateDateOnce = false
         }, 10)
     }, [shouldAnimate])
     return <Card key={'date'} style={{ alignSelf: 'center', margin: 0, padding: 0, fontSize: '0.7em', borderRadius: 12, position: 'sticky', top: 16, transition: "max-height ease-in 300ms", maxHeight, overflow: 'hidden' }}>

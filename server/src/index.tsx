@@ -85,6 +85,7 @@ initMDB().then(() => {
       const splitModule = container.resolve(SplitModule);
       const userIdString = req.cookies.user_id;
       const userId = userIdString ? Number.parseInt(userIdString, 10) : undefined
+      res.cookie('ssr_user_id', userId)
 
       const timeZone = req.cookies.time_zone
       res.cookie('ssr_time_zone', timeZone)

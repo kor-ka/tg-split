@@ -124,4 +124,8 @@ export class SessionModel {
     ssrTimeSone = () => {
         return Cookies.get('ssr_time_zone')
     }
+
+    ssrUserId = () => {
+        return Cookies.get('ssr_user_id')
+    }
 }
