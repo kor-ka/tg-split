@@ -28,6 +28,7 @@ export const showAlert = (message: string) => {
 export const ModelContext = React.createContext<SessionModel | undefined>(undefined);
 export const UserContext = React.createContext<number | undefined>(undefined);
 export const UsersProvider = React.createContext<UsersModule>(new UsersModule());
+export const Timezone = React.createContext<string | undefined>(undefined);
 
 export const useNav = () => {
     if (typeof window !== "undefined") {
@@ -68,13 +69,15 @@ export const renderApp = (model: SessionModel) => {
         },
     ]);
 
-    return <ModelContext.Provider value={model}>
-        <UserContext.Provider value={model.tgWebApp.user.id}>
-            <UsersProvider.Provider value={model.users}>
-                <RouterProvider router={router} />
-            </UsersProvider.Provider>
-        </UserContext.Provider>
-    </ModelContext.Provider>
+    return <Timezone.Provider value={Intl.DateTimeFormat().resolvedOptions().timeZone}>
+        <ModelContext.Provider value={model}>
+            <UserContext.Provider value={model.tgWebApp.user.id}>
+                <UsersProvider.Provider value={model.users}>
+                    <RouterProvider router={router} />
+                </UsersProvider.Provider>
+            </UserContext.Provider>
+        </ModelContext.Provider>
+    </Timezone.Provider>
 }
 
 export const MainScreen = () => {
@@ -251,11 +254,12 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
 })
 
 const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operation>>> }) => {
+    const timeZone = React.useContext(Timezone)
     const logMap = useVMvalue(logVm)
     const log = React.useMemo(() => [...logMap.values()], [logMap])
-    let prevDate = ""
+    let prevDate: string | undefined = undefined
     return <CardLight key="log">{log.map((op, i, array) => {
-        const date = new Date(array[i].val.date).toLocaleString('en', { month: 'short', day: 'numeric' });
+        const date = timeZone && new Date(array[i].val.date).toLocaleString('en', { month: 'short', day: 'numeric', timeZone });
         const show = date !== prevDate
         prevDate = date
         return <React.Fragment key={op.val.id}>

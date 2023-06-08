@@ -13,7 +13,7 @@ import { SocketApi } from "./api/socket";
 import { container } from "tsyringe";
 import * as fs from "fs";
 import { initMDB } from "./utils/MDB";
-import { MainScreenView, UserContext, UsersProvider } from "../../src/view/MainScreen";
+import { MainScreenView, Timezone, UserContext, UsersProvider } from "../../src/view/MainScreen";
 import { SplitModule } from "./modules/splitModule/SplitModule";
 import { savedOpsToApi, savedUserToApi } from "./api/ClientAPI";
 import { UsersModule as UsersClientModule } from "../../src/model/UsersModule";
@@ -86,6 +86,8 @@ initMDB().then(() => {
       const userIdString = req.cookies.user_id;
       const userId = userIdString ? Number.parseInt(userIdString, 10) : undefined
 
+      const timeZone = req.cookies.time_zone
+
       const { balance: balanceState } = await splitModule.getBalanceCached(chatId, threadId)
       const balance = optimiseBalance(balanceState.balance)
         .filter(e => (userId !== undefined) && e.pair.includes(userId) && e.sum !== 0)
@@ -110,13 +112,15 @@ initMDB().then(() => {
 
       // const app = ''
       const app = ReactDOMServer.renderToString(
-        <UserContext.Provider
-          value={userId}
-        >
-          <UsersProvider.Provider value={usersProvider}>
-            <MainScreenView balanceVM={balanceStateVm} logVM={new VM(logMap)} />
-          </UsersProvider.Provider>
-        </UserContext.Provider>
+        <Timezone.Provider value={timeZone}>
+          <UserContext.Provider
+            value={userId}
+          >
+            <UsersProvider.Provider value={usersProvider}>
+              <MainScreenView balanceVM={balanceStateVm} logVM={new VM(logMap)} />
+            </UsersProvider.Provider>
+          </UserContext.Provider>
+        </Timezone.Provider>
       );
       const data = await getIndexStr();
       res.send(
