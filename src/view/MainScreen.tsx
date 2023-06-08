@@ -186,7 +186,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
     }, [shouldAnimate])
 
     if (userId === undefined) {
-        return <Card key="first" style={{ transition: "max-height ease-in 300ms", maxHeight }}>
+        return <Card key="first" style={{ transition: "max-height ease-in 300ms", maxHeight, overflow: 'hidden' }}>
             <ListItem titile={"Loading..."} subtitle="Figuring out the final details..." />
         </Card>
     }
@@ -196,29 +196,31 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
     }
 
     return <>
-        {!!balanceNegative.length && <Card key="first" style={{ transition: "max-height ease-in 300ms", maxHeight }}>
-            {balanceNegative?.map(e =>
-                <BalanceEntry key={e.pair.join('-')} balance={e} />
-            )}
-            {balanceNegative.length > 1 && <div style={{ marginBottom: 8, color: "var(--tg-theme-hint-color)" }}>
-                <ListItem
-                    key="negative-total"
-                    titile="Total"
-                    right={formatSum(sumNegative)} />
-            </div>}
-        </Card>}
+        {!!balanceNegative.length &&
+            <Card key="first" style={{ transition: "max-height ease-in 300ms", maxHeight, overflow: 'hidden' }}>
+                {balanceNegative?.map(e =>
+                    <BalanceEntry key={e.pair.join('-')} balance={e} />
+                )}
+                {balanceNegative.length > 1 && <div style={{ marginBottom: 8, color: "var(--tg-theme-hint-color)" }}>
+                    <ListItem
+                        key="negative-total"
+                        titile="Total"
+                        right={formatSum(sumNegative)} />
+                </div>}
+            </Card>}
 
-        {!!balancePositive.length && <Card key={!!balanceNegative.length ? "second" : "first"} style={{ transition: "max-height ease-in 300ms", maxHeight }}>
-            {balancePositive?.map(e =>
-                <BalanceEntry key={e.pair.join('-')} balance={e} />
-            )}
-            {balancePositive.length > 1 && <div style={{ marginBottom: 8, color: "var(--tg-theme-hint-color)" }}>
-                <ListItem
-                    key="positive-total"
-                    titile="Total"
-                    right={formatSum(sumPosistive)} />
-            </div>}
-        </Card>}
+        {!!balancePositive.length &&
+            <Card key={!!balanceNegative.length ? "second" : "first"} style={{ transition: "max-height ease-in 300ms", maxHeight, overflow: 'hidden' }}>
+                {balancePositive?.map(e =>
+                    <BalanceEntry key={e.pair.join('-')} balance={e} />
+                )}
+                {balancePositive.length > 1 && <div style={{ marginBottom: 8, color: "var(--tg-theme-hint-color)" }}>
+                    <ListItem
+                        key="positive-total"
+                        titile="Total"
+                        right={formatSum(sumPosistive)} />
+                </div>}
+            </Card>}
     </>
 })
 
