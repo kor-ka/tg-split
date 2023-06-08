@@ -181,7 +181,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
             setTimeout(() => {
                 setMaxHeight(9000)
             }, 301);
-        }, 10)
+        }, 100)
 
     }, [shouldAnimate])
 
@@ -296,7 +296,7 @@ const DateView = React.memo(({ date }: { date: string }) => {
         amimateDateOnce = false
         setTimeout(() => {
             setMaxHeight(50)
-        }, 10)
+        }, 100)
     }, [shouldAnimate])
     return <Card key={'date'} style={{ alignSelf: 'center', margin: 0, padding: 0, fontSize: '0.7em', borderRadius: 12, position: 'sticky', top: 16, transition: "max-height ease-in 300ms", maxHeight, overflow: 'hidden' }}>
         <ListItem titile={date} titleStyle={{ padding: 0, fontWeight: 500 }} leftStyle={{ padding: '0 4px' }} />
