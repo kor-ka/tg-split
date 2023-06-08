@@ -80,6 +80,16 @@ export const renderApp = (model: SessionModel) => {
     </Timezone.Provider>
 }
 
+const formatSum = (sum: number, abs = true) => {
+    let s = ((abs ? Math.abs(sum) : sum) / 100)
+
+    if (s >= 1000 && s % 1 === 0) {
+        s /= 1000
+        return s + 'K'
+    }
+    return s.toString()
+}
+
 export const MainScreen = () => {
     const model = React.useContext(ModelContext)
     return model ? <MainScreenWithModel model={model} /> : null
@@ -137,7 +147,7 @@ const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
         nav(`/tg/addPayment?uid=${user.id}&sum=${Math.abs(balance.sum)}`)
     }, [nav, user.id])
     return <div onClick={balance.sum < 0 ? navigateToAddPayment : undefined}>
-        <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: balance.sum < 0 ? 'var(--text-destructive-color)' : 'var(--text-confirm-color)' }}>{(Math.abs(balance.sum) / 100).toString()}</span>} />
+        <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: balance.sum < 0 ? 'var(--text-destructive-color)' : 'var(--text-confirm-color)' }}>{formatSum(balance.sum)}</span>} />
     </div>
 })
 
@@ -173,7 +183,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
                 <ListItem
                     key="negative-total"
                     titile="Total"
-                    right={(Math.abs(sumNegative) / 100).toString()} />
+                    right={formatSum(sumNegative)} />
             </div>}
         </Card>}
 
@@ -185,7 +195,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
                 <ListItem
                     key="positive-total"
                     titile="Total"
-                    right={(Math.abs(sumPosistive) / 100).toString()} />
+                    right={formatSum(sumPosistive)} />
             </div>}
         </Card>}
     </>
@@ -223,7 +233,7 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
         }
     }, [op.uid, op.uids, userId])
     return <div onClick={onClick} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
-        <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum / 100).toString()}</span>} />
+        <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{formatSum(op.sum)}</span>} />
     </div >
 })
 
@@ -249,7 +259,7 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
     }, [op.uid, op.dstUid, userId])
 
     return <div onClick={onClick} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
-        <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{(op.sum / 100).toString()}</span>} />
+        <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={<span style={{ fontSize: '1.4em', color: sumColor }}>{formatSum(op.sum)}</span>} />
     </div>
 })
 
