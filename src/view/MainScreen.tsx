@@ -167,15 +167,28 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
     }, [balance])
 
     const userId = React.useContext(UserContext)
+
+    // if ssr missing user, maxHeight to 0, 750 on client to animate 
+    const [maxHeight, setMaxHeight] = React.useState(userId ? 750 : 58.5)
+    React.useEffect(() => {
+        // expand to "no limit" after animation
+        setTimeout(() => {
+            setMaxHeight(9000)
+        }, 301);
+    }, [])
+
     if (userId === undefined) {
-        return <Card> <ListItem titile={"Loading..."} subtitle="Figuring out the final details..." /> </Card>
+        return <Card style={{ transition: "max-height ease-in 300ms", maxHeight }}>
+            <ListItem titile={"Loading..."} subtitle="Figuring out the final details..." />
+        </Card>
     }
+
     if (balance?.length === 0) {
         return <Card> <ListItem titile="✨ All settled up ✨" subtitle="You are awesome" /> </Card>
     }
 
     return <>
-        {!!balanceNegative.length && <Card key="negative">
+        {!!balanceNegative.length && <Card style={{ transition: "max-height ease-in 300ms", maxHeight }}>
             {balanceNegative?.map(e =>
                 <BalanceEntry key={e.pair.join('-')} balance={e} />
             )}
@@ -187,7 +200,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
             </div>}
         </Card>}
 
-        {!!balancePositive.length && <Card key="positive">
+        {!!balancePositive.length && <Card style={{ transition: "max-height ease-in 300ms", maxHeight }}>
             {balancePositive?.map(e =>
                 <BalanceEntry key={e.pair.join('-')} balance={e} />
             )}
@@ -263,6 +276,21 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
     </div>
 })
 
+
+let amimateDateOnce = true
+const DateView = React.memo(({ date }: { date: string }) => {
+    const model = React.useContext(ModelContext)
+    const shouldAnimate = React.useMemo(() => model && !model.ssrTimeSone() && amimateDateOnce, [])
+    const [maxHeight, setMaxHeight] = React.useState(shouldAnimate ? 0 : 50)
+    React.useEffect(() => {
+        setMaxHeight(50)
+        amimateDateOnce = false
+    }, [shouldAnimate])
+    return <Card key={'date'} style={{ alignSelf: 'center', margin: 0, padding: 0, fontSize: '0.7em', borderRadius: 12, position: 'sticky', top: 16, transition: "max-height ease-in 300ms", maxHeight }}>
+        <ListItem titile={date} titleStyle={{ padding: 0, fontWeight: 500 }} leftStyle={{ padding: '0 4px' }} />
+    </Card>
+})
+
 const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operation>>> }) => {
     const timeZone = React.useContext(Timezone)
     const logMap = useVMvalue(logVm)
@@ -273,7 +301,7 @@ const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operat
         const show = date !== prevDate
         prevDate = date
         return <React.Fragment key={op.val.id}>
-            {show && <Card key={'date'} style={{ alignSelf: 'center', margin: 0, padding: 0, fontSize: '0.7em', borderRadius: 12, position: 'sticky', top: 16 }}><ListItem titile={date} titleStyle={{ padding: 0, fontWeight: 500 }} leftStyle={{ padding: '0 4px' }} /></Card>}
+            {show && date && <DateView date={date} />}
             {op.val.type === 'split' ? <SplitLogItem key={op.val.id} opVM={op as VM<OperationSplit>} /> : op.val.type === 'transfer' ? <TransferLogItem key={op.val.id} opVM={op as VM<OperationTransfer>} /> : null}
         </React.Fragment>
     })}</CardLight>

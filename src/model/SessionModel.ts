@@ -120,4 +120,8 @@ export class SessionModel {
         });
         return d.promise
     };
+
+    ssrTimeSone = () => {
+        return Cookies.get('ssr_time_zone')
+    }
 }

@@ -87,6 +87,7 @@ initMDB().then(() => {
       const userId = userIdString ? Number.parseInt(userIdString, 10) : undefined
 
       const timeZone = req.cookies.time_zone
+      res.cookie('ssr_time_zone', timeZone)
 
       const { balance: balanceState } = await splitModule.getBalanceCached(chatId, threadId)
       const balance = optimiseBalance(balanceState.balance)
