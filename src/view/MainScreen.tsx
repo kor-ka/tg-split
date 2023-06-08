@@ -178,7 +178,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
     }, [])
 
     if (userId === undefined) {
-        return <Card style={{ transition: "max-height ease-in 300ms", maxHeight }}>
+        return <Card key="first" style={{ transition: "max-height ease-in 300ms", maxHeight }}>
             <ListItem titile={"Loading..."} subtitle="Figuring out the final details..." />
         </Card>
     }
@@ -188,7 +188,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
     }
 
     return <>
-        {!!balanceNegative.length && <Card style={{ transition: "max-height ease-in 300ms", maxHeight }}>
+        {!!balanceNegative.length && <Card key="first" style={{ transition: "max-height ease-in 300ms", maxHeight }}>
             {balanceNegative?.map(e =>
                 <BalanceEntry key={e.pair.join('-')} balance={e} />
             )}
@@ -200,7 +200,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
             </div>}
         </Card>}
 
-        {!!balancePositive.length && <Card style={{ transition: "max-height ease-in 300ms", maxHeight }}>
+        {!!balancePositive.length && <Card key={!!balanceNegative.length ? "second" : "first"} style={{ transition: "max-height ease-in 300ms", maxHeight }}>
             {balancePositive?.map(e =>
                 <BalanceEntry key={e.pair.join('-')} balance={e} />
             )}
@@ -283,10 +283,12 @@ const DateView = React.memo(({ date }: { date: string }) => {
     const shouldAnimate = React.useMemo(() => model && !model.ssrTimeSone() && amimateDateOnce, [])
     const [maxHeight, setMaxHeight] = React.useState(shouldAnimate ? 0 : 50)
     React.useEffect(() => {
-        setMaxHeight(50)
-        amimateDateOnce = false
+        setTimeout(() => {
+            setMaxHeight(50)
+            amimateDateOnce = false
+        }, 10)
     }, [shouldAnimate])
-    return <Card key={'date'} style={{ alignSelf: 'center', margin: 0, padding: 0, fontSize: '0.7em', borderRadius: 12, position: 'sticky', top: 16, transition: "max-height ease-in 300ms", maxHeight }}>
+    return <Card key={'date'} style={{ alignSelf: 'center', margin: 0, padding: 0, fontSize: '0.7em', borderRadius: 12, position: 'sticky', top: 16, transition: "max-height ease-in 300ms", maxHeight, overflow: 'hidden' }}>
         <ListItem titile={date} titleStyle={{ padding: 0, fontWeight: 500 }} leftStyle={{ padding: '0 4px' }} />
     </Card>
 })
