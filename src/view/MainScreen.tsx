@@ -153,37 +153,39 @@ const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
 
 let animateBalanceOnce = true;
 const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | undefined> }) => {
-    const model = React.useContext(ModelContext)
-    const balance = useVMvalue(balanceVM)?.balance
+    const model = React.useContext(ModelContext);
+    const balance = useVMvalue(balanceVM)?.balance;
 
     let [balancePositive, sumPosistive] = React.useMemo(() => {
-        const b = balance?.filter(b => b.sum > 0) || []
-        const sum = b.reduce((acc, e) => acc + e.sum, 0)
-        return [b, sum]
-    }, [balance])
+        const b = balance?.filter(b => b.sum > 0) || [];
+        const sum = b.reduce((acc, e) => acc + e.sum, 0);
+        return [b, sum];
+    }, [balance]);
 
     let [balanceNegative, sumNegative] = React.useMemo(() => {
-        const b = balance?.filter(b => b.sum < 0) || []
-        const sum = b.reduce((acc, e) => acc + e.sum, 0)
+        const b = balance?.filter(b => b.sum < 0) || [];
+        const sum = b.reduce((acc, e) => acc + e.sum, 0);
         return [b, sum]
-    }, [balance])
+    }, [balance]);
 
-    const userId = React.useContext(UserContext)
+    const userId = React.useContext(UserContext);
 
-    const shouldAnimate = React.useMemo(() => model && !model.ssrUserId() && animateBalanceOnce, [])
+    const shouldAnimate = React.useMemo(() => model && !model.ssrUserId() && animateBalanceOnce, []);
     // if ssr missing user, maxHeight to 1 line, 750 on client to animate 
-    const [maxHeight, setMaxHeight] = React.useState(shouldAnimate ? 58.5 : 750)
+    const [maxHeight, setMaxHeight] = React.useState(shouldAnimate ? 58.5 : 750);
     React.useEffect(() => {
-        animateBalanceOnce = false;
-        setTimeout(() => {
-            setMaxHeight(750)
-            // expand to "no limit" after animation
+        if (shouldAnimate) {
+            animateBalanceOnce = false;
             setTimeout(() => {
-                setMaxHeight(9000)
-            }, 301);
-        }, 100)
+                setMaxHeight(750);
+                // expand to "no limit" after animation
+                setTimeout(() => {
+                    setMaxHeight(9000);
+                }, 301);
+            }, 10);
+        }
 
-    }, [shouldAnimate])
+    }, [shouldAnimate]);
 
     if (userId === undefined) {
         return <Card key="first" style={{ transition: "max-height ease-in 300ms", maxHeight, overflow: 'hidden' }}>
@@ -222,7 +224,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
                 </div>}
             </Card>}
     </>
-})
+});
 
 const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
     const op = useVMvalue(opVM)
@@ -289,19 +291,21 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
 
 let amimateDateOnce = true
 const DateView = React.memo(({ date }: { date: string }) => {
-    const model = React.useContext(ModelContext)
-    const shouldAnimate = React.useMemo(() => model && !model.ssrTimeSone() && amimateDateOnce, [])
-    const [maxHeight, setMaxHeight] = React.useState(shouldAnimate ? 0 : 50)
+    const model = React.useContext(ModelContext);
+    const shouldAnimate = React.useMemo(() => model && !model.ssrTimeSone() && amimateDateOnce, []);
+    const [maxHeight, setMaxHeight] = React.useState(shouldAnimate ? 0 : 50);
     React.useEffect(() => {
-        amimateDateOnce = false
-        setTimeout(() => {
-            setMaxHeight(50)
-        }, 100)
-    }, [shouldAnimate])
+        if (shouldAnimate) {
+            amimateDateOnce = false;
+            setTimeout(() => {
+                setMaxHeight(50);
+            }, 10);
+        }
+    }, [shouldAnimate]);
     return <Card key={'date'} style={{ alignSelf: 'center', margin: 0, padding: 0, fontSize: '0.7em', borderRadius: 12, position: 'sticky', top: 16, transition: "max-height ease-in 300ms", maxHeight, overflow: 'hidden' }}>
         <ListItem titile={date} titleStyle={{ padding: 0, fontWeight: 500 }} leftStyle={{ padding: '0 4px' }} />
     </Card>
-})
+});
 
 const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operation>>> }) => {
     const timeZone = React.useContext(Timezone)
