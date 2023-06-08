@@ -25,9 +25,6 @@ export const AddTransferScreen = () => {
     const [loading, setLoading] = React.useState(false);
     const onClick = React.useCallback(() => {
         const sum = Math.floor(Number(sumRef.current?.value.replace(',', '.')) * 100);
-        if (sum === 0) {
-            return;
-        }
         if (!loading) {
             setLoading(true);
             model?.commitOperation({ type: editOp ? 'update' : 'create', operation: { type: 'transfer', sum, id: editOp?.id ?? model.nextId() + '', dstUid: dst.id } })

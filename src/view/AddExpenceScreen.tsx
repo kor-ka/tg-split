@@ -58,9 +58,6 @@ export const AddExpenceScreen = () => {
     const onClick = React.useCallback(() => {
         console.log("submit click", sumRef.current?.value);
         const sum = Math.floor(Number(sumRef.current?.value.replace(',', '.')) * 100);
-        if (sum === 0) {
-            return;
-        }
         if (!loading) {
             setLoading(true);
             model?.commitOperation({ type: editTransaction ? 'update' : 'create', operation: { type: 'split', sum, id: editTransaction?.id ?? model.nextId() + '', description: descriptionRef.current?.value, uids: [...checked.values()] } })
