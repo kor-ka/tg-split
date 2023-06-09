@@ -165,7 +165,7 @@ export class SplitModule {
   }
 
   getBalanceCached = async (chatId: number, threadId: number | undefined) => {
-    let balance = this.balanceCache.get(`${chatId}_${threadId}`)
+    let balance = this.balanceCache.get(`${chatId}_${threadId ?? undefined}`)
     const balancePromsie = this.getBalance(chatId, threadId)
     if (!balance) {
       balance = await balancePromsie
@@ -176,7 +176,7 @@ export class SplitModule {
   logCache = new Map<string, SavedOp[]>();
   getLog = async (chatId: number, threadId: number | undefined, limit = 500): Promise<SavedOp[]> => {
     const res = await this.ops.find({ chatId, threadId, deleted: { $ne: true } }, { limit, sort: { _id: -1 } }).toArray()
-    this.logCache.set(`${chatId}-${threadId}-${limit}`, res)
+    this.logCache.set(`${chatId}-${threadId ?? undefined}-${limit}`, res)
     return res
   }
 
