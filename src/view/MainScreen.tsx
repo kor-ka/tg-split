@@ -117,7 +117,7 @@ export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<Balanc
         <BalanceView balanceVM={balanceVM} />
         <LogView logVM={log} />
         {/* <button onClick={() => nav("/tg/addPayment")} >Add payment</button> */}
-        <MainButtopnController onClick={() => nav("/tg/addExpence")} text={"Add expense"} />
+        <MainButtopnController onClick={() => nav("/tg/addExpence")} text={"ADD EXPENSE"} />
     </div>
 }
 

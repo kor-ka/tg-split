@@ -60,8 +60,8 @@ export const AddTransferScreen = () => {
         <div style={{ display: 'flex', flexDirection: 'column', padding: '20px 0px' }}>
             <CardLight><ListItem titile={`You → ${dst.fullName}`} /></CardLight>
             <input ref={sumRef} defaultValue={initialSum / 100} disabled={disable} autoFocus={true} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
-            {editOp && <Button disabled={disable} onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="Delete Payment" /></Button>}
+            {editOp && <Button disabled={disable} onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="DELETE PAYMENT" /></Button>}
         </div>
-        <MainButtopnController onClick={onClick} text={(editOp ? "Edit" : "Add") + " payment"} progress={loading} isActive={!disable} />
+        <MainButtopnController onClick={onClick} text={(editOp ? "EDIT" : "ADD") + " PAYMENT"} progress={loading} isActive={!disable} />
     </>
 }
