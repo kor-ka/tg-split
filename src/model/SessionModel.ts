@@ -27,8 +27,8 @@ export class SessionModel {
     };
 
     constructor(params: { initDataUnsafe: TgWebAppInitData, initData: string }) {
-        Cookies.set("user_id", params.initDataUnsafe.user.id.toString(), { path: "/", secure: true, expires: 1000 * 60 * 60 * 24 * 30 })
-        Cookies.set("time_zone", Intl.DateTimeFormat().resolvedOptions().timeZone, { path: "/", secure: true, expires: 1000 * 60 * 60 * 24 * 30 })
+        Cookies.set("user_id", params.initDataUnsafe.user.id.toString(), { path: "/", sameSite: 'None', secure: true, expires: 1000 * 60 * 60 * 24 * 30 })
+        Cookies.set("time_zone", Intl.DateTimeFormat().resolvedOptions().timeZone, { path: "/", sameSite: 'None', secure: true, expires: 1000 * 60 * 60 * 24 * 30 })
 
         this.users = new UsersModule(params.initDataUnsafe.user.id)
 
