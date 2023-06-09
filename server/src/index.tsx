@@ -86,12 +86,12 @@ initMDB().then(() => {
       const userIdString = req.cookies.user_id;
       const userId = userIdString ? Number.parseInt(userIdString, 10) : undefined
       if (userId !== undefined) {
-        res.cookie('ssr_user_id', userId)
+        res.cookie('ssr_user_id', userId, { sameSite: 'none', secure: true })
       }
 
       const timeZone = req.cookies.time_zone
       if (timeZone !== undefined) {
-        res.cookie('ssr_time_zone', timeZone)
+        res.cookie('ssr_time_zone', timeZone, { sameSite: 'none', secure: true })
       }
 
       const { balance: balanceState } = await splitModule.getBalanceCached(chatId, threadId)
