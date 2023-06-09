@@ -63,7 +63,7 @@ export class ClientAPI {
                             const { operation: updatedOp, balanceState } = await this.splitModule.commitOperation(chatId, threadId, type, op)
                             ack({ patch: { type, balanceState, operation: savedOpToApi(updatedOp) } })
                         } else if (type === 'delete') {
-                            const { operation: updatedOp, balanceState } = await this.splitModule.deleteOperation(command.id)
+                            const { operation: updatedOp, balanceState } = await this.splitModule.deleteOperation(command.id, tgData.user.id)
                             ack({ patch: { type, balanceState, operation: savedOpToApi(updatedOp) } })
                         }
 

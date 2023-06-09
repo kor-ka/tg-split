@@ -33,7 +33,7 @@ export class SplitModule {
         } else if (type === 'update') {
           _id = new ObjectId(id)
           // update op
-          const op = (await this.ops.findOne({ _id, deleted: { $ne: true } }))
+          const op = (await this.ops.findOne({ _id, uid, deleted: { $ne: true } }))
           if (!op) {
             throw new Error("Operation not found")
           }
@@ -94,9 +94,9 @@ export class SplitModule {
   };
 
   // TODO: merge with commit? - two signatures for this function?
-  deleteOperation = async (id: string) => {
+  deleteOperation = async (id: string, uid: number) => {
     const _id = new ObjectId(id);
-    const op = await this.ops.findOne({ _id });
+    const op = await this.ops.findOne({ _id, uid });
     if (!op) {
       throw new Error("Operation not found")
     }
