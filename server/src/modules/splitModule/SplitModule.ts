@@ -6,14 +6,12 @@ import { ObjectId, WithId } from "mongodb";
 import { Subject } from "../../utils/subject";
 import { savedOpToApi } from "../../api/ClientAPI";
 
-type StateListener = (balance: BalanceState, op: Operation) => void
-
 @singleton()
 export class SplitModule {
   private balance = BALANCE();
   private ops = OP();
 
-  readonly stateSubject = new Subject<{ chatId: number, threadId: number | undefined, balanceState: BalanceState, operation: SavedOp, type: 'create' | 'update' | 'delete' }>;
+  readonly stateUpateSubject = new Subject<{ chatId: number, threadId: number | undefined, balanceState: BalanceState, operation: SavedOp, type: 'create' | 'update' | 'delete' }>;
 
   commitOperation = async (chatId: number, threadId: number | undefined, type: 'create' | 'update', operation: ClientAPICommandOperation & { uid: number }) => {
     if (typeof operation.sum !== 'number' || operation.sum % 1 !== 0 || operation.sum < 0) {
@@ -77,13 +75,16 @@ export class SplitModule {
       })
 
       const balanceState = await this.getBalance(chatId, threadId)
+      // non-blocking cache update
+      this.getLog(chatId, threadId).catch((e) => console.error(e))
+
       const op = await this.ops.findOne({ _id })
       if (!op) {
         throw new Error("operation lost during " + type)
       }
 
       // notify all
-      this.stateSubject.next({ chatId, threadId, balanceState, operation: op, type })
+      this.stateUpateSubject.next({ chatId, threadId, balanceState, operation: op, type })
       return { operation: op, balanceState }
 
 
@@ -92,6 +93,7 @@ export class SplitModule {
     }
   };
 
+  // TODO: merge with commit? - two signatures for this function?
   deleteOperation = async (id: string) => {
     const _id = new ObjectId(id);
     const op = await this.ops.findOne({ _id });
@@ -133,9 +135,11 @@ export class SplitModule {
       }
 
       const balanceState = await this.getBalance(chatId, threadId);
+      // non-blocking cache update
+      this.getLog(chatId, threadId).catch((e) => console.error(e))
 
       // notify all
-      this.stateSubject.next({ chatId, threadId, balanceState, operation: op, type: 'delete' })
+      this.stateUpateSubject.next({ chatId, threadId, balanceState, operation: op, type: 'delete' })
 
       return { operation: op, balanceState };
     }

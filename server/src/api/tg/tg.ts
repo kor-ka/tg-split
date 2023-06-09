@@ -167,7 +167,7 @@ export class TelegramBot {
     });
 
     // TODO: this shit can race, add worker
-    this.splitModule.stateSubject.subscribe(async (upd) => {
+    this.splitModule.stateUpateSubject.subscribe(async (upd) => {
       try {
         const { chatId, threadId, balanceState } = upd;
         const pinned = await this.pinModule.getPinMeta(chatId, threadId);

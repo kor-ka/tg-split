@@ -20,7 +20,7 @@ export class ClientAPI {
     }
 
     readonly init = () => {
-        this.splitModule.stateSubject.subscribe(state => {
+        this.splitModule.stateUpateSubject.subscribe(state => {
             const { chatId, threadId, balanceState, operation, type } = state
             const upd: StateUpdate = { balanceState, operation: savedOpToApi(operation), type }
             this.io.to('chatClient_' + [chatId, threadId].filter(Boolean).join('_')).emit('update', upd)
