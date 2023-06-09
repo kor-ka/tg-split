@@ -174,13 +174,13 @@ export class SplitModule {
   }
 
   logCache = new Map<string, SavedOp[]>();
-  getLog = async (chatId: number, threadId: number | undefined, limit = 500): Promise<SavedOp[]> => {
+  getLog = async (chatId: number, threadId: number | undefined, limit = 200): Promise<SavedOp[]> => {
     const res = await this.ops.find({ chatId, threadId, deleted: { $ne: true } }, { limit, sort: { _id: -1 } }).toArray()
     this.logCache.set(`${chatId}-${threadId ?? undefined}-${limit}`, res)
     return res
   }
 
-  getLogCached = async (chatId: number, threadId: number | undefined, limit = 500) => {
+  getLogCached = async (chatId: number, threadId: number | undefined, limit = 200) => {
     let log = this.logCache.get(`${chatId}-${threadId ?? undefined}-${limit}`)
     const logPromise = this.getLog(chatId, threadId, limit)
     if (!log) {

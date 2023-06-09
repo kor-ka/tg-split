@@ -330,15 +330,18 @@ const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operat
     const logMap = useVMvalue(logVm)
     const log = React.useMemo(() => [...logMap.values()], [logMap])
     let prevDate: string | undefined = undefined
-    return <CardLight key="log">{log.map((op, i, array) => {
-        const date = timeZone && new Date(array[i].val.date).toLocaleString('en', { month: 'short', day: 'numeric', timeZone });
-        const show = date !== prevDate
-        prevDate = date
-        return <React.Fragment key={op.val.id}>
-            {show && date && <DateView date={date} />}
-            {op.val.type === 'split' ? <SplitLogItem key={op.val.id} opVM={op as VM<OperationSplit>} /> : op.val.type === 'transfer' ? <TransferLogItem key={op.val.id} opVM={op as VM<OperationTransfer>} /> : null}
-        </React.Fragment>
-    })}</CardLight>
+    return <>
+        <CardLight key="log">{log.map((op, i, array) => {
+            const date = timeZone && new Date(array[i].val.date).toLocaleString('en', { month: 'short', day: 'numeric', timeZone });
+            const show = date !== prevDate
+            prevDate = date
+            return <React.Fragment key={op.val.id}>
+                {show && date && <DateView date={date} />}
+                {op.val.type === 'split' ? <SplitLogItem key={op.val.id} opVM={op as VM<OperationSplit>} /> : op.val.type === 'transfer' ? <TransferLogItem key={op.val.id} opVM={op as VM<OperationTransfer>} /> : null}
+            </React.Fragment>
+        })}</CardLight>
+        {log.length === 200 && <Card><ListItem subtitle={`Maybe there are more operation, who knows 🤷‍♂️\nDeveloper was too lasy to implement pagination.`} /></Card>}
+    </>
 }))
 
 export const BackButtopnController = React.memo(() => {
