@@ -89,7 +89,7 @@ export const AddExpenceScreen = () => {
             <input ref={sumRef} defaultValue={editTransaction ? editTransaction.sum / 100 : undefined} autoFocus={true} disabled={disable} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
             <CardLight><ListItem subtitle="Split among: " /></CardLight>
             {sorted.map(u => <UserCheckListItem id={u.val.id} key={u.val.id} onUserClick={onUserClick} checked={checked.has(u.val.id)} disabled={disable} />)}
-            <Card><ListItem subtitle={`Missing someone?\nIf there are some users not displayed here (but they are in the group), ask them to write a mesage to group or open this app.`} /></Card>
+            <Card><ListItem subtitle={`Missing someone?\nIf there are users not displayed here (but they are in the group), ask them to write a message to the group or open this app.`} /></Card>
         </div>
         <MainButtopnController onClick={onClick} text={(editTransaction ? 'Edit' : 'Add') + ' expense'} progress={loading} isActive={!disable} />
     </>
