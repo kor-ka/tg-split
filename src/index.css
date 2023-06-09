@@ -61,6 +61,11 @@ body {
 
 }
 
+button {
+  font-size: 1em;
+  border: none;
+}
+
 input,
 select,
 textarea {
