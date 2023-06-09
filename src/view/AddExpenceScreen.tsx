@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { OperationSplit } from "../../entity";
 import { useVMvalue } from "../utils/vm/useVM";
-import { BackButtopnController, Card, CardLight, ListItem, MainButtopnController, ModelContext, showAlert, useNav, UserContext, UsersProvider, WebApp, __DEV__ } from "./MainScreen"
+import { BackButtopnController, Card, CardLight, ListItem, MainButtopnController, ModelContext, showAlert, showConfirm, useNav, UserContext, UsersProvider, WebApp, __DEV__ } from "./MainScreen"
 
 const UserCheckListItem = React.memo(({ id, checked, onUserClick, disabled }: { id: number, checked: boolean, onUserClick: (id: number) => void, disabled: boolean }) => {
     const usersModule = React.useContext(UsersProvider)
@@ -28,7 +28,7 @@ export const AddExpenceScreen = () => {
     const editTransactionId = searchParams.get("editExpense");
     const editTransaction: OperationSplit | undefined = editTransactionId ? model?.logModule.getOperationOpt(editTransactionId) : undefined;
 
-    const disable = !!editTransaction?.deleted || (!!editTransaction && editTransaction.uid !== userId);
+    let disable = !!editTransaction?.deleted || (!!editTransaction && editTransaction.uid !== userId);
 
     const descriptionRef = React.useRef<HTMLTextAreaElement>(null);
     const sumRef = React.useRef<HTMLInputElement>(null);
@@ -56,32 +56,61 @@ export const AddExpenceScreen = () => {
     }, []);
 
     const [loading, setLoading] = React.useState(false);
+
+    const handleOperation = React.useCallback(<T,>(promise: Promise<T>) => {
+        if (loading) {
+            return Promise.reject(new Error("operation already in progress"))
+        }
+        setLoading(true);
+        return promise.then((res: T) => {
+            WebApp?.HapticFeedback.notificationOccurred("success");
+            nav(-1);
+            return res
+        })
+            .catch(e => {
+                WebApp?.HapticFeedback.notificationOccurred("error");
+                if (e instanceof Error) {
+                    showAlert(e.message);
+                }
+                throw e
+            })
+            .finally(() => setLoading(false));
+    }, [loading])
+
+    disable = disable || loading
+
     const onClick = React.useCallback(() => {
         console.log("submit click", sumRef.current?.value);
         const sum = Math.floor(Number(sumRef.current?.value.replace(',', '.')) * 100);
-        if (!loading) {
-            setLoading(true);
-            model?.commitOperation({ type: editTransaction ? 'update' : 'create', operation: { type: 'split', sum, id: editTransaction?.id ?? model.nextId() + '', description: descriptionRef.current?.value, uids: [...checked.values()] } })
-                .then(() => {
-                    WebApp?.HapticFeedback.notificationOccurred("success");
-                    nav(-1);
-                })
-                .catch(e => {
-                    console.error(e);
-                    WebApp?.HapticFeedback.notificationOccurred("error");
-                    if (e instanceof Error) {
-                        showAlert(e.message);
-                    } else {
-                        console.error(e);
+        if (model) {
+            handleOperation(
+                model.commitOperation({
+                    type: editTransaction ? 'update' : 'create',
+                    operation: {
+                        type: 'split',
+                        sum,
+                        id: editTransaction?.id ?? model.nextId() + '',
+                        description: descriptionRef.current?.value,
+                        uids: [...checked.values()]
                     }
-
-                })
-                .finally(() => setLoading(false));
+                })).catch(console.error)
         }
-    }, [loading, checked]);
+    }, [model, checked, editTransaction, handleOperation]);
+
+
+    const onDeleteClick = React.useCallback(() => {
+        showConfirm("Delete expense? This can not be undone.", (confirmed) => {
+            if (confirmed && model && editTransactionId) {
+                handleOperation(
+                    model.commitOperation({
+                        type: 'delete',
+                        id: editTransactionId
+                    })).catch(console.error)
+            }
+        })
+    }, [model, editTransactionId, handleOperation])
 
     const sorted = React.useMemo(() => [...usersModule.users.values()].sort((a, b) => (a.val.disabled === b.val.disabled) ? 0 : a.val.disabled ? 1 : -1), [usersModule.users]);
-
     return <>
         <BackButtopnController />
         <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0px', whiteSpace: 'pre-wrap' }}>
@@ -90,6 +119,7 @@ export const AddExpenceScreen = () => {
             <CardLight><ListItem subtitle="Split among: " /></CardLight>
             {sorted.map(u => <UserCheckListItem id={u.val.id} key={u.val.id} onUserClick={onUserClick} checked={checked.has(u.val.id)} disabled={disable} />)}
             <Card><ListItem subtitle={`Missing someone?\nIf there are users not displayed here (but they are in the group), ask them to write a message to the group or open this app.`} /></Card>
+            {editTransactionId && <Card onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="Delete Expense" /></Card>}
         </div>
         <MainButtopnController onClick={onClick} text={(editTransaction ? 'Edit' : 'Add') + ' expense'} progress={loading} isActive={!disable} />
     </>

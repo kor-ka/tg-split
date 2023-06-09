@@ -19,11 +19,22 @@ if (typeof window !== "undefined") {
     WebApp = (window as any).Telegram.WebApp
 }
 export const showAlert = (message: string) => {
-    WebApp?.showAlert(message)
     if (__DEV__) {
-        alert(message)
+        window.alert(message)
+    } else {
+        WebApp?.showAlert(message)
     }
 }
+
+export const showConfirm = (message: string, callback: (confirmed: boolean) => void) => {
+    if (__DEV__) {
+        callback(window.confirm(message))
+    } else {
+        WebApp?.showConfirm(message, callback)
+
+    }
+}
+
 
 export const ModelContext = React.createContext<SessionModel | undefined>(undefined);
 export const UserContext = React.createContext<number | undefined>(undefined);
@@ -110,8 +121,8 @@ export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<Balanc
     </div>
 }
 
-export const Card = ({ children, style }: { children: any, style?: any }) => {
-    return <div style={{ display: 'flex', flexDirection: 'column', margin: '8px 16px', padding: 4, backgroundColor: "var(--tg-theme-secondary-bg-color)", borderRadius: 16, ...style }}>{children}</div>
+export const Card = ({ children, style, onClick }: { children: any, style?: any, onClick?: React.MouseEventHandler<HTMLDivElement> }) => {
+    return <div onClick={onClick} style={{ display: 'flex', flexDirection: 'column', margin: '8px 16px', padding: 4, backgroundColor: "var(--tg-theme-secondary-bg-color)", borderRadius: 16, ...style }}>{children}</div>
 }
 
 export const CardLight = ({ children, style }: { children: any, style?: any }) => {

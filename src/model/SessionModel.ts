@@ -58,6 +58,11 @@ export class SessionModel {
                 this.bumpBalance(balanceState);
             }
             if (log) {
+                // happens on reconnect and cache update
+                // since some operation may be deleted in between, rewrite whole log
+                // TODO: detect deletions?
+                this.logModule.log.next(new Map())
+
                 for (let i = log.length - 1; i >= 0; i--) {
                     this.addOperation(log[i])
                 }

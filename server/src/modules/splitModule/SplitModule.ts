@@ -119,7 +119,7 @@ export class SplitModule {
           }, { session });
 
           // update after balance - check seq not changed
-          const res = await this.ops.updateOne({ _id, seq: op.seq }, { $set: { deleted: true }, inc: { seq: 1 } }, { session })
+          const res = await this.ops.updateOne({ _id, seq: op.seq }, { $set: { deleted: true }, $inc: { seq: 1 } }, { session })
           if (res.modifiedCount === 0) {
             // propbably seq updated concurrently - throw
             throw new Error("Error occured, try again later")
@@ -171,7 +171,7 @@ export class SplitModule {
 
   logCache = new Map<string, SavedOp[]>();
   getLog = async (chatId: number, threadId: number | undefined, limit = 500): Promise<SavedOp[]> => {
-    const res = await this.ops.find({ chatId, threadId }, { limit, sort: { _id: -1 } }).toArray()
+    const res = await this.ops.find({ chatId, threadId, deleted: { $ne: true } }, { limit, sort: { _id: -1 } }).toArray()
     this.logCache.set(`${chatId}-${threadId}-${limit}`, res)
     return res
   }
