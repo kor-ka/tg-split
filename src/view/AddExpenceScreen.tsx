@@ -20,26 +20,27 @@ const UserCheckListItem = React.memo(({ id, checked, onUserClick, disabled }: { 
 
 
 export const AddExpenceScreen = () => {
-    const nav = useNav()
+    const nav = useNav();
     const [searchParams] = useSearchParams();
-    const model = React.useContext(ModelContext)
-    const userId = React.useContext(UserContext)
+    const model = React.useContext(ModelContext);
+    const userId = React.useContext(UserContext);
 
-    const editTransactionId = searchParams.get("editExpense")
-    const editTransaction: OperationSplit | undefined = editTransactionId ? model?.logModule.getOperationOpt(editTransactionId) : undefined
+    const editTransactionId = searchParams.get("editExpense");
+    const editTransaction: OperationSplit | undefined = editTransactionId ? model?.logModule.getOperationOpt(editTransactionId) : undefined;
 
-    const disable = !!editTransaction?.deleted || (!!editTransaction && editTransaction.uid !== userId)
+    const disable = !!editTransaction?.deleted || (!!editTransaction && editTransaction.uid !== userId);
 
-    const descriptionRef = React.useRef<HTMLTextAreaElement>(null)
-    const sumRef = React.useRef<HTMLInputElement>(null)
+    const descriptionRef = React.useRef<HTMLTextAreaElement>(null);
+    const sumRef = React.useRef<HTMLInputElement>(null);
 
-    const usersModule = React.useContext(UsersProvider)
+    const usersModule = React.useContext(UsersProvider);
 
     const [checked, setChecked] = React.useState<Set<number>>(
         editTransaction ?
             new Set(editTransaction.uids) :
-            new Set([...usersModule.users.values()].sort((a) => a.val.disabled ? -1 : 0).filter(u => !u.val.disabled).map(u => u.val.id))
-    )
+            new Set([...usersModule.users.values()]
+                .filter(u => !u.val.disabled).map(u => u.val.id))
+    );
 
     const onUserClick = React.useCallback((id: number) => {
         setChecked(checked => {
@@ -79,13 +80,15 @@ export const AddExpenceScreen = () => {
         }
     }, [loading, checked]);
 
+    const sorted = React.useMemo(() => [...usersModule.users.values()].sort((a, b) => (a.val.disabled === b.val.disabled) ? 0 : a.val.disabled ? 1 : -1), [usersModule.users]);
+
     return <>
         <BackButtopnController />
         <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0px', whiteSpace: 'pre-wrap' }}>
             <textarea ref={descriptionRef} defaultValue={editTransaction?.description} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder={disable ? "No description" : "Enter a description"} />
             <input ref={sumRef} defaultValue={editTransaction ? editTransaction.sum / 100 : undefined} autoFocus={true} disabled={disable} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
             <CardLight><ListItem subtitle="Split among: " /></CardLight>
-            {[...usersModule.users.values()].map(u => <UserCheckListItem id={u.val.id} key={u.val.id} onUserClick={onUserClick} checked={checked.has(u.val.id)} disabled={disable} />)}
+            {sorted.map(u => <UserCheckListItem id={u.val.id} key={u.val.id} onUserClick={onUserClick} checked={checked.has(u.val.id)} disabled={disable} />)}
             <Card><ListItem subtitle={`Missing someone?\nIf there are some users not displayed here (but they are in the group), ask them to write a mesage to group or open this app.`} /></Card>
         </div>
         <MainButtopnController onClick={onClick} text={(editTransaction ? 'Edit' : 'Add') + ' expense'} progress={loading} isActive={!disable} />
