@@ -160,7 +160,7 @@ export class SplitModule {
       balance = []
     }
     const res = { seq, balance }
-    this.balanceCache.set(`${chatId}_${threadId}`, res)
+    this.balanceCache.set(`${chatId}_${threadId ?? undefined}`, res)
     return res
   }
 
@@ -181,7 +181,7 @@ export class SplitModule {
   }
 
   getLogCached = async (chatId: number, threadId: number | undefined, limit = 500) => {
-    let log = this.logCache.get(`${chatId}-${threadId}-${limit}`)
+    let log = this.logCache.get(`${chatId}-${threadId ?? undefined}-${limit}`)
     const logPromise = this.getLog(chatId, threadId, limit)
     if (!log) {
       log = await logPromise
