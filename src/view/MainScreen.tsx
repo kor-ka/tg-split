@@ -340,7 +340,7 @@ const LogView = React.memo((({ logVM: logVm }: { logVM: VM<Map<string, VM<Operat
                 {op.val.type === 'split' ? <SplitLogItem key={op.val.id} opVM={op as VM<OperationSplit>} /> : op.val.type === 'transfer' ? <TransferLogItem key={op.val.id} opVM={op as VM<OperationTransfer>} /> : null}
             </React.Fragment>
         })}</CardLight>
-        {log.length === 200 && <Card><ListItem subtitle={`Maybe there are more operation, who knows 🤷‍♂️\nDeveloper was too lasy to implement pagination.`} /></Card>}
+        {log.length === 200 && <Card><ListItem subtitle={`Maybe there are more operations, who knows 🤷‍♂️\nDeveloper was too lasy to implement pagination.`} /></Card>}
     </>
 }))
 
