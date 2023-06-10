@@ -39,7 +39,7 @@ export class TelegramBot {
     await this.bot.sendMessage(
       chatId,
       `Hi there! 
-I'll help you split expenses among this group. Imagine someone paid for dinner, another one paid for the taxi, and someone bought ice cream for all. Who owes whom what sum? I'm here so you don't need to rack your mind each time; just enjoy your time. 
+I'll help you split expenses among this group. Imagine someone paid for dinner, another one paid for the taxi, and someone bought ice cream for all. Who owes whom what sum? I'm here so you don't need to puzzle over it each time; just enjoy your time. 
 To start, add your first expense using the "Split" button. 
 And don't forget to pin the message with the button, so everyone can open the app.`,
       { message_thread_id: threadId }
