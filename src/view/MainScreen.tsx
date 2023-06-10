@@ -11,6 +11,7 @@ import {
 import { AddExpenceScreen } from "./AddExpenceScreen";
 import { AddTransferScreen } from "./AddTransferScreen";
 import { VM } from "../utils/vm/VM";
+import { formatSum } from "./utils/formatSum";
 
 export let __DEV__ = false
 export let WebApp: any = undefined
@@ -89,16 +90,6 @@ export const renderApp = (model: SessionModel) => {
             </UserContext.Provider>
         </ModelContext.Provider>
     </Timezone.Provider>
-}
-
-const formatSum = (sum: number, abs = true) => {
-    let s = ((abs ? Math.abs(sum) : sum) / 100)
-
-    if (s >= 1000 && ((s / 100) % 1 === 0)) {
-        s /= 1000
-        return s + 'K'
-    }
-    return s.toString()
 }
 
 export const MainScreen = () => {

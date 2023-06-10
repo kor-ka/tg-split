@@ -26,8 +26,8 @@ export class TelegramBot {
   private createPin = async (chatId: number, threadId: number | undefined) => {
     console.log("createPin", chatId);
     let message: TB.Message;
-
-    let { text, buttonsRows } = renderPin(chatId, threadId);
+    const balanceState = await this.splitModule.getBalance(chatId, threadId)
+    let { text, buttonsRows } = await renderPin(chatId, threadId, balanceState.balance);
     message = await this.bot.sendMessage(chatId, text, {
       reply_markup: { inline_keyboard: buttonsRows },
       parse_mode: "HTML",
@@ -38,7 +38,10 @@ export class TelegramBot {
     this.pinModule.updatePinMeta(chatId, threadId, { messageId }).catch(((e) => console.log(e)));
     await this.bot.sendMessage(
       chatId,
-      "❗️Don't forget do pin it ☝️, so everyone can open app",
+      `Hi there! 
+I'll help you split expenses among this group. Imagine someone paid for dinner, another one paid for the taxi, and someone bought ice cream for all. Who owes whom what sum? I'm here so you don't need to rack your mind each time; just enjoy your time. 
+To start, add your first expense using the "Split" button. 
+And don't forget to pin the message with the button, so everyone can open the app.`,
       { message_thread_id: threadId }
     );
   };
@@ -174,27 +177,10 @@ export class TelegramBot {
 
         if (pinned) {
           // TODO: move to render pin, no pin case?
-          const promieses = optimiseBalance(balanceState.balance).filter(({ sum }) => sum !== 0).map(async ({ pair, sum }) => {
-            try {
-              const src = sum < 0 ? 0 : 1
-              const dst = sum < 0 ? 1 : 0
-              const srcUser = await this.userModule.getUser(pair[src]);
-              const srcName = [srcUser?.name, srcUser?.lastname].filter(Boolean).join(' ') || '???';
-              const dstUser = await this.userModule.getUser(pair[dst]);
-              const dstName = [dstUser?.name, dstUser?.lastname].filter(Boolean).join(' ') || '???';
 
-              return `${srcName} → ${dstName} ${Math.abs(sum) / 100}`;
-            } catch (e) {
-              console.error(e);
-              return '';
-            }
-          });
+          const { text, buttonsRows } = await renderPin(chatId, threadId, balanceState.balance);
 
-          const lines = (await Promise.all(promieses)).join('\n').trim() || '✨ All settled up ✨';
-
-          const { buttonsRows } = renderPin(chatId, threadId);
-
-          await this.bot.editMessageText(lines, {
+          await this.bot.editMessageText(text, {
             chat_id: chatId,
             message_id: pinned.messageId,
             parse_mode: "HTML",
