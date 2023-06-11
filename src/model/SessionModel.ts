@@ -1,7 +1,7 @@
 import { io, Socket } from "socket.io-client";
 import { VM } from "../utils/vm/VM";
 import Cookies from "js-cookie";
-import { BalanceState, ClientAPICommand, FullState, Log, Operation, StateUpdate, User } from "../../entity";
+import { Balance, BalanceState, ClientAPICommand, FullState, Log, Operation, StateUpdate, User } from "../../entity";
 import { Deffered } from "../utils/deffered";
 import { UsersModule } from "./UsersModule";
 import { OmitUnion } from "../utils/types";
@@ -10,10 +10,11 @@ import { LogModule } from "./LogModule";
 
 type TgWebAppInitData = { chat?: { id: number }, user: { id: number }, start_param?: string } & unknown;
 
+export type SortedBalance = { yours: Balance, others: Balance, seq: number }
 
 export class SessionModel {
     readonly tgWebApp: TgWebAppInitData;
-    readonly balance = new VM<BalanceState | undefined>(undefined);
+    readonly balance = new VM<SortedBalance | undefined>(undefined);
     readonly logModule = new LogModule()
     readonly users: UsersModule
 
@@ -90,16 +91,19 @@ export class SessionModel {
         console.log('bumpBalance', this.balance.val?.seq, balanceState)
 
         if ((this.balance.val?.seq ?? -1) < balanceState.seq) {
-            const b = optimiseBalance(balanceState.balance)
-                .filter(e => e.pair.includes(this.tgWebApp.user.id) && e.sum !== 0)
-                .map(e => {
+            const b = optimiseBalance(balanceState.balance).reduce((balanceState, e) => {
+                if (e.pair.includes(this.tgWebApp.user.id) && e.sum !== 0) {
+                    balanceState.yours.push(e)
                     if (e.pair[0] !== this.tgWebApp.user.id) {
                         e.pair.reverse()
                         e.sum *= -1
                     }
-                    return e
-                }).sort((a, b) => a.sum - b.sum)
-            this.balance.next({ seq: balanceState.seq, balance: b })
+                } else {
+                    balanceState.others.push(e)
+                }
+                return balanceState
+            }, { yours: [] as Balance, others: [] as Balance })
+            this.balance.next({ seq: balanceState.seq, ...b })
         }
     }
 

@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { BalanceState } from "../entity";
 import "./index.css";
-import { SessionModel } from "./model/SessionModel";
+import { SessionModel, SortedBalance } from "./model/SessionModel";
 import reportWebVitals from "./reportWebVitals";
 
 const tryInit = () => {
@@ -26,14 +26,14 @@ const tryInit = () => {
 
   import('./view/MainScreen').then(({ renderApp }) => {
 
-    const onBalance = (b: BalanceState | undefined) => {
+    const onBalance = (b: SortedBalance | undefined) => {
       if (b) {
         model.balance.unsubscribe(onBalance)
         wa.MainButton.offClick(goToAddExpense)
         root.render(renderApp(model))
       }
     }
-    const sub = model.balance.subscribe(onBalance);
+    model.balance.subscribe(onBalance);
   })
 
   return true

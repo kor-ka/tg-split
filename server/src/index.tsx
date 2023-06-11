@@ -19,7 +19,7 @@ import { savedOpsToApi, savedUserToApi } from "./api/ClientAPI";
 import { UsersModule as UsersClientModule } from "../../src/model/UsersModule";
 import { UserModule } from "./modules/userModule/UserModule";
 import { VM } from "../../src/utils/vm/VM";
-import { BalanceState, Operation } from "../../entity";
+import { Balance, Operation } from "../../entity";
 import { optimiseBalance } from "../../src/model/optimiseBalance";
 
 var path = require("path");
@@ -95,16 +95,19 @@ initMDB().then(() => {
       }
 
       const { balance: balanceState } = await splitModule.getBalanceCached(chatId, threadId)
-      const balance = optimiseBalance(balanceState.balance)
-        .filter(e => (userId !== undefined) && e.pair.includes(userId) && e.sum !== 0)
-        .map(e => {
+      const balance = optimiseBalance(balanceState.balance).reduce((balanceState, e) => {
+        if (userId !== undefined && e.pair.includes(userId) && e.sum !== 0) {
+          balanceState.yours.push(e)
           if (e.pair[0] !== userId) {
             e.pair.reverse()
             e.sum *= -1
           }
-          return e
-        }).sort((a, b) => a.sum - b.sum)
-      const balanceStateVm = new VM<BalanceState | undefined>({ seq: balanceState.seq, balance })
+        } else {
+          balanceState.others.push(e)
+        }
+        return balanceState
+      }, { yours: [] as Balance, others: [] as Balance })
+      const balanceStateVm = new VM<{ yours: Balance, others: Balance, seq: number } | undefined>({ seq: balanceState.seq, ...balance })
 
       const { log: savedLog } = await splitModule.getLogCached(chatId, threadId)
       const logMap = new Map<string, VM<Operation>>()

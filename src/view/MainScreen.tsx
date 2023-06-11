@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { Balance, BalanceState, Log, Operation, OperationSplit, OperationTransfer } from "../../entity"
-import { SessionModel } from "../model/SessionModel"
+import { SessionModel, SortedBalance } from "../model/SessionModel"
 import { UsersModule } from "../model/UsersModule";
 import { useVMvalue } from "../utils/vm/useVM"
 import {
@@ -101,7 +101,7 @@ const MainScreenWithModel = ({ model }: { model: SessionModel }) => {
     return <MainScreenView balanceVM={model.balance} logVM={model.logModule.log} />
 }
 
-export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<BalanceState | undefined>, logVM: VM<Map<string, VM<Operation>>> }) => {
+export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<SortedBalance | undefined>, logVM: VM<Map<string, VM<Operation>>> }) => {
     const nav = useNav()
     return <div style={{ display: 'flex', flexDirection: 'column', padding: "8px 0px" }}>
         <BackButtopnController />
@@ -138,32 +138,45 @@ export const ListItem = React.memo(({ titile: title, subtitle, right, style, tit
 }
 )
 const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
+    const userId = React.useContext(UserContext)
     const usersModule = React.useContext(UsersProvider)
-    const user = useVMvalue(usersModule.getUser(balance.pair[1]))
+    const srcUser = useVMvalue(usersModule.getUser(balance.pair[0]))
+    const dstUser = useVMvalue(usersModule.getUser(balance.pair[1]))
     const title = React.useMemo(() => {
-        const youOwe = balance.sum < 0;
-        return `${youOwe ? 'You' : user.name} → ${youOwe ? user.name : 'You'}`
+        const srcName = srcUser.id === userId ? 'You' : srcUser.name
+        const dstName = dstUser.id === userId ? 'You' : dstUser.name
+        return `${srcName} → ${dstName}`
 
-    }, [balance])
+    }, [balance, srcUser, dstUser])
     const subtitle = React.useMemo(() => {
-        const youOwe = balance.sum < 0;
-        return `${youOwe ? 'You' : user.fullName} owe${youOwe ? '' : 's'} ${youOwe ? user.fullName : 'You'}`
+        const srcName = srcUser.id === userId ? 'You' : srcUser.fullName
+        const dstName = dstUser.id === userId ? 'You' : dstUser.fullName
+        const youOwe = (balance.sum < 0) && (srcUser.id === userId);
+        return `${srcName} owe${youOwe ? '' : 's'} ${dstName}`
 
-    }, [balance])
+    }, [balance, srcUser, dstUser])
+
+    const sumColor = React.useMemo(() => {
+        if (userId !== undefined && balance.pair.includes(userId)) {
+            return balance.sum < 0 ? 'var(--text-destructive-color)' : 'var(--text-confirm-color)'
+        }
+    }, [balance.pair, balance.sum, userId])
 
     const nav = useNav()
     const navigateToAddPayment = React.useCallback(() => {
-        nav(`/tg/addPayment?uid=${user.id}&sum=${Math.abs(balance.sum)}`)
-    }, [nav, user.id])
-    return <div onClick={balance.sum < 0 ? navigateToAddPayment : undefined}>
-        <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.2em', color: balance.sum < 0 ? 'var(--text-destructive-color)' : 'var(--text-confirm-color)' }}>{formatSum(balance.sum)}</span>} />
+        nav(`/tg/addPayment?uid=${dstUser.id}&sum=${Math.abs(balance.sum)}`)
+    }, [nav, dstUser.id])
+    return <div onClick={(srcUser.id === userId) && (balance.sum < 0) ? navigateToAddPayment : undefined}>
+        <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.2em', color: sumColor }}>{formatSum(balance.sum)}</span>} />
     </div>
 })
 
 let animateBalanceOnce = true;
-const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | undefined> }) => {
+const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<SortedBalance | undefined> }) => {
     const model = React.useContext(ModelContext);
-    const balance = useVMvalue(balanceVM)?.balance;
+    const balalnceSate = useVMvalue(balanceVM)
+    const balance = balalnceSate?.yours;
+    const othresBalance = balalnceSate?.others || [];
 
     let [balancePositive, sumPosistive] = React.useMemo(() => {
         const b = balance?.filter(b => b.sum > 0) || [];
@@ -209,7 +222,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
     return <>
         {!!balanceNegative.length &&
             <Card key="first" style={{ transition: "max-height ease-in 300ms", maxHeight, overflow: 'hidden' }}>
-                {balanceNegative?.map(e =>
+                {balanceNegative.map(e =>
                     <BalanceEntry key={e.pair.join('-')} balance={e} />
                 )}
                 {balanceNegative.length > 1 && <div style={{ marginBottom: 8, color: "var(--tg-theme-hint-color)" }}>
@@ -222,7 +235,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
 
         {!!balancePositive.length &&
             <Card key={!!balanceNegative.length ? "second" : "first"} style={{ transition: "max-height ease-in 300ms", maxHeight, overflow: 'hidden' }}>
-                {balancePositive?.map(e =>
+                {balancePositive.map(e =>
                     <BalanceEntry key={e.pair.join('-')} balance={e} />
                 )}
                 {balancePositive.length > 1 && <div style={{ marginBottom: 8, color: "var(--tg-theme-hint-color)" }}>
@@ -231,6 +244,13 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<BalanceState | un
                         titile="Total"
                         right={formatSum(sumPosistive)} />
                 </div>}
+            </Card>}
+
+        {!!othresBalance.length &&
+            <Card key={"others"}>
+                {othresBalance.map(e =>
+                    <BalanceEntry key={e.pair.join('-')} balance={e} />
+                )}
             </Card>}
     </>
 });
