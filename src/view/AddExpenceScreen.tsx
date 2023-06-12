@@ -77,7 +77,7 @@ export const AddExpenceScreen = () => {
 
 
     const onDeleteClick = React.useCallback(() => {
-        showConfirm("Delete expense? This can not be undone.", (confirmed) => {
+        showConfirm("Delete expense?\nThis can not be undone.", (confirmed) => {
             if (confirmed && model && editTransactionId) {
                 handleOperation(
                     model.commitOperation({
@@ -96,7 +96,7 @@ export const AddExpenceScreen = () => {
             <input ref={sumRef} defaultValue={editTransaction ? editTransaction.sum / 100 : undefined} autoFocus={true} disabled={disable} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
             <CardLight><ListItem subtitle="Split among: " /></CardLight>
             {sorted.map(u => <UserCheckListItem id={u.val.id} key={u.val.id} onUserClick={onUserClick} checked={checked.has(u.val.id)} disabled={disable} />)}
-            <Card><ListItem subtitle={`Missing someone?\nIf there are users not displayed here (but they are in the group), ask them to write a message to the group or open this app.\nDon't worry if you can't add them right now, you can still add the expense and edit the list of involved users later on.`} /></Card>
+            <Card><ListItem subtitle={`Missing someone?\nIf there are users not displayed here (but they are in the group), ask them to write a message to the group or open this app.\nDon't worry if you can't add them right now, you can still add the expense and edit the list of involved users later on.`} /></Card>
             {editTransaction && <Button disabled={disable} onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="DELETE EXPENSE" /></Button>}
         </div>
         <MainButtopnController onClick={onClick} text={(editTransaction ? 'EDIT' : 'ADD') + ' EXPENSE'} progress={loading} isActive={!disable} />
