@@ -158,7 +158,7 @@ const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
 
     const sumColor = React.useMemo(() => {
         if (userId !== undefined && balance.pair.includes(userId)) {
-            return balance.sum < 0 ? 'var(--text-destructive-color)' : 'var(--text-confirm-color)'
+            return balance.pair[0] === userId ? 'var(--text-destructive-color)' : 'var(--text-confirm-color)'
         }
     }, [balance.pair, balance.sum, userId])
 
