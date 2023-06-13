@@ -1,4 +1,4 @@
-import { Balance } from "../../entity";
+import { Balance } from "../shared/entity";
 
 // TODO: extract reusable
 export const key = (src: number, dst: number): [string, number] => {

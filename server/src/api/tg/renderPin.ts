@@ -1,4 +1,4 @@
-import { Balance, BalanceState, Log, Operation, User } from "../../../../entity";
+import { Balance, BalanceState, Log, Operation, User } from "../../../../src/shared/entity";
 import TB from "node-telegram-bot-api";
 import { optimiseBalance } from "../../../../src/model/optimiseBalance";
 import { container } from "tsyringe";

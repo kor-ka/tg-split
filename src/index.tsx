@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { BalanceState } from "../entity";
+import { BalanceState } from "./shared/entity";
 import "./index.css";
 import { SessionModel, SortedBalance } from "./model/SessionModel";
 import reportWebVitals from "./reportWebVitals";

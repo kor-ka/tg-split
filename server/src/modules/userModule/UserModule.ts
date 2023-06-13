@@ -1,5 +1,5 @@
 import { singleton } from "tsyringe";
-import { User } from "../../../../entity";
+import { User } from "../../../../src/shared/entity";
 import { Subject } from "../../utils/subject";
 import { SavedUser, USER } from "./userStore";
 

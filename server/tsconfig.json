@@ -17,6 +17,7 @@
   "include": [
     "src/**/*",
     "../entity.ts",
-    "../src/view/MainScreen.ts"
+    "../src/view/MainScreen.ts",
+    "../src/shared"
   ]
 }

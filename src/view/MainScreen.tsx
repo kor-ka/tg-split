@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { Balance, BalanceState, Log, Operation, OperationSplit, OperationTransfer } from "../../entity"
+import { Balance, BalanceState, Log, Operation, OperationSplit, OperationTransfer } from "../shared/entity"
 import { SessionModel, SortedBalance } from "../model/SessionModel"
 import { UsersModule } from "../model/UsersModule";
 import { useVMvalue } from "../utils/vm/useVM"

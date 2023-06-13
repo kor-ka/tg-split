@@ -1,6 +1,6 @@
 import * as socketIo from "socket.io";
 import { container } from "tsyringe";
-import { ClientAPICommand, FullState, Log, Operation, StateUpdate, User } from "../../../entity";
+import { ClientAPICommand, FullState, Log, Operation, StateUpdate, User } from "../../../src/shared/entity";
 import { PinsModule } from "../modules/pinsModule/PinsModule";
 import { SplitModule } from "../modules/splitModule/SplitModule";
 import { SavedOp } from "../modules/splitModule/splitStore";

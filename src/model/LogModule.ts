@@ -1,4 +1,4 @@
-import { Operation, User } from "../../entity";
+import { Operation, User } from "../shared/entity";
 import { VM } from "../utils/vm/VM";
 
 export class LogModule {

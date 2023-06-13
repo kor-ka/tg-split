@@ -1,10 +1,11 @@
 import { Balance as SavedBalance, BALANCE, OP, SavedOp, OmitUnion, ServerOp } from "./splitStore";
 import { singleton } from "tsyringe";
-import { Operation, OperationSplit, BalanceState, Balance, ClientAPICommandOperation } from "../../../../entity";
 import { MDBClient } from "../../utils/MDB";
 import { ObjectId, WithId } from "mongodb";
 import { Subject } from "../../utils/subject";
 import { savedOpToApi } from "../../api/ClientAPI";
+import { BalanceState, ClientAPICommandOperation, OperationSplit, Balance } from "../../../../src/shared/entity";
+import { Atom, atom } from "../../../../src/shared/atom";
 
 @singleton()
 export class SplitModule {
@@ -190,13 +191,6 @@ export class SplitModule {
   }
 }
 
-type Atom = [string, number];
-const atom = (src: number, dst: number, sum: number): Atom => {
-  const flip = src > dst ? -1 : 1
-  const account = [flip === 1 ? src : dst, flip === 1 ? dst : src].join('-')
-  return [account, sum * flip]
-}
-
 const opToAtoms = (op: SavedOp | (ClientAPICommandOperation & { uid: number })) => {
   let atoms: Atom[]
 
@@ -237,19 +231,6 @@ const splitOpToAtoms = (split: Omit<OperationSplit, 'id' | 'date'>): Atom[] => {
   return atoms;
 }
 
-const sumAtoms = (atoms: Atom[]) => {
-  const byAccount = new Map<string, Atom>()
-  atoms.forEach(([account, sum]) => {
-    let atom = byAccount.get(account)
-    if (!atom) {
-      atom = [account, 0]
-      byAccount.set(account, atom)
-    }
-    atom[1] += sum
-  })
-  return [...byAccount.values()]
-}
-
 const invertAtoms = (atoms: Atom[]) => {
-  return atoms.map(([account, sum]) => [account, -sum] as Atom)
+  return atoms.map(([account, sum, pair]) => [account, -sum, pair] as Atom)
 }

@@ -1,10 +1,10 @@
 import { io, Socket } from "socket.io-client";
 import { VM } from "../utils/vm/VM";
 import Cookies from "js-cookie";
-import { Balance, BalanceState, ClientAPICommand, FullState, Log, Operation, StateUpdate, User } from "../../entity";
+import { Balance, BalanceState, ClientAPICommand, FullState, Log, Operation, StateUpdate, User } from "../shared/entity";
 import { Deffered } from "../utils/deffered";
 import { UsersModule } from "./UsersModule";
-import { OmitUnion } from "../utils/types";
+import { OmitUnion } from "../shared/types";
 import { optimiseBalance } from "./optimiseBalance";
 import { LogModule } from "./LogModule";
 
