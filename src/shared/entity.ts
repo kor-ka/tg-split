@@ -1,5 +1,8 @@
-import { OmitUnion } from "./src/utils/types";
+import { OmitUnion } from "./types";
 
+// 
+// Abstract 
+// 
 export type User = {
     id: number;
     name: string;
@@ -32,6 +35,25 @@ export type Operation = OperationSplit | OperationTransfer
 
 export type Log = Operation[]
 
+type ExtraCondition = { extra: number };
+type ConditionBase = { uid: number };
+export type DisabledCondition = ConditionBase & {
+    type: 'disabled',
+};
+export type FixedCondition = ConditionBase & {
+    type: 'fixed',
+    sum: number
+};
+export type SharesCondition = ConditionBase & {
+    type: 'shares',
+    shares: number,
+
+} & ExtraCondition;
+export type Condition = FixedCondition | SharesCondition | DisabledCondition;
+
+// 
+// Client API
+// 
 export type FullState = {
     balanceState: BalanceState,
     log: Log,
@@ -44,6 +66,9 @@ export type StateUpdate = {
     operation: Operation,
 }
 
+// 
+// Server API
+// 
 export type ClientAPICommandOperation = OmitUnion<Operation, 'uid' | 'edited' | 'deleted' | 'date'>
 export type ClientAPICommand =
     { type: 'create' | 'update', operation: ClientAPICommandOperation } |

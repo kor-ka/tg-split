@@ -1,4 +1,4 @@
-import { User } from "../../entity";
+import { User } from "../shared/entity";
 import { VM } from "../utils/vm/VM";
 
 export type UserClient = Partial<User> & Pick<User, 'id'> & { fullName: string, name: string }

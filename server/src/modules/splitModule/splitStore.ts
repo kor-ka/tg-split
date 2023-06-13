@@ -1,5 +1,5 @@
 import { ObjectId, WithId } from "mongodb";
-import { Operation } from "../../../../entity";
+import { Operation } from "../../../../src/shared/entity";
 import { MDB } from "../../utils/MDB";
 
 export type OmitUnion<T, K extends keyof any> = T extends any ? Omit<T, K> : never

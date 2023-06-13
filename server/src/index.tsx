@@ -19,7 +19,7 @@ import { savedOpsToApi, savedUserToApi } from "./api/ClientAPI";
 import { UsersModule as UsersClientModule } from "../../src/model/UsersModule";
 import { UserModule } from "./modules/userModule/UserModule";
 import { VM } from "../../src/utils/vm/VM";
-import { Balance, Operation } from "../../entity";
+import { Balance, Operation } from "../../src/shared/entity";
 import { optimiseBalance } from "../../src/model/optimiseBalance";
 
 var path = require("path");

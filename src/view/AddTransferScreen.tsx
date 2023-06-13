@@ -1,6 +1,6 @@
 import React from "react";
 import { useSearchParams } from "react-router-dom";
-import { OperationTransfer } from "../../entity";
+import { OperationTransfer } from "../shared/entity";
 import { useVMvalue } from "../utils/vm/useVM";
 import { useNav, UsersProvider, ModelContext, BackButtopnController, CardLight, ListItem, MainButtopnController, showAlert, UserContext, WebApp, Card, showConfirm, Button } from "./MainScreen";
 import { useHandleOperation } from "./useHandleOperation";
