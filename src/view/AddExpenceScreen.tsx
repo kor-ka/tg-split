@@ -78,7 +78,7 @@ const UserCheckListItem = React.memo(({ onConditionUpdated, disabled, userVm, su
                 right={
                     <>
                         <span onClick={onSumClick} style={{ marginRight: 8, fontSize: '1.2em' }}>{formatSum(sum)}</span>
-                        <input checked={condition.type !== 'disabled'} readOnly={true} type="checkbox" disabled={disabled} style={{ transform: "scale(1.4)", filter: 'grayscale(1)' }} />
+                        <input checked={condition.type !== 'disabled'} readOnly={true} type="checkbox" disabled={disabled} style={{ transform: "scale(1.4)", accentColor: 'var(--tg-theme-button-color)' }} />
                     </>
                 }
             />
