@@ -4,8 +4,9 @@ import { MDBClient } from "../../utils/MDB";
 import { ObjectId, WithId } from "mongodb";
 import { Subject } from "../../utils/subject";
 import { savedOpToApi } from "../../api/ClientAPI";
-import { BalanceState, ClientAPICommandOperation, OperationSplit, Balance } from "../../../../src/shared/entity";
+import { BalanceState, ClientAPICommandOperation, OperationSplit, Balance, SharesCondition } from "../../../../src/shared/entity";
 import { Atom, atom } from "../../../../src/shared/atom";
+import { splitToAtoms } from "../../../../src/shared/splitToAtoms";
 
 @singleton()
 export class SplitModule {
@@ -42,7 +43,6 @@ export class SplitModule {
           // revert balance
           const invertedAtoms = invertAtoms(opToAtoms(op))
           const updateBalances = invertedAtoms.reduce((upd, [acc, incr]) => {
-            console.log(acc, incr)
             upd[`balance.${acc}`] = incr;
             return upd
           }, {} as { [selector: string]: number })
@@ -63,7 +63,6 @@ export class SplitModule {
 
         // Update balance
         const updateBalances = atoms.reduce((upd, [acc, incr]) => {
-          console.log(acc, incr)
           upd[`balance.${acc}`] = incr;
           return upd
         }, {} as { [selector: string]: number })
@@ -195,40 +194,13 @@ const opToAtoms = (op: SavedOp | (ClientAPICommandOperation & { uid: number })) 
   let atoms: Atom[]
 
   if (op.type === 'split') {
-
-    atoms = splitOpToAtoms(op)
+    atoms = splitToAtoms(op.uid, op.sum, op.conditions)
   } else if (op.type === 'transfer') {
     atoms = (op.uid !== op.dstUid) ? [atom(op.uid, op.dstUid, op.sum)] : []
   } else {
     throw new Error('unsupported opration')
   }
   return atoms
-}
-
-const splitOpToAtoms = (split: Omit<OperationSplit, 'id' | 'date'>): Atom[] => {
-  const src = split.uid;
-  const atoms: Atom[] = [];
-
-  let sum = split.sum;
-  console.log('int sum', sum);
-
-  const rem = sum % split.uids.length;
-  console.log('rem', rem);
-
-  sum -= rem;
-  console.log('sum-rem', rem);
-
-  sum /= split.uids.length
-  console.log('sum/len', sum);
-
-  split.uids.forEach((dst, i) => {
-    if (dst !== src) {
-      console.log('adding part', dst, src, sum + (i < rem ? 1 : 0));
-      atoms.push(atom(src, dst, sum + (i < rem ? 1 : 0)));
-    }
-  });
-
-  return atoms;
 }
 
 const invertAtoms = (atoms: Atom[]) => {

@@ -1,7 +1,7 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Atom } from "../shared/atom";
-import { Condition, OperationSplit } from "../shared/entity";
+import { Condition, OperationSplit, SharesCondition } from "../shared/entity";
 import { splitToAtoms } from "../shared/splitToAtoms";
 import { UserClient } from "../model/UsersModule";
 import { useVMvalue } from "../utils/vm/useVM";
@@ -10,23 +10,79 @@ import { BackButtopnController, Button, Card, CardLight, ListItem, MainButtopnCo
 import { useHandleOperation } from "./useHandleOperation";
 import { formatSum } from "./utils/formatSum";
 
+const describeCondition = (condition: Condition) => {
+    if (condition.type === 'shares') {
+        if (condition.shares > 1) {
+            return `covers split part for ${condition.shares} persons`
+        }
+        return "covers own split part"
+    } else if (condition.type === 'disabled') {
+        return "not involved"
+    }
+    return "???"
+}
+
+const SharesConditionView = React.memo(({ condition, onConditionChange }: { condition: SharesCondition, onConditionChange: (condition: Condition) => void }) => {
+    const sharesIncr = React.useCallback((incr: 1 | -1) => {
+        let shares = (condition.shares += incr) || 1
+        onConditionChange({ ...condition, shares })
+    }, [condition, onConditionChange]);
+
+    const sharesPlus = React.useCallback((e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        e.stopPropagation()
+        sharesIncr(1)
+    }, [sharesIncr]);
+
+    const sharesMinus = React.useCallback((e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        e.stopPropagation()
+        sharesIncr(-1)
+    }, [sharesIncr]);
+
+    return <ListItem style={{ marginBottom: 8 }}
+        subtitle="split parts to cover"
+        right={<>
+            <button style={{ marginRight: 8, padding: '2px 8px', fontFamily: 'monospace', fontSize: '1.4em' }} onClick={sharesMinus} >−</button>
+            {condition.shares}
+            <button style={{ marginLeft: 8, padding: '2px 8px', fontFamily: 'monospace', fontSize: '1.4em' }} onClick={sharesPlus} >+</button>
+        </>} />
+})
+
 const UserCheckListItem = React.memo(({ onConditionUpdated, disabled, userVm, sum, condition }: { userVm: VM<UserClient>, condition: Condition, sum: number, onConditionUpdated: (condition: Condition) => void, disabled: boolean }) => {
     const user = useVMvalue(userVm)
     const onClick = React.useCallback(() => {
         const nextCondition: Condition = condition.type === 'disabled' ? { uid: user.id, type: 'shares', shares: 1, extra: 0 } : { uid: user.id, type: 'disabled' };
         onConditionUpdated(nextCondition)
-    }, [onConditionUpdated, user.id, condition])
+    }, [onConditionUpdated, user.id, condition]);
+
+    const [showConditionDetails, setShowConditionDetails] = useState(false);
+    React.useEffect(() => {
+        if (condition.type === 'disabled') {
+            setShowConditionDetails(false)
+        }
+    }, [condition]);
+
+    const onSumClick = React.useCallback((e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
+        e.stopPropagation()
+        if (condition.type !== 'disabled') {
+            setShowConditionDetails(show => !show)
+        }
+    }, [condition]);
+
+    const conditionDescription = React.useMemo(() => `${describeCondition(condition)}`, [condition])
+
     return <div onClick={disabled ? undefined : onClick}>
-        <Card>
+        <Card >
             <ListItem
                 titile={user.fullName}
+                subtitle={conditionDescription}
                 right={
                     <>
-                        <span style={{ fontSize: '1.2em' }}>{formatSum(sum)}</span>
+                        <span onClick={onSumClick} style={{ marginRight: 8, fontSize: '1.2em' }}>{formatSum(sum)}</span>
                         <input checked={condition.type !== 'disabled'} readOnly={true} type="checkbox" disabled={disabled} style={{ transform: "scale(1.4)", filter: 'grayscale(1)' }} />
                     </>
                 }
             />
+            {(condition.type === 'shares') && showConditionDetails && <SharesConditionView condition={condition} onConditionChange={onConditionUpdated} />}
         </Card>
     </div>
 })
@@ -72,18 +128,27 @@ export const AddExpenceScreen = () => {
 
     const [{ conditions, vms, atoms }, setUserEntries] = React.useState(
         () => {
-            // TODO: sort actor to up
             const vms = [...usersModule.users.values()]
-                .sort((a, b) => (a.val.disabled === b.val.disabled) ? 0 : a.val.disabled ? 1 : -1)
-            const sortedIds = vms.map(vm => vm.val.id)
+                .sort((a, b) =>
+                    // bring current user up
+                    (a.val.id === userId) ? -1 : (b.val.id === userId) ? 1 :
+                        // push disabled to the end
+                        (a.val.disabled === b.val.disabled) ? 0 : a.val.disabled ? 1 : -1);
+            const sortedIds = vms.map(vm => vm.val.id);
 
-            const conditions = vms.map(({ val: user }) => getDefaultCondition(user));
+            const conditions = vms.map(({ val: user }) => {
+                if (editTransaction) {
+                    return editTransaction?.conditions.find(c => c.uid === user.id) ?? { type: 'disabled' as const, uid: user.id };
+                } else {
+                    return getDefaultCondition(user);
+                }
+            });
 
             // TODO: unify initial and update calc?
             const atoms = splitToAtoms(userId ?? -1, sum, conditions, false)
                 // [2][1] is dst user id in atom
                 .sort((a, b) => sortedIds.indexOf(a[2][1]) - sortedIds.indexOf(b[2][1]));
-            return { sortedIds, conditions, vms, atoms }
+            return { sortedIds, conditions, vms, atoms };
 
         }
     );
@@ -94,7 +159,6 @@ export const AddExpenceScreen = () => {
             const atoms = splitToAtoms(userId ?? -1, sumRef.current, conditionsNext, false)
                 // [2][1] is dst user id in atom
                 .sort((a, b) => sortedIds.indexOf(a[2][1]) - sortedIds.indexOf(b[2][1]));
-            console.log(atoms);
             return { sortedIds, conditions: conditionsNext, vms, atoms }
         });
     }, []);
@@ -116,8 +180,7 @@ export const AddExpenceScreen = () => {
                         sum,
                         id: editTransaction?.id ?? model.nextId() + '',
                         description: descriptionRef.current?.value,
-                        // TODO: use conditions
-                        uids: []
+                        conditions
                     }
                 }))
         }

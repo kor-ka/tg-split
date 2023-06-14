@@ -64,6 +64,10 @@ body {
 button {
   font-size: 1em;
   border: none;
+  background-color: var(--tg-theme-bg-color);
+  padding: 4px;
+  border-radius: 8px;
+  color: var(--tg-theme-button-text-color)
 }
 
 input,

@@ -20,7 +20,8 @@ export type OperationBase = { id: string, uid: number, date: number, edited?: bo
 
 export type OperationSplit = OperationBase & {
     type: 'split',
-    uids: number[],
+    conditions: Condition[],
+    uids?: number[],
     sum: number,
     description?: string
 }

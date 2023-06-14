@@ -110,6 +110,9 @@ export class ClientAPI {
 
 export const savedOpToApi = (saved: SavedOp): Operation => {
     const { _id, seq, ...op } = saved
+    if (op.type === 'split') {
+        op.conditions = op.conditions.filter(c => c.type !== 'disabled')
+    }
     return { ...op, id: _id.toHexString(), date: _id.getTimestamp().getTime(), edited: seq > 0 }
 }
 
