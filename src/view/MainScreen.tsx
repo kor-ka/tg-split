@@ -133,7 +133,7 @@ export const ListItem = React.memo(({ titile: title, subtitle, right, style, tit
             {!!title && <div style={{ padding: '2px 4px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', ...titleStyle }}>{title}</div>}
             {!!subtitle && <div style={{ padding: '2px 4px', fontSize: '0.8em', color: "var(--tg-theme-hint-color)", ...subTitleStyle }}>{subtitle}</div>}
         </div>
-        {!!right && <div style={{ padding: '4px 16px', flexShrink: 0, alignItems: 'center', ...rightStyle }}>{right}</div>}
+        {!!right && <div style={{ display: 'flex', padding: '4px 16px', flexShrink: 0, alignItems: 'center', ...rightStyle }}>{right}</div>}
     </div>
 }
 )
@@ -143,16 +143,12 @@ const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
     const srcUser = useVMvalue(usersModule.getUser(balance.pair[0]))
     const dstUser = useVMvalue(usersModule.getUser(balance.pair[1]))
     const title = React.useMemo(() => {
-        const srcName = srcUser.id === userId ? 'You' : srcUser.name
-        const dstName = dstUser.id === userId ? 'You' : dstUser.name
-        return `${srcName} → ${dstName}`
+        return `${srcUser.name} → ${dstUser.name}`
 
     }, [balance, srcUser, dstUser])
     const subtitle = React.useMemo(() => {
-        const srcName = srcUser.id === userId ? 'You' : srcUser.fullName
-        const dstName = dstUser.id === userId ? 'You' : dstUser.fullName
         const youOwe = (balance.sum < 0) && (srcUser.id === userId);
-        return `${srcName} owe${youOwe ? '' : 's'} ${dstName}`
+        return `${srcUser.fullName} owe${youOwe ? '' : 's'} ${dstUser.fullName}`
 
     }, [balance, srcUser, dstUser])
 
@@ -262,11 +258,11 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
     const actor = useVMvalue(usersModule.getUser(op.uid))
     // extract as components? (make names reactive)
     const fullNames = React.useMemo(() => {
-        return op.uids.map((uid) => usersModule.getUser(uid).val.fullName).join(', ')
-    }, [...op.uids])
+        return op.conditions.map((cond) => usersModule.getUser(cond.uid).val.fullName).join(', ')
+    }, [...op.conditions])
     const namesShort = React.useMemo(() => {
-        return op.uids.length > 2 ? `${op.uids.length} persons` : op.uids.map((uid) => usersModule.getUser(uid).val.name).join(', ')
-    }, [...op.uids])
+        return op.conditions.length > 2 ? `${op.conditions.length} persons` : op.conditions.map((cond) => usersModule.getUser(cond.uid).val.name).join(', ')
+    }, [...op.conditions])
 
     const title = React.useMemo(() => `⚡️ ${actor.name} → ${op.description || namesShort}`, [actor.name, op.description, namesShort])
 
@@ -282,10 +278,10 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
     const sumColor = React.useMemo(() => {
         if (op.uid === userId) {
             return 'var(--text-destructive-color)'
-        } else if (userId && op.uids.includes(userId)) {
+        } else if (userId && op.conditions.find(c => c.uid === userId)) {
             return 'var(--text-confirm-color)'
         }
-    }, [op.uid, op.uids, userId])
+    }, [op.uid, op.conditions, userId])
     return <div onClick={onClick} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
         <ListItem titile={title} subtitle={subtitle} right={<span style={{ fontSize: '1.2em', color: sumColor }}>{formatSum(op.sum)}</span>} />
     </div >
