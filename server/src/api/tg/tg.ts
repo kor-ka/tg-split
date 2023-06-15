@@ -168,7 +168,7 @@ And don't forget to pin the message with the button, so everyone can open the ap
         if(message.entities){
           for(let e of message.entities){
             const user = e.user;
-            if(user){
+            if(user && (!user.is_bot || (message.chat.title?.endsWith("__DEV__")))){
               await this.userModule.updateUser(message.chat.id, message.message_thread_id, {
                 id: user.id,
                 name: user.first_name,
