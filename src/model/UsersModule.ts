@@ -20,9 +20,9 @@ export class UsersModule {
     }
 
     readonly updateUser = (user: User) => {
-        user.name = user.id === this.userId ? "You" : user.name.replaceAll(" ", " ")
-        user.lastname = user.lastname?.replaceAll(" ", " ")
-        const fullName = user.id === this.userId ? "You" : [user.name, user.lastname].filter(Boolean).join(' ')
+        user.name = user.id === this.userId ? "You" : user.name.replaceAll(" ", " ")
+        user.lastname = user.lastname?.replaceAll(" ", " ")
+        const fullName = user.id === this.userId ? "You" : [user.name, user.lastname].filter(Boolean).join(' ')
         this.getUser(user.id).next({ ...user, fullName })
     }
 }
