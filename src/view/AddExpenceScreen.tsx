@@ -10,14 +10,14 @@ import { BackButtopnController, Button, Card, CardLight, ListItem, MainButtopnCo
 import { useHandleOperation } from "./useHandleOperation";
 import { formatSum } from "./utils/formatSum";
 
-const describeCondition = (condition: Condition) => {
+const describeCondition = (user: UserClient, condition: Condition) => {
     if (condition.type === 'shares') {
         if (condition.shares > 1) {
             return `covers split part for ${condition.shares} persons`
         }
         return "covers own split part"
     } else if (condition.type === 'disabled') {
-        return "not involved"
+        return user.disabled ? "not in group" : "not involved"
     }
     return "???"
 }
@@ -74,7 +74,7 @@ const UserCheckListItem = React.memo(({ onConditionUpdated, disabled, userVm, su
         }
     }, [condition]);
 
-    const conditionDescription = React.useMemo(() => `${describeCondition(condition)}`, [condition]);
+    const conditionDescription = React.useMemo(() => `${describeCondition(user, condition)}`, [condition]);
 
     return <div onClick={disabled ? undefined : onClick}>
         <Card >
@@ -160,9 +160,21 @@ export const AddExpenceScreen = () => {
         }
     );
 
-    const onConditionUpdated = React.useCallback((upd?: Condition) => {
+    const onConditionUpdated = React.useCallback((upd?: Condition, selectAll?: boolean) => {
         setUserEntries(({ sortedIds, conditions, vms }) => {
-            const conditionsNext = conditions.map(c => c.uid === upd?.uid ? upd : c);
+            let conditionsNext = conditions;
+            if (upd) {
+                conditionsNext = conditionsNext.map(c => c.uid === upd?.uid ? upd : c);
+            }
+            if (selectAll !== undefined) {
+                conditionsNext = conditionsNext.map(c => {
+                    if (selectAll) {
+                        return c.type === 'disabled' ? getDefaultCondition(usersModule.getUser(c.uid).val) : c
+                    } else {
+                        return { type: 'disabled', uid: c.uid }
+                    }
+                })
+            }
             const atoms = splitToAtoms(userId ?? -1, sumRef.current, conditionsNext, false)
                 // [2][1] is dst user id in atom
                 .sort((a, b) => sortedIds.indexOf(a[2][1]) - sortedIds.indexOf(b[2][1]));
@@ -214,12 +226,22 @@ export const AddExpenceScreen = () => {
         }
     }, [disable])
 
+    const someSelected = React.useMemo(() => !!conditions.find(c => c.type !== 'disabled'), [conditions])
+    const onAllCheckClick = React.useCallback(() => {
+        onConditionUpdated(undefined, !someSelected)
+        WebApp?.HapticFeedback.selectionChanged();
+    }, [someSelected])
+
     return <>
         <BackButtopnController />
         <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0px', whiteSpace: 'pre-wrap' }}>
             <textarea ref={descriptionRef} defaultValue={editTransaction?.description} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder={disable ? "No description" : "What did you pay for?"} />
             <input ref={sumInputRef} value={sumStr} onChange={onSumInputChange} autoFocus={true} disabled={disable} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
-            <CardLight><ListItem subtitle="Split among: " /></CardLight>
+            <CardLight>
+                <ListItem subtitle="Split among: " right={
+                    <input onClick={onAllCheckClick} checked={someSelected} readOnly={true} type="checkbox" disabled={disable} style={{ width: 20, height: 20, accentColor: 'var(--tg-theme-button-color)' }} />
+                } />
+            </CardLight>
             {conditions.map((c, i) => <UserCheckListItem key={c.uid} userVm={vms[i]} condition={conditions[i]} onConditionUpdated={onConditionUpdated} sum={atoms[i][1]} disabled={disable} />)}
             <Card><ListItem subtitle={`Missing someone?\nIf there are users not displayed here (but they are in the group), ask them to write a message to the group or open this app.\nDon't worry if you can't add them right now, you can still add the expense and edit the list of involved users later on.`} /></Card>
             {editTransaction && <Button disabled={disable} onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="DELETE EXPENSE" /></Button>}
