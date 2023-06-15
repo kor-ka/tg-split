@@ -164,6 +164,21 @@ And don't forget to pin the message with the button, so everyone can open the ap
             disabled: false
           })
         }
+        
+        if(message.entities){
+          for(let e of message.entities){
+            const user = e.user;
+            if(user){
+              await this.userModule.updateUser(message.chat.id, message.message_thread_id, {
+                id: user.id,
+                name: user.first_name,
+                lastname: user.last_name,
+                username: user.username,
+                disabled: false
+              });
+            }
+          }
+        }
       } catch (e) {
         console.error(e);
       }
