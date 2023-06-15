@@ -24,22 +24,23 @@ const describeCondition = (condition: Condition) => {
 
 const SharesConditionView = React.memo(({ condition, onConditionChange }: { condition: SharesCondition, onConditionChange: (condition: Condition) => void }) => {
     const sharesIncr = React.useCallback((incr: 1 | -1) => {
-        let shares = (condition.shares += incr) || 1
-        onConditionChange({ ...condition, shares })
+        let shares = (condition.shares += incr) || 1;
+        onConditionChange({ ...condition, shares });
+        WebApp?.HapticFeedback.selectionChanged();
     }, [condition, onConditionChange]);
 
     const sharesPlus = React.useCallback((e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-        e.stopPropagation()
-        sharesIncr(1)
+        e.stopPropagation();
+        sharesIncr(1);
     }, [sharesIncr]);
 
     const sharesMinus = React.useCallback((e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-        e.stopPropagation()
-        sharesIncr(-1)
+        e.stopPropagation();
+        sharesIncr(-1);
     }, [sharesIncr]);
 
     const preventParentClick = React.useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-        e.stopPropagation()
+        e.stopPropagation();
     }, []);
 
     return <ListItem onClick={preventParentClick} style={{ marginBottom: 8 }}
@@ -52,27 +53,28 @@ const SharesConditionView = React.memo(({ condition, onConditionChange }: { cond
 })
 
 const UserCheckListItem = React.memo(({ onConditionUpdated, disabled, userVm, sum, condition }: { userVm: VM<UserClient>, condition: Condition, sum: number, onConditionUpdated: (condition: Condition) => void, disabled: boolean }) => {
-    const user = useVMvalue(userVm)
+    const user = useVMvalue(userVm);
     const onClick = React.useCallback(() => {
         const nextCondition: Condition = condition.type === 'disabled' ? { uid: user.id, type: 'shares', shares: 1, extra: 0 } : { uid: user.id, type: 'disabled' };
-        onConditionUpdated(nextCondition)
+        onConditionUpdated(nextCondition);
+        WebApp?.HapticFeedback.selectionChanged();
     }, [onConditionUpdated, user.id, condition]);
 
     const [isConditionShown, setIsShowConditionShown] = useState(false);
     React.useEffect(() => {
         if (condition.type === 'disabled') {
-            setIsShowConditionShown(false)
+            setIsShowConditionShown(false);
         }
     }, [condition]);
 
     const showCondition = React.useCallback((e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
-        e.stopPropagation()
+        e.stopPropagation();
         if (condition.type !== 'disabled') {
-            setIsShowConditionShown(show => !show)
+            setIsShowConditionShown(show => !show);
         }
     }, [condition]);
 
-    const conditionDescription = React.useMemo(() => `${describeCondition(condition)}`, [condition])
+    const conditionDescription = React.useMemo(() => `${describeCondition(condition)}`, [condition]);
 
     return <div onClick={disabled ? undefined : onClick}>
         <Card >
