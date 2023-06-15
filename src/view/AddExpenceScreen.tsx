@@ -38,12 +38,16 @@ const SharesConditionView = React.memo(({ condition, onConditionChange }: { cond
         sharesIncr(-1)
     }, [sharesIncr]);
 
-    return <ListItem style={{ marginBottom: 8 }}
+    const preventParentClick = React.useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        e.stopPropagation()
+    }, []);
+
+    return <ListItem onClick={preventParentClick} style={{ marginBottom: 8 }}
         subtitle="split parts to cover"
         right={<>
-            <button style={{ marginRight: 8, padding: '2px 8px', fontFamily: 'monospace', fontSize: '1.4em' }} onClick={sharesMinus} >−</button>
+            <button style={{ marginRight: 8, padding: '2px 8px', fontFamily: 'monospace', fontSize: '1.4em', fontWeight: 900 }} onClick={sharesMinus} >−</button>
             {condition.shares}
-            <button style={{ marginLeft: 8, padding: '2px 8px', fontFamily: 'monospace', fontSize: '1.4em' }} onClick={sharesPlus} >+</button>
+            <button style={{ marginLeft: 8, padding: '2px 8px', fontFamily: 'monospace', fontSize: '1.4em', fontWeight: 900 }} onClick={sharesPlus} >+</button>
         </>} />
 })
 
@@ -54,17 +58,17 @@ const UserCheckListItem = React.memo(({ onConditionUpdated, disabled, userVm, su
         onConditionUpdated(nextCondition)
     }, [onConditionUpdated, user.id, condition]);
 
-    const [showConditionDetails, setShowConditionDetails] = useState(false);
+    const [isConditionShown, setIsShowConditionShown] = useState(false);
     React.useEffect(() => {
         if (condition.type === 'disabled') {
-            setShowConditionDetails(false)
+            setIsShowConditionShown(false)
         }
     }, [condition]);
 
-    const onSumClick = React.useCallback((e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
+    const showCondition = React.useCallback((e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
         e.stopPropagation()
         if (condition.type !== 'disabled') {
-            setShowConditionDetails(show => !show)
+            setIsShowConditionShown(show => !show)
         }
     }, [condition]);
 
@@ -75,14 +79,15 @@ const UserCheckListItem = React.memo(({ onConditionUpdated, disabled, userVm, su
             <ListItem
                 titile={user.fullName}
                 subtitle={conditionDescription}
+                onSubtitleClick={showCondition}
                 right={
                     <>
-                        <span onClick={onSumClick} style={{ marginRight: 8, fontSize: '1.2em' }}>{formatSum(sum)}</span>
-                        <input checked={condition.type !== 'disabled'} readOnly={true} type="checkbox" disabled={disabled} style={{ transform: "scale(1.4)", accentColor: 'var(--tg-theme-button-color)' }} />
+                        <span onClick={showCondition} style={{ marginRight: 8, fontSize: '1.2em' }}>{formatSum(sum)}</span>
+                        <input checked={condition.type !== 'disabled'} readOnly={true} type="checkbox" disabled={disabled} style={{ width: 20, height: 20, accentColor: 'var(--tg-theme-button-color)' }} />
                     </>
                 }
             />
-            {(condition.type === 'shares') && showConditionDetails && <SharesConditionView condition={condition} onConditionChange={onConditionUpdated} />}
+            {(condition.type === 'shares') && isConditionShown && <SharesConditionView condition={condition} onConditionChange={onConditionUpdated} />}
         </Card>
     </div>
 })
@@ -198,6 +203,14 @@ export const AddExpenceScreen = () => {
             }
         })
     }, [model, editTransactionId, handleOperation])
+
+    React.useEffect(() => {
+        if (!disable) {
+            setTimeout(() => {
+                sumInputRef.current?.focus()
+            }, 10)
+        }
+    }, [disable])
 
     return <>
         <BackButtopnController />
