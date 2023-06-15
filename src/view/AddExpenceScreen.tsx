@@ -114,7 +114,7 @@ export const AddExpenceScreen = () => {
     const usersModule = React.useContext(UsersProvider);
 
     const [sum, setSum] = React.useState(editTransaction ? editTransaction.sum : 0)
-    const [sumStr, setSumStr] = React.useState(formatSum(sum, true, false))
+    const [sumStr, setSumStr] = React.useState(editTransaction ? formatSum(sum, true, false) : '')
     const sumRef = React.useRef(sum)
 
     const onSumInputChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -210,7 +210,7 @@ export const AddExpenceScreen = () => {
         if (!disable) {
             setTimeout(() => {
                 sumInputRef.current?.focus()
-            }, 200)
+            }, 600)
         }
     }, [disable])
 
