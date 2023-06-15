@@ -210,7 +210,7 @@ export const AddExpenceScreen = () => {
         if (!disable) {
             setTimeout(() => {
                 sumInputRef.current?.focus()
-            }, 10)
+            }, 200)
         }
     }, [disable])
 
