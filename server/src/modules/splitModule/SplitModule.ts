@@ -39,24 +39,9 @@ export class SplitModule {
           if (!op) {
             throw new Error("Operation not found")
           }
-
+          await this.ops.updateOne({ _id, seq: op.seq }, { $set: opData, $inc: { seq: 1 } }, { session })
           // revert balance
-          const invertedAtoms = invertAtoms(opToAtoms(op))
-          const updateBalances = invertedAtoms.reduce((upd, [acc, incr]) => {
-            upd[`balance.${acc}`] = incr;
-            return upd
-          }, {} as { [selector: string]: number })
-
-          await this.balance.updateOne({ chatId, threadId }, {
-            $inc: { ...updateBalances, seq: 1 }
-          }, { session })
-
-          // update after balance - check seq not changed
-          const res = await this.ops.updateOne({ _id, seq: op.seq }, { $set: opData, $inc: { seq: 1 } }, { session })
-          if (res.modifiedCount === 0) {
-            // propbably seq updated concurrently - throw
-            throw new Error("Error occured, try again later")
-          }
+          atoms = sumAtoms([...atoms, ...invertAtoms(opToAtoms(op))])
         } else {
           throw new Error('Unknown operation modification type')
         }
@@ -109,6 +94,11 @@ export class SplitModule {
       const session = MDBClient.startSession();
       try {
         await session.withTransaction(async () => {
+          // update op
+          await this.ops.updateOne({ _id, seq: op.seq }, { $set: { deleted: true }, $inc: { seq: 1 } }, { session })
+          op.deleted = true;
+          op.seq += 1;
+
           // revert balance
           const atoms = invertAtoms(opToAtoms(op));
           const updateBalances = atoms.reduce((upd, [acc, incr]) => {
@@ -119,16 +109,6 @@ export class SplitModule {
           await this.balance.updateOne({ chatId, threadId }, {
             $inc: { ...updateBalances, seq: 1 }
           }, { session });
-
-          // update after balance - check seq not changed
-          const res = await this.ops.updateOne({ _id, seq: op.seq }, { $set: { deleted: true }, $inc: { seq: 1 } }, { session })
-          if (res.modifiedCount === 0) {
-            // propbably seq updated concurrently - throw
-            throw new Error("Error occured, try again later")
-          }
-          op.deleted = true;
-          op.seq += 1;
-
         });
       } finally {
         await session.endSession();
@@ -205,4 +185,17 @@ const opToAtoms = (op: SavedOp | (ClientAPICommandOperation & { uid: number })) 
 
 const invertAtoms = (atoms: Atom[]) => {
   return atoms.map(([account, sum, pair]) => [account, -sum, pair] as Atom)
+}
+
+const sumAtoms = (atoms: Atom[]) => {
+  const byAccount = new Map<string, Atom>()
+  atoms.forEach(([account, sum, pair]) => {
+    let atom = byAccount.get(account)
+    if (!atom) {
+      atom = [account, 0, pair]
+      byAccount.set(account, atom)
+    }
+    atom[1] += sum
+  })
+  return [...byAccount.values()]
 }
