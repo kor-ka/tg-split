@@ -167,7 +167,7 @@ const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
         <ListItem titile={title} subtitle={subtitle} right={
             <div style={{ position: 'relative', fontSize: '1.2em' }}>
                 <span style={{ color: sumColor }}>{formatSum(balance.sum)}</span>
-                {myDebt && <span style={{ position: 'absolute', color: 'var(--tg-theme-hint-color)', top: 0, bottom: 0, right: 'calc(-100% - 2px)' }}> 〉</span>}
+                {myDebt && <span style={{ position: 'absolute', color: 'var(--tg-theme-hint-color)', top: 0, bottom: 0, width: '1em', right: '-1em' }}> 〉</span>}
             </div>
         } />
     </div>
@@ -292,7 +292,7 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
         <ListItem titile={title} subtitle={subtitle} right={
             <div style={{ position: 'relative', fontSize: '1.2em' }}>
                 <span style={{ color: sumColor }}>{formatSum(op.sum)}</span>
-                <span style={{ position: 'absolute', top: 0, bottom: 0, right: 'calc(-100% + 8px)', color: 'var(--tg-theme-hint-color)' }}> 〉</span>
+                <span style={{ position: 'absolute', top: 0, bottom: 0, width: '1em', right: '-1em', color: 'var(--tg-theme-hint-color)' }}> 〉</span>
             </div>
         } />
     </div>
@@ -323,7 +323,7 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
         <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={
             <div style={{ position: 'relative', fontSize: '1.2em' }}>
                 <span style={{ color: sumColor }}>{formatSum(op.sum)}</span>
-                <span style={{ position: 'absolute', top: 0, bottom: 0, right: 'calc(-100% + 8px)', color: 'var(--tg-theme-hint-color)' }}> 〉</span>
+                <span style={{ position: 'absolute', top: 0, bottom: 0, width: '1em', right: '-1em', color: 'var(--tg-theme-hint-color)' }}> 〉</span>
             </div>}
         />
     </div>
