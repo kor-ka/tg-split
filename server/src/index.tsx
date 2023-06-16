@@ -85,7 +85,7 @@ initMDB().then(() => {
       const splitModule = container.resolve(SplitModule);
       const chatMetaModule = container.resolve(ChatMetaModule)
 
-      const [chat_descriptor, token] = (req.query.tgWebAppStartParam as string).split('~') ?? [];
+      const [chat_descriptor, token] = (req.query.tgWebAppStartParam as string).split('T') ?? [];
       const [chatId, threadId] = chat_descriptor.split('_').map(Number) ?? [];
 
       const userIdString = req.cookies.user_id;

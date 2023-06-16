@@ -22,7 +22,7 @@ export class ChatMetaModule {
   updateChat = async (chatId: number, name: string) => {
     let res = await this.db.updateOne(
       { chatId },
-      { $set: { chatId, name }, $setOnInsert: { token: randomBytes(48).toString('hex') } },
+      { $set: { chatId, name }, $setOnInsert: { token: randomBytes(16).toString('hex') } },
       { upsert: true }
     );
     this.onMetaUpdated(chatId);

@@ -36,7 +36,7 @@ export const renderPin = async (chatId: number, threadId: number | undefined, ba
   const text = (await Promise.all(promieses)).join('\n').trim() || '✨ All settled up ✨';
   let key = [chatId, threadId].filter(Boolean).join('_');
   const token = (await chatMetaModule.getChatMeta(chatId))?.token
-  key = [key, token].filter(Boolean).join('~')
+  key = [key, token].filter(Boolean).join('T')
   let buttonsRows: TB.InlineKeyboardButton[][] = [];
   buttonsRows.push([
     {

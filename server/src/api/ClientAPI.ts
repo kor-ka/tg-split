@@ -47,7 +47,7 @@ export class ClientAPI {
                     return
                 }
                 sw.lap("tgAuth");
-                const [chat_descriptor, token] = (tgData.start_param as string).split('~') ?? [];
+                const [chat_descriptor, token] = (tgData.start_param as string).split('T') ?? [];
                 const [chatId, threadId] = chat_descriptor?.split('_').map(Number) ?? []
                 if (chatId === undefined) {
                     return
