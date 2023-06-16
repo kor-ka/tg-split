@@ -24,7 +24,7 @@ const describeCondition = (user: UserClient, condition: Condition) => {
 
 const SharesConditionView = React.memo(({ condition, onConditionChange }: { condition: SharesCondition, onConditionChange: (condition: Condition) => void }) => {
     const sharesIncr = React.useCallback((incr: 1 | -1) => {
-        let shares = (condition.shares += incr) || 1;
+        let shares = (condition.shares + incr) || 1;
         onConditionChange({ ...condition, shares });
         WebApp?.HapticFeedback.selectionChanged();
     }, [condition, onConditionChange]);
