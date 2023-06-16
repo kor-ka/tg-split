@@ -13,9 +13,9 @@ import { formatSum } from "./utils/formatSum";
 const describeCondition = (user: UserClient, condition: Condition) => {
     if (condition.type === 'shares') {
         if (condition.shares > 1) {
-            return `covers split part for ${condition.shares} persons`
+            return `covers split part for ${condition.shares} persons 〉`
         }
-        return "covers own split part"
+        return "covers own split part 〉"
     } else if (condition.type === 'disabled') {
         return user.disabled ? "not in group" : "not involved"
     }
@@ -76,22 +76,19 @@ const UserCheckListItem = React.memo(({ onConditionUpdated, disabled, userVm, su
 
     const conditionDescription = React.useMemo(() => `${describeCondition(user, condition)}`, [condition]);
 
-    return <div onClick={disabled ? undefined : onClick}>
-        <Card >
-            <ListItem
-                titile={user.fullName}
-                subtitle={conditionDescription}
-                onSubtitleClick={showCondition}
-                right={
-                    <>
-                        <span onClick={showCondition} style={{ marginRight: 8, fontSize: '1.2em' }}>{formatSum(sum)}</span>
-                        <input checked={condition.type !== 'disabled'} readOnly={true} type="checkbox" disabled={disabled} style={{ width: 20, height: 20, accentColor: 'var(--tg-theme-button-color)' }} />
-                    </>
-                }
-            />
-            {(condition.type === 'shares') && isConditionShown && <SharesConditionView condition={condition} onConditionChange={onConditionUpdated} />}
-        </Card>
-    </div>
+    return <Card onClick={!disabled ? showCondition : undefined}>
+        <ListItem
+            titile={user.fullName}
+            subtitle={conditionDescription}
+            right={
+                <>
+                    <span style={{ marginRight: 8, fontSize: '1.2em' }}>{formatSum(sum)}</span>
+                    <input checked={condition.type !== 'disabled'} onClick={onClick} readOnly={true} type="checkbox" disabled={disabled} style={{ width: 20, height: 20, accentColor: 'var(--tg-theme-button-color)' }} />
+                </>
+            }
+        />
+        {(condition.type === 'shares') && isConditionShown && <SharesConditionView condition={condition} onConditionChange={onConditionUpdated} />}
+    </Card>
 })
 
 const getDefaultCondition = (user: UserClient): Condition => {
