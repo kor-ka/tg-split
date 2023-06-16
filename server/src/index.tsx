@@ -21,6 +21,7 @@ import { UserModule } from "./modules/userModule/UserModule";
 import { VM } from "../../src/utils/vm/VM";
 import { Balance, Operation } from "../../src/shared/entity";
 import { optimiseBalance } from "../../src/model/optimiseBalance";
+import { ChatMetaModule } from "./modules/chatMetaModule/ChatMetaModule";
 
 var path = require("path");
 const PORT = process.env.PORT || 5001;
@@ -81,8 +82,12 @@ initMDB().then(() => {
 
   app.use(compression()).get("/tg/", async (req, res) => {
     try {
-      const [chatId, threadId] = (req.query.tgWebAppStartParam as string).split('_').map(Number) ?? []
       const splitModule = container.resolve(SplitModule);
+      const chatMetaModule = container.resolve(ChatMetaModule)
+
+      const [chat_descriptor, token] = (req.query.tgWebAppStartParam as string).split('~') ?? [];
+      const [chatId, threadId] = chat_descriptor.split('_').map(Number) ?? [];
+
       const userIdString = req.cookies.user_id;
       const userId = userIdString ? Number.parseInt(userIdString, 10) : undefined
       if (userId !== undefined) {
@@ -94,7 +99,13 @@ initMDB().then(() => {
         res.cookie('ssr_time_zone', timeZone, { sameSite: 'none', secure: true })
       }
 
-      const { balance: balanceState } = await splitModule.getBalanceCached(chatId, threadId)
+      const [balanceCached, chatMeta] = await Promise.all([splitModule.getBalanceCached(chatId, threadId), chatMetaModule.getChatMeta(chatId)])
+
+      if ((chatMeta?.token ?? undefined) !== token) {
+        throw new Error("unauthorized")
+      }
+
+      const { balance: balanceState } = balanceCached;
       const balance = optimiseBalance(balanceState.balance).reduce((balanceState, e) => {
         if (userId !== undefined && e.pair.includes(userId) && e.sum !== 0) {
           balanceState.yours.push(e)
@@ -137,7 +148,11 @@ initMDB().then(() => {
       );
     } catch (e) {
       console.error("Something went wrong:", e);
-      return res.status(500).send("Oops 🤷‍♂️");
+      if (e instanceof Error) {
+        return res.status(500).send(e.message);
+      } else {
+        return res.status(500).send("Oops 🤷‍♂️");
+      }
     }
   });
   app

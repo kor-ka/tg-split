@@ -5,8 +5,7 @@ export interface ChatMeta {
   _id: ObjectId;
   chatId: number;
   name: string;
-  settings: {
-  };
+  token: string
 }
 
 export const CHATMETA = () => MDB.collection<ChatMeta>("settings");

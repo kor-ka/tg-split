@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { ObjectId } from "mongodb";
 import { singleton } from "tsyringe";
 import { Subject } from "../../utils/subject";
@@ -18,33 +19,10 @@ export class ChatMetaModule {
     });
   };
 
-  updateSettings = async (
-    chatId: number,
-    settings: Required<ChatMeta>["settings"]
-  ) => {
-    let update = Object.entries(settings).reduce((update, [key, value]) => {
-      update[`settings.${key}`] = value;
-      return update;
-    }, {} as any);
-
+  updateChat = async (chatId: number, name: string) => {
     let res = await this.db.updateOne(
       { chatId },
-      {
-        $set: {
-          chatId,
-          ...update,
-        },
-      },
-      { upsert: true }
-    );
-    this.onMetaUpdated(chatId);
-    return res;
-  };
-
-  updateName = async (chatId: number, name: string) => {
-    let res = await this.db.updateOne(
-      { chatId },
-      { $set: { chatId, name } },
+      { $set: { chatId, name }, $setOnInsert: { token: randomBytes(48).toString('hex') } },
       { upsert: true }
     );
     this.onMetaUpdated(chatId);

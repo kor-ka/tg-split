@@ -1,6 +1,7 @@
 import * as socketIo from "socket.io";
 import { container } from "tsyringe";
 import { ClientAPICommand, FullState, Log, Operation, StateUpdate, User } from "../../../src/shared/entity";
+import { ChatMetaModule } from "../modules/chatMetaModule/ChatMetaModule";
 import { PinsModule } from "../modules/pinsModule/PinsModule";
 import { SplitModule } from "../modules/splitModule/SplitModule";
 import { SavedOp } from "../modules/splitModule/splitStore";
@@ -14,7 +15,7 @@ export class ClientAPI {
 
     private splitModule = container.resolve(SplitModule)
     private userModule = container.resolve(UserModule)
-    private pinModule = container.resolve(PinsModule)
+    private chatMetaModule = container.resolve(ChatMetaModule)
     constructor(private socket: socketIo.Server) {
         this.io = socket
     }
@@ -46,15 +47,38 @@ export class ClientAPI {
                     return
                 }
                 sw.lap("tgAuth");
-                const [chatId, threadId] = tgData.start_param?.split('_').map(Number) ?? []
+                const [chat_descriptor, token] = (tgData.start_param as string).split('~') ?? [];
+                const [chatId, threadId] = chat_descriptor?.split('_').map(Number) ?? []
                 if (chatId === undefined) {
                     return
+                }
+
+                const tokenCheckPromise = new Promise<boolean>(async (resolve, reject) => {
+                    try {
+                        const chatMeta = await this.chatMetaModule.getChatMeta(chatId)
+                        resolve((chatMeta?.token ?? undefined) === token)
+                    } catch (e) {
+                        reject(e)
+                    }
+                }).catch(() => false).then(auth => {
+                    if (!auth) {
+                        socket.disconnect()
+                    }
+                    return auth
+                })
+
+                const checkAuth = async () => {
+                    let auth = await tokenCheckPromise;
+                    if (!auth) {
+                        throw new Error("unauthrized")
+                    }
                 }
 
                 socket.on("op", async (
                     command: ClientAPICommand,
                     ack: (res: { patch: StateUpdate, error?: never } | { error: string, patch?: never }) => void) => {
                     try {
+                        await checkAuth()
                         // TODO: sanitise op
                         const { type } = command
                         if (type === 'create' || type === 'update') {
@@ -78,6 +102,8 @@ export class ClientAPI {
                 });
                 (async () => {
                     try {
+                        await checkAuth()
+
                         socket.join(`chatClient_${tgData.start_param}`);
                         socket.join(`chatUsersClient_${chatId}`);
 

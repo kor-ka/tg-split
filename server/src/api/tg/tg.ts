@@ -49,10 +49,9 @@ And don't forget to pin the message with the button, so everyone can open the ap
   init = () => {
     this.bot.on("group_chat_created", async (upd) => {
       try {
+        await this.chatMetaModule.updateChat(upd.chat.id, upd.chat.title ?? '');
         await this.createPin(upd.chat.id, upd.message_thread_id)
-        if (upd.chat.title) {
-          await this.chatMetaModule.updateName(upd.chat.id, upd.chat.title);
-        }
+
       } catch (e) {
         console.error(e)
       }
@@ -78,6 +77,7 @@ And don't forget to pin the message with the button, so everyone can open the ap
           } finally {
             await session.endSession();
           }
+          await this.chatMetaModule.updateChat(toId, upd.chat.title ?? "");
           await this.createPin(toId, undefined)
 
           console.log("migrate_from_chat_id <<<", fromId, toId)
@@ -95,10 +95,9 @@ And don't forget to pin the message with the button, so everyone can open the ap
           (u) => u.id === 6065926905
         );
         if (botAdded) {
+          await this.chatMetaModule.updateChat(upd.chat.id, upd.chat.title ?? "");
           await this.createPin(upd.chat.id, undefined)
-          if (upd.chat.title) {
-            await this.chatMetaModule.updateName(upd.chat.id, upd.chat.title);
-          }
+
         }
 
         upd.new_chat_members?.filter(u => !u.is_bot || (upd.chat.title?.endsWith("__DEV__"))).forEach(u => {
@@ -135,6 +134,7 @@ And don't forget to pin the message with the button, so everyone can open the ap
 
     this.bot.onText(/\/pin/, async (upd) => {
       try {
+        await this.chatMetaModule.updateChat(upd.chat.id, upd.chat.title ?? "");
         await this.createPin(upd.chat.id, upd.message_thread_id);
       } catch (e) {
         console.log(e);
@@ -164,11 +164,11 @@ And don't forget to pin the message with the button, so everyone can open the ap
             disabled: false
           })
         }
-        
-        if(message.entities){
-          for(let e of message.entities){
+
+        if (message.entities) {
+          for (let e of message.entities) {
             const user = e.user;
-            if(user && (!user.is_bot || (message.chat.title?.endsWith("__DEV__")))){
+            if (user && (!user.is_bot || (message.chat.title?.endsWith("__DEV__")))) {
               await this.userModule.updateUser(message.chat.id, message.message_thread_id, {
                 id: user.id,
                 name: user.first_name,
@@ -191,8 +191,6 @@ And don't forget to pin the message with the button, so everyone can open the ap
         const pinned = await this.pinModule.getPinMeta(chatId, threadId);
 
         if (pinned) {
-          // TODO: move to render pin, no pin case?
-
           const { text, buttonsRows } = await renderPin(chatId, threadId, balanceState.balance);
 
           await this.bot.editMessageText(text, {

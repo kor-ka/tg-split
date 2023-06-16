@@ -4,6 +4,7 @@ import { optimiseBalance } from "../../../../src/model/optimiseBalance";
 import { container } from "tsyringe";
 import { UserModule } from "../../modules/userModule/UserModule";
 import { formatSum } from "../../../../src/view/utils/formatSum";
+import { ChatMetaModule } from "../../modules/chatMetaModule/ChatMetaModule";
 
 export function htmlEntities(str: string) {
   return String(str)
@@ -15,6 +16,7 @@ export function htmlEntities(str: string) {
 
 export const renderPin = async (chatId: number, threadId: number | undefined, balance: Balance) => {
   const userModule = container.resolve(UserModule)
+  const chatMetaModule = container.resolve(ChatMetaModule)
   const promieses = optimiseBalance(balance).filter(({ sum }) => sum !== 0).map(async ({ pair, sum }) => {
     try {
       const src = sum < 0 ? 0 : 1
@@ -32,7 +34,9 @@ export const renderPin = async (chatId: number, threadId: number | undefined, ba
   });
 
   const text = (await Promise.all(promieses)).join('\n').trim() || '✨ All settled up ✨';
-  const key = [chatId, threadId].filter(Boolean).join('_');
+  let key = [chatId, threadId].filter(Boolean).join('_');
+  const token = (await chatMetaModule.getChatMeta(chatId))?.token
+  key = [key, token].filter(Boolean).join('~')
   let buttonsRows: TB.InlineKeyboardButton[][] = [];
   buttonsRows.push([
     {
