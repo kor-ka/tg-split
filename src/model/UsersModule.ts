@@ -14,7 +14,9 @@ export class UsersModule {
         let vm = this.users.get(id)
         if (!vm) {
             vm = new VM({ id, fullName: "Loading user...", name: "Loading user..." })
-            this.users.set(id, vm)
+            if (!Number.isNaN(id)) {
+                this.users.set(id, vm)
+            }
         }
         return vm
     }
