@@ -162,7 +162,7 @@ const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
     const navigateToAddPayment = React.useCallback(() => {
         nav(`/tg/addPayment?uid=${dstUser.id}&sum=${Math.abs(balance.sum)}`)
     }, [nav, dstUser.id])
-    const myDebt = true//(srcUser.id === userId) && (balance.sum < 0);
+    const myDebt = (srcUser.id === userId) && (balance.sum < 0);
     return <div onClick={myDebt ? navigateToAddPayment : undefined}>
         <ListItem titile={title} subtitle={subtitle} right={
             <div style={{ position: 'relative', fontSize: '1.2em' }}>
