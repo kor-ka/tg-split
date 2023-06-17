@@ -162,12 +162,15 @@ const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
     const navigateToAddPayment = React.useCallback(() => {
         nav(`/tg/addPayment?uid=${dstUser.id}&sum=${Math.abs(balance.sum)}`)
     }, [nav, dstUser.id])
-    const myDebt = (srcUser.id === userId) && (balance.sum < 0);
+    const myDebt = true//(srcUser.id === userId) && (balance.sum < 0);
     return <div onClick={myDebt ? navigateToAddPayment : undefined}>
         <ListItem titile={title} subtitle={subtitle} right={
             <div style={{ position: 'relative', fontSize: '1.2em' }}>
-                <span style={{ color: sumColor }}>{formatSum(balance.sum)}</span>
-                {myDebt && <span style={{ position: 'absolute', color: 'var(--tg-theme-hint-color)', top: 0, bottom: 0, width: '1em', right: '-1em' }}> 〉</span>}
+                <span style={{ color: sumColor }}>
+                    {formatSum(balance.sum)}
+                    {myDebt && <span style={{ display: 'inline-block', width: 0, color: 'var(--tg-theme-hint-color)' }}> 〉</span>}
+                </span>
+
             </div>
         } />
     </div>
@@ -291,8 +294,11 @@ const SplitLogItem = React.memo(({ opVM }: { opVM: VM<OperationSplit> }) => {
     return <div onClick={onClick} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
         <ListItem titile={title} subtitle={subtitle} right={
             <div style={{ position: 'relative', fontSize: '1.2em' }}>
-                <span style={{ color: sumColor }}>{formatSum(op.sum)}</span>
-                <span style={{ position: 'absolute', top: 0, bottom: 0, width: '1em', right: '-1em', color: 'var(--tg-theme-hint-color)' }}> 〉</span>
+                <span style={{ color: sumColor }}>
+                    {formatSum(op.sum)}
+                    <span style={{ display: 'inline-block', width: 0, color: 'var(--tg-theme-hint-color)' }}> 〉</span>
+                </span>
+
             </div>
         } />
     </div>
@@ -322,8 +328,9 @@ const TransferLogItem = React.memo(({ opVM }: { opVM: VM<OperationTransfer> }) =
     return <div onClick={onClick} style={op.deleted ? { textDecoration: 'line-through' } : undefined}>
         <ListItem titile={`💸 ${srcuser.name} → ${dstuser.name}`} subtitle={subtitle} right={
             <div style={{ position: 'relative', fontSize: '1.2em' }}>
-                <span style={{ color: sumColor }}>{formatSum(op.sum)}</span>
-                <span style={{ position: 'absolute', top: 0, bottom: 0, width: '1em', right: '-1em', color: 'var(--tg-theme-hint-color)' }}> 〉</span>
+                <span style={{ color: sumColor }}>{formatSum(op.sum)}
+                    <span style={{ display: 'inline-block', width: 0, color: 'var(--tg-theme-hint-color)' }}> 〉</span>
+                </span>
             </div>}
         />
     </div>
