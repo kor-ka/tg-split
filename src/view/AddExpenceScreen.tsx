@@ -102,8 +102,8 @@ export const AddExpenceScreen = () => {
     const editTransactionId = searchParams.get("editExpense");
     const editTransaction: OperationSplit | undefined = editTransactionId ? model?.logModule.getOperationOpt(editTransactionId) : undefined;
 
-    let myTransaction = !editTransaction || (editTransaction.uid === userId);
-    let disable = !!editTransaction?.deleted || (!myTransaction);
+    let myTransaction = !editTransactionId || (editTransaction?.uid === userId);
+    let disable = !!editTransaction?.deleted || !myTransaction;
 
     const descriptionRef = React.useRef<HTMLTextAreaElement>(null);
     const sumInputRef = React.useRef<HTMLInputElement>(null);
@@ -243,6 +243,6 @@ export const AddExpenceScreen = () => {
             <CardLight><ListItem subtitle={`Missing someone?\nIf there are users not displayed here (but they are in the group), ask them to write a message to the group or open this app.\n&${!editTransaction ? `Don't worry if you can't add them right now, you can still add the expense and edit the list of involved users later on.` : ''}`} /></CardLight>
             {editTransaction && myTransaction && <Button disabled={disable} onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="DELETE EXPENSE" /></Button>}
         </div>
-        <MainButtopnController onClick={onClick} text={(editTransaction ? 'EDIT' : 'ADD') + ' EXPENSE'} progress={loading} isActive={!disable} />
+        <MainButtopnController onClick={onClick} text={(editTransaction ? 'EDIT' : 'ADD') + ' EXPENSE'} progress={loading} isVisible={myTransaction} />
     </>
 }
