@@ -1,6 +1,5 @@
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Atom } from "../shared/atom";
 import { Condition, OperationSplit, SharesCondition } from "../shared/entity";
 import { splitToAtoms } from "../shared/splitToAtoms";
 import { UserClient } from "../model/UsersModule";
@@ -103,7 +102,8 @@ export const AddExpenceScreen = () => {
     const editTransactionId = searchParams.get("editExpense");
     const editTransaction: OperationSplit | undefined = editTransactionId ? model?.logModule.getOperationOpt(editTransactionId) : undefined;
 
-    let disable = !!editTransaction?.deleted || (!!editTransaction && editTransaction.uid !== userId);
+    let myTransaction = !editTransaction || (editTransaction.uid === userId);
+    let disable = !!editTransaction?.deleted || (!myTransaction);
 
     const descriptionRef = React.useRef<HTMLTextAreaElement>(null);
     const sumInputRef = React.useRef<HTMLInputElement>(null);
@@ -216,12 +216,12 @@ export const AddExpenceScreen = () => {
     }, [model, editTransactionId, handleOperation])
 
     React.useEffect(() => {
-        if (!disable) {
+        if (!disable && !editTransaction) {
             setTimeout(() => {
                 sumInputRef.current?.focus()
-            }, 600)
+            }, 1000)
         }
-    }, [disable])
+    }, [disable, editTransaction])
 
     const someSelected = React.useMemo(() => !!conditions.find(c => c.type !== 'disabled'), [conditions])
     const onAllCheckClick = React.useCallback(() => {
@@ -233,15 +233,15 @@ export const AddExpenceScreen = () => {
         <BackButtopnController />
         <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0px', whiteSpace: 'pre-wrap' }}>
             <textarea ref={descriptionRef} defaultValue={editTransaction?.description} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder={disable ? "No description" : "What did you pay for?"} />
-            <input ref={sumInputRef} value={sumStr} onChange={onSumInputChange} autoFocus={true} disabled={disable} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
+            <input ref={sumInputRef} value={sumStr} onChange={onSumInputChange} autoFocus={!editTransaction} disabled={disable} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
             <CardLight>
                 <ListItem subtitle="Split among: " right={
                     <input onClick={onAllCheckClick} checked={someSelected} readOnly={true} type="checkbox" disabled={disable} style={{ width: 20, height: 20, accentColor: 'var(--tg-theme-button-color)' }} />
                 } />
             </CardLight>
             {conditions.map((c, i) => <UserCheckListItem key={c.uid} userVm={vms[i]} condition={conditions[i]} onConditionUpdated={onConditionUpdated} sum={atoms[i][1]} disabled={disable} />)}
-            <CardLight><ListItem subtitle={`Missing someone?\nIf there are users not displayed here (but they are in the group), ask them to write a message to the group or open this app.\nDon't worry if you can't add them right now, you can still add the expense and edit the list of involved users later on.`} /></CardLight>
-            {editTransaction && <Button disabled={disable} onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="DELETE EXPENSE" /></Button>}
+            <CardLight><ListItem subtitle={`Missing someone?\nIf there are users not displayed here (but they are in the group), ask them to write a message to the group or open this app.\n&${!editTransaction ? `Don't worry if you can't add them right now, you can still add the expense and edit the list of involved users later on.` : ''}`} /></CardLight>
+            {editTransaction && myTransaction && <Button disabled={disable} onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="DELETE EXPENSE" /></Button>}
         </div>
         <MainButtopnController onClick={onClick} text={(editTransaction ? 'EDIT' : 'ADD') + ' EXPENSE'} progress={loading} isActive={!disable} />
     </>
