@@ -86,7 +86,7 @@ const UserCheckListItem = React.memo(({ onConditionUpdated, disabled, userVm, su
                 </>
             }
         />
-        {(condition.type === 'shares') && isConditionShown && <SharesConditionView condition={condition} onConditionChange={onConditionUpdated} />}
+        {(condition.type === 'shares') && <div style={{ transition: `max-height ${isConditionShown ? 'ease-in' : 'ease-out'} 150ms`, maxHeight: isConditionShown ? 150 : 0, overflow: 'hidden' }}><SharesConditionView condition={condition} onConditionChange={onConditionUpdated} /></div>}
     </Card>
 })
 
@@ -235,6 +235,6 @@ export const AddExpenceScreen = () => {
             <CardLight><ListItem subtitle={`Missing someone?\nIf there are users not displayed here (but they are in the group), ask them to write a message to the group or open this app.\n${!editTransaction ? `Don't worry if you can't add them right now, you can still add the expense and edit the list of involved users later on.` : ''}`} /></CardLight>
             {editTransaction && myTransaction && <Button disabled={disable} onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="DELETE EXPENSE" /></Button>}
         </div>
-        <MainButtopnController onClick={onClick} text={(editTransaction ? 'EDIT' : 'ADD') + ' EXPENSE'} progress={loading} isVisible={myTransaction} />
+        <MainButtopnController onClick={onClick} text={(editTransaction ? 'EDIT' : 'ADD') + ' EXPENSE'} progress={loading} isActive={!disable && (sum !== 0)} isVisible={myTransaction} />
     </>
 }
