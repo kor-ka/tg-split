@@ -12,12 +12,7 @@ const tryInit = () => {
   let { initData, initDataUnsafe, ready } = wa
   ready();
 
-  const goToAddExpense = () => {
-    window.history.replaceState({}, "", "/tg/addExpence");
-  }
-
-  wa.MainButton.setParams({ is_active: true, is_visible: true, text: "ADD PAYMENT" })
-  wa.MainButton.onClick(goToAddExpense)
+  wa.MainButton.setParams({ is_active: false, is_visible: true, text: "ADD PAYMENT" })
 
   const model = new SessionModel(
     { initData, initDataUnsafe }
@@ -29,7 +24,6 @@ const tryInit = () => {
     const onBalance = (b: SortedBalance | undefined) => {
       if (b) {
         model.balance.unsubscribe(onBalance)
-        wa.MainButton.offClick(goToAddExpense)
         root.render(renderApp(model))
       }
     }
