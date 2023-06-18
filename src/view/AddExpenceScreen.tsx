@@ -306,9 +306,9 @@ export const AddExpenceScreen = () => {
         <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0px', whiteSpace: 'pre-wrap' }}>
 
             <div style={{ flexDirection: 'row', paddingLeft: 4 }}>
-                <Button onClick={pickSrc} style={{ marginRight: 8 }}><ListItem titile={srcUser.name} /></Button>
+                <Button onClick={pickSrc} style={{ marginRight: 8 }}><ListItem titleStyle={{ color: "var(--tg-theme-text-color)" }} titile={srcUser.name} /></Button>
                 →
-                <Button onClick={pickDst} disabled={!!editTransactionId} style={{ marginLeft: 8 }}><ListItem titile="Group" /></Button>
+                <Button onClick={pickDst} disabled={!!editTransactionId} style={{ marginLeft: 8 }}><ListItem titleStyle={{ color: "var(--tg-theme-text-color)" }} titile="Group" /></Button>
             </div>
             <UserPicker show={!!showUserPicker} showGroupOption={showUserPicker === 'dst'} onUserClick={onUserPicked} onGroupClick={pickDst} />
 
