@@ -15,10 +15,30 @@ export class SplitModule {
 
   readonly stateUpateSubject = new Subject<{ chatId: number, threadId: number | undefined, balanceState: BalanceState, operation: SavedOp, type: 'create' | 'update' | 'delete' }>;
 
-  commitOperation = async (chatId: number, threadId: number | undefined, type: 'create' | 'update', operation: ClientAPICommandOperation & { uid: number }) => {
+  commitOperation = async (chatId: number, threadId: number | undefined, type: 'create' | 'update', operation: ClientAPICommandOperation) => {
     if (typeof operation.sum !== 'number' || operation.sum % 1 !== 0 || operation.sum < 0) {
-      throw new Error("Sum should be a positive integer")
+      throw new Error("Sum should be non negative integer");
     }
+    if (!Number.isInteger(operation.uid)) {
+      throw new Error(operation.uid + " not a user id");
+    }
+    if (operation.type === 'transfer') {
+      if (!Number.isInteger(operation.dstUid)) {
+        throw new Error(operation.uid + " not a user id");
+      }
+    } else if (operation.type === 'split') {
+      operation.conditions.forEach(c => {
+        if (c.type === 'shares') {
+          if (!Number.isInteger(c.extra) || !Number.isInteger(c.shares)) {
+            throw new Error("Bad condition");
+          }
+          if (!Number.isInteger(c.uid)) {
+            throw new Error(c.uid + " not a user id");
+          }
+        }
+      });
+    }
+
     const session = MDBClient.startSession()
     let _id: ObjectId | undefined
     try {
@@ -35,7 +55,7 @@ export class SplitModule {
         } else if (type === 'update') {
           _id = new ObjectId(id)
           // update op
-          const op = (await this.ops.findOne({ _id, uid, deleted: { $ne: true } }))
+          const op = (await this.ops.findOne({ _id, deleted: { $ne: true } }))
           if (!op) {
             throw new Error("Operation not found")
           }
@@ -79,9 +99,9 @@ export class SplitModule {
   };
 
   // TODO: merge with commit? - two signatures for this function?
-  deleteOperation = async (id: string, uid: number) => {
+  deleteOperation = async (id: string) => {
     const _id = new ObjectId(id);
-    const op = await this.ops.findOne({ _id, uid });
+    const op = await this.ops.findOne({ _id });
     if (!op) {
       throw new Error("Operation not found")
     }

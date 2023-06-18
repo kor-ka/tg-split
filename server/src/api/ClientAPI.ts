@@ -82,12 +82,10 @@ export class ClientAPI {
                         // TODO: sanitise op
                         const { type } = command
                         if (type === 'create' || type === 'update') {
-                            const { operation } = command
-                            const op = { ...operation, uid: tgData.user.id } as Operation
-                            const { operation: updatedOp, balanceState } = await this.splitModule.commitOperation(chatId, threadId, type, op)
+                            const { operation: updatedOp, balanceState } = await this.splitModule.commitOperation(chatId, threadId, type, command.operation)
                             ack({ patch: { type, balanceState, operation: savedOpToApi(updatedOp) } })
                         } else if (type === 'delete') {
-                            const { operation: updatedOp, balanceState } = await this.splitModule.deleteOperation(command.id, tgData.user.id)
+                            const { operation: updatedOp, balanceState } = await this.splitModule.deleteOperation(command.id)
                             ack({ patch: { type, balanceState, operation: savedOpToApi(updatedOp) } })
                         }
 

@@ -5,7 +5,7 @@ import { splitToAtoms } from "../shared/splitToAtoms";
 import { UserClient } from "../model/UsersModule";
 import { useVMvalue } from "../utils/vm/useVM";
 import { VM } from "../utils/vm/VM";
-import { BackButtopnController, Button, Card, CardLight, ListItem, MainButtopnController, ModelContext, showConfirm, UserContext, UsersProvider, WebApp, __DEV__ } from "./MainScreen"
+import { BackButtopnController, Button, Card, CardLight, ListItem, MainButtopnController, ModelContext, showConfirm, useNav, UserContext, UsersProvider, WebApp, __DEV__ } from "./MainScreen"
 import { useHandleOperation } from "./useHandleOperation";
 import { formatSum } from "./utils/formatSum";
 
@@ -94,7 +94,51 @@ const getDefaultCondition = (user: UserClient): Condition => {
     return user.disabled ? { uid: user.id, type: 'disabled' } : { uid: user.id, type: 'shares', shares: 1, extra: 0 }
 }
 
+const UserPickerEntry = React.memo(({ id, onClick }: { id: number, onClick: (id: number) => void }) => {
+    const usersModule = React.useContext(UsersProvider);
+    const user = useVMvalue(usersModule.getUser(id));
+    const onCardClick = React.useCallback(() => {
+        onClick(id)
+    }, [id, onClick])
+    return <Card onClick={onCardClick} style={{ margin: 4, backgroundColor: 'var(--tg-theme-bg-color)' }}><ListItem titile={user.fullName} /></Card>
+})
+
+const UserPicker = React.memo(({ show, showGroupOption, onUserClick, onGroupClick }: { show: boolean, showGroupOption: boolean, onUserClick: (id: number) => void, onGroupClick?: () => void }) => {
+    const usersModule = React.useContext(UsersProvider);
+    const userId = React.useContext(UserContext);
+    const [vms] = React.useState(
+        () => {
+            const vms = [...usersModule.users.values()]
+                .sort((a, b) =>
+                    // bring current user up
+                    (a.val.id === userId) ? -1 : (b.val.id === userId) ? 1 :
+                        (a.val.disabled === b.val.disabled) ?
+                            // alphabet sort
+                            a.val.fullName.localeCompare(b.val.fullName) :
+                            // push disabled to the end
+                            a.val.disabled ? 1 : -1);
+            return vms;
+
+        }
+    );
+
+    const onGroupCardClick = React.useCallback(() => {
+        onGroupClick?.();
+    }, [onGroupClick]);
+
+    return <div style={{ maxHeight: show ? 300 : 0, transition: `max-height ${show ? 'ease-in' : 'ease-out'} 150ms`, display: 'flex', flexDirection: 'column', padding: '0 16px', backgroundColor: 'var(--tg-theme-secondary-bg-color)' }}>
+        <div style={{ display: 'flex', padding: '8px 0', flexDirection: 'row', flexWrap: 'wrap', overflow: show ? 'scroll' : 'hidden' }}>
+            {vms.map(u => <UserPickerEntry key={u.val.id} id={u.val.id} onClick={onUserClick} />)}
+            {showGroupOption && <Card onClick={onGroupCardClick} style={{ margin: 4, backgroundColor: 'var(--tg-theme-bg-color)' }}><ListItem titile="Group" /></Card>}
+        </div>
+    </div >
+})
+
 export const AddExpenceScreen = () => {
+    // 
+    // general
+    // 
+    const nav = useNav()
     const [searchParams] = useSearchParams();
     const model = React.useContext(ModelContext);
     const userId = React.useContext(UserContext);
@@ -102,14 +146,17 @@ export const AddExpenceScreen = () => {
     const editTransactionId = searchParams.get("editExpense");
     const editTransaction: OperationSplit | undefined = editTransactionId ? model?.logModule.getOperationOpt(editTransactionId) : undefined;
 
-    let myTransaction = !editTransactionId || (editTransaction?.uid === userId);
-    let disable = !!editTransaction?.deleted || !myTransaction;
+    let disable = !!editTransaction?.deleted;
 
     const descriptionRef = React.useRef<HTMLTextAreaElement>(null);
     const sumInputRef = React.useRef<HTMLInputElement>(null);
 
     const usersModule = React.useContext(UsersProvider);
 
+
+    // 
+    // sum
+    // 
     const [sum, setSum] = React.useState(editTransaction ? editTransaction.sum : 0)
     const [sumStr, setSumStr] = React.useState(editTransaction ? formatSum(sum, true, false) : '')
     const sumRef = React.useRef(sum)
@@ -125,19 +172,48 @@ export const AddExpenceScreen = () => {
                 setSum(num);
                 onConditionUpdated();
             }
-            setSumStr(e.target.value.startsWith('0') ? formatSum(num) : e.target.value);
+            setSumStr(e.target.value);
         }
     }, [])
 
+    // 
+    // src/dst 
+    // 
+    const [srcUserId, setSrcUserId] = React.useState(editTransaction?.uid ?? userId ?? NaN);
+    const [showUserPicker, setShowUserPicker] = React.useState<'src' | 'dst' | false>(false);
+    const pickSrc = React.useCallback(() => {
+        setShowUserPicker(picker => picker === 'src' ? false : 'src');
+    }, []);
+    const pickDst = React.useCallback(() => {
+        setShowUserPicker(picker => picker === 'dst' ? false : 'dst');
+    }, []);
+    const onUserPicked = React.useCallback((uid: number) => {
+        setShowUserPicker((picker) => {
+            if (picker === 'src') {
+                setSrcUserId(uid)
+            } else if (picker === 'dst') {
+                nav(`/tg/addPayment?src=${srcUserId}&dst=${uid}&sum=${sum}`)
+            }
+            return false
+        })
+    }, [srcUserId, sum])
+    const srcUser = useVMvalue(usersModule.getUser(srcUserId));
 
+
+    // 
+    // conditions
+    // 
     const [{ conditions, vms, atoms }, setUserEntries] = React.useState(
         () => {
             const vms = [...usersModule.users.values()]
                 .sort((a, b) =>
                     // bring current user up
                     (a.val.id === userId) ? -1 : (b.val.id === userId) ? 1 :
-                        // push disabled to the end
-                        (a.val.disabled === b.val.disabled) ? 0 : a.val.disabled ? 1 : -1);
+                        (a.val.disabled === b.val.disabled) ?
+                            // alphabet sort
+                            a.val.fullName.localeCompare(b.val.fullName) :
+                            // push disabled to the end
+                            a.val.disabled ? 1 : -1);
             const sortedIds = vms.map(vm => vm.val.id);
 
             const conditions = vms.map(({ val: user }) => {
@@ -184,6 +260,9 @@ export const AddExpenceScreen = () => {
 
     disable = disable || loading;
 
+    // 
+    // actions
+    // 
     const onClick = React.useCallback(() => {
         console.log("submit click", sumInputRef.current?.value);
         const sum = Math.floor(Number(sumInputRef.current?.value.replace(',', '.')) * 100);
@@ -195,12 +274,13 @@ export const AddExpenceScreen = () => {
                         type: 'split',
                         sum,
                         id: editTransaction?.id ?? model.nextId() + '',
+                        uid: srcUserId,
                         description: descriptionRef.current?.value,
                         conditions
                     }
                 }))
         }
-    }, [model, conditions, editTransaction, handleOperation]);
+    }, [model, conditions, editTransaction, handleOperation, srcUserId]);
 
 
     const onDeleteClick = React.useCallback(() => {
@@ -224,8 +304,16 @@ export const AddExpenceScreen = () => {
     return <>
         <BackButtopnController />
         <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0px', whiteSpace: 'pre-wrap' }}>
-            <textarea ref={descriptionRef} defaultValue={editTransaction?.description} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder={disable ? "No description" : "What did you pay for?"} />
+
+            <div style={{ flexDirection: 'row', paddingLeft: 4 }}>
+                <Button onClick={pickSrc} style={{ marginRight: 8 }}><ListItem titile={srcUser.name} /></Button>
+                →
+                <Button onClick={pickDst} disabled={!!editTransactionId} style={{ marginLeft: 8 }}><ListItem titile="Group" /></Button>
+            </div>
+            <UserPicker show={!!showUserPicker} showGroupOption={showUserPicker === 'dst'} onUserClick={onUserPicked} onGroupClick={pickDst} />
+
             <input ref={sumInputRef} value={sumStr} onChange={onSumInputChange} autoFocus={!editTransaction} disabled={disable} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
+            <textarea ref={descriptionRef} defaultValue={editTransaction?.description} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder={disable ? "No description" : `What did ${srcUser.name} pay for?`} />
             <CardLight>
                 <ListItem subtitle="Split among: " right={
                     <input onClick={onAllCheckClick} checked={someSelected} readOnly={true} type="checkbox" disabled={disable} style={{ width: 20, height: 20, accentColor: 'var(--tg-theme-button-color)' }} />
@@ -233,8 +321,8 @@ export const AddExpenceScreen = () => {
             </CardLight>
             {conditions.map((c, i) => <UserCheckListItem key={c.uid} userVm={vms[i]} condition={conditions[i]} onConditionUpdated={onConditionUpdated} sum={atoms[i][1]} disabled={disable} />)}
             <CardLight><ListItem subtitle={`Missing someone?\nIf there are users not displayed here (but they are in the group), ask them to write a message to the group or open this app.\n${!editTransaction ? `Don't worry if you can't add them right now, you can still add the expense and edit the list of involved users later on.` : ''}`} /></CardLight>
-            {editTransaction && myTransaction && <Button disabled={disable} onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="DELETE EXPENSE" /></Button>}
+            {editTransaction && <Button disabled={disable} onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="DELETE EXPENSE" /></Button>}
         </div>
-        <MainButtopnController onClick={onClick} text={(editTransaction ? 'EDIT' : 'ADD') + ' EXPENSE'} progress={loading} isActive={!disable && (sum !== 0)} isVisible={myTransaction} />
+        <MainButtopnController onClick={onClick} text={(editTransaction ? 'EDIT' : 'ADD') + ' EXPENSE'} progress={loading} isActive={!disable && (sum !== 0)} />
     </>
 }

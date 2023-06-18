@@ -107,8 +107,7 @@ export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<Sorted
         <BackButtopnController />
         <BalanceView balanceVM={balanceVM} />
         <LogView logVM={log} />
-        {/* <button onClick={() => nav("/tg/addPayment")} >Add payment</button> */}
-        <MainButtopnController onClick={() => nav("/tg/addExpence")} text={"ADD EXPENSE"} />
+        <MainButtopnController onClick={() => nav("/tg/addExpence")} text={"ADD PAYMENT"} />
     </div>
 }
 
@@ -160,7 +159,7 @@ const BalanceEntry = React.memo(({ balance }: { balance: Balance[0] }) => {
 
     const nav = useNav()
     const navigateToAddPayment = React.useCallback(() => {
-        nav(`/tg/addPayment?uid=${dstUser.id}&sum=${Math.abs(balance.sum)}`)
+        nav(`/tg/addPayment?src=${userId}&dst=${dstUser.id}&sum=${Math.abs(balance.sum)}`)
     }, [nav, dstUser.id])
     const myDebt = (srcUser.id === userId) && (balance.sum < 0);
     return <div onClick={myDebt ? navigateToAddPayment : undefined}>

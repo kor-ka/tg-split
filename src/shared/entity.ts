@@ -70,7 +70,7 @@ export type StateUpdate = {
 // 
 // Server API
 // 
-export type ClientAPICommandOperation = OmitUnion<Operation, 'uid' | 'edited' | 'deleted' | 'date'>
+export type ClientAPICommandOperation = OmitUnion<Operation, 'edited' | 'deleted' | 'date'>
 export type ClientAPICommand =
     { type: 'create' | 'update', operation: ClientAPICommandOperation } |
     { type: 'delete', id: string };
