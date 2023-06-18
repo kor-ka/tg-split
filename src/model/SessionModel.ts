@@ -92,12 +92,12 @@ export class SessionModel {
 
         if ((this.balance.val?.seq ?? -1) < balanceState.seq) {
             const b = optimiseBalance(balanceState.balance).reduce((balanceState, e) => {
-                if (e.pair.includes(this.tgWebApp.user.id) && e.sum !== 0) {
+                if (e.sum > 0) {
+                    e.pair.reverse()
+                    e.sum *= -1
+                }
+                if (e.pair.includes(this.tgWebApp.user.id)) {
                     balanceState.yours.push(e)
-                    if (e.sum > 0) {
-                        e.pair.reverse()
-                        e.sum *= -1
-                    }
                 } else {
                     balanceState.others.push(e)
                 }

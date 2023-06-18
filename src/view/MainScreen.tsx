@@ -180,20 +180,20 @@ let animateBalanceOnce = true;
 const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<SortedBalance | undefined> }) => {
     const model = React.useContext(ModelContext);
     const balalnceSate = useVMvalue(balanceVM)
-    const balance = balalnceSate?.yours;
+    const balanceYours = balalnceSate?.yours || [];
     const othresBalance = balalnceSate?.others || [];
 
     let [balancePositive, sumPosistive] = React.useMemo(() => {
-        const b = balance?.filter(b => b.sum > 0) || [];
+        const b = balanceYours?.filter(b => b.sum > 0) || [];
         const sum = b.reduce((acc, e) => acc + e.sum, 0);
         return [b, sum];
-    }, [balance]);
+    }, [balanceYours]);
 
     let [balanceNegative, sumNegative] = React.useMemo(() => {
-        const b = balance?.filter(b => b.sum < 0) || [];
+        const b = balanceYours?.filter(b => b.sum < 0) || [];
         const sum = b.reduce((acc, e) => acc + e.sum, 0);
         return [b, sum]
-    }, [balance]);
+    }, [balanceYours]);
 
     const userId = React.useContext(UserContext);
 
@@ -220,7 +220,7 @@ const BalanceView = React.memo(({ balanceVM }: { balanceVM: VM<SortedBalance | u
         </Card>
     }
 
-    if (balance?.length === 0) {
+    if (balanceYours.length === 0 && othresBalance.length === 0) {
         return <Card> <ListItem titile="✨ All settled up ✨" subtitle="You are awesome" /> </Card>
     }
 

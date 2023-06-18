@@ -107,12 +107,12 @@ initMDB().then(() => {
 
       const { balance: balanceState } = balanceCached;
       const balance = optimiseBalance(balanceState.balance).reduce((balanceState, e) => {
-        if (userId !== undefined && e.pair.includes(userId) && e.sum !== 0) {
+        if (e.sum > 0) {
+          e.pair.reverse()
+          e.sum *= -1
+        }
+        if (userId !== undefined && e.pair.includes(userId)) {
           balanceState.yours.push(e)
-          if (e.sum > 0) {
-            e.pair.reverse()
-            e.sum *= -1
-          }
         } else {
           balanceState.others.push(e)
         }
