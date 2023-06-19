@@ -1,6 +1,6 @@
 import React from "react";
 import { WebApp, showAlert, useNav } from "./MainScreen";
-export const useHandleOperation = () => {
+export const useHandleOperation = (onComplete?: () => void) => {
     const nav = useNav();
 
     const [loading, setLoading] = React.useState(false);
@@ -12,7 +12,11 @@ export const useHandleOperation = () => {
         setLoading(true);
         return promise.then((res: T) => {
             WebApp?.HapticFeedback.notificationOccurred("success");
-            nav(-1);
+            if (onComplete) {
+                onComplete()
+            } else {
+                nav(-1);
+            }
             return res
         })
             .catch(e => {
@@ -24,7 +28,7 @@ export const useHandleOperation = () => {
                 }
             })
             .finally(() => setLoading(false));
-    }, [loading])
+    }, [loading, onComplete])
 
     return [callback, loading] as const
 }

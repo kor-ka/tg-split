@@ -2,8 +2,9 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { OperationTransfer } from "../shared/entity";
 import { useVMvalue } from "../utils/vm/useVM";
-import { UsersProvider, ModelContext, BackButtopnController, CardLight, ListItem, MainButtopnController, showConfirm, Button } from "./MainScreen";
+import { UsersProvider, ModelContext, BackButtopnController, CardLight, ListItem, MainButtopnController, showConfirm, Button, HomeLoc } from "./MainScreen";
 import { useHandleOperation } from "./useHandleOperation";
+import { useGoHome } from "./utils/useGoHome";
 
 export const AddTransferScreen = () => {
     const model = React.useContext(ModelContext);
@@ -22,7 +23,8 @@ export const AddTransferScreen = () => {
     const dst = useVMvalue(usersModule.getUser(editOp?.dstUid ?? Number(searchParams.get('dst'))));
     const initialSum = React.useMemo(() => editOp?.sum ?? Number(searchParams.get('sum')), []);
 
-    const [handleOperation, loading] = useHandleOperation()
+    const goHome = useGoHome()
+    const [handleOperation, loading] = useHandleOperation(goHome);
 
     disable = disable || loading
 
