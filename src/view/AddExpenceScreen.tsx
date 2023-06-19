@@ -8,6 +8,7 @@ import { VM } from "../utils/vm/VM";
 import { BackButtopnController, Button, Card, CardLight, ListItem, MainButtopnController, ModelContext, showConfirm, useNav, UserContext, UsersProvider, WebApp, __DEV__ } from "./MainScreen"
 import { useHandleOperation } from "./useHandleOperation";
 import { formatSum } from "./utils/formatSum";
+import { conditionsDiff } from "../shared/conditionsDiff";
 
 const describeCondition = (user: UserClient, condition: Condition) => {
     if (condition.type === 'shares') {
@@ -146,9 +147,13 @@ export const AddExpenceScreen = () => {
     const editTransactionId = searchParams.get("editExpense");
     const editTransaction: OperationSplit | undefined = editTransactionId ? model?.logModule.getOperationOpt(editTransactionId) : undefined;
 
-    let disable = !!editTransaction?.deleted;
 
     const descriptionRef = React.useRef<HTMLTextAreaElement>(null);
+    const [descriptionState, setDescr] = React.useState(editTransaction?.description ?? '')
+    const onDescriptionInputChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setDescr(e.target.value);
+    }, [])
+
     const sumInputRef = React.useRef<HTMLInputElement>(null);
 
     const usersModule = React.useContext(UsersProvider);
@@ -203,7 +208,7 @@ export const AddExpenceScreen = () => {
     // 
     // conditions
     // 
-    const [{ conditions, vms, atoms }, setUserEntries] = React.useState(
+    const [{ conditions, vms, atoms, diff }, setUserEntries] = React.useState(
         () => {
             const vms = [...usersModule.users.values()]
                 .sort((a, b) =>
@@ -228,7 +233,7 @@ export const AddExpenceScreen = () => {
             const atoms = splitToAtoms(userId ?? -1, sum, conditions, false)
                 // [2][1] is dst user id in atom
                 .sort((a, b) => sortedIds.indexOf(a[2][1]) - sortedIds.indexOf(b[2][1]));
-            return { sortedIds, conditions, vms, atoms };
+            return { sortedIds, conditions, vms, atoms, diff: editTransaction ? [] : conditions };
 
         }
     );
@@ -251,14 +256,14 @@ export const AddExpenceScreen = () => {
             const atoms = splitToAtoms(userId ?? -1, sumRef.current, conditionsNext, false)
                 // [2][1] is dst user id in atom
                 .sort((a, b) => sortedIds.indexOf(a[2][1]) - sortedIds.indexOf(b[2][1]));
-            return { sortedIds, conditions: conditionsNext, vms, atoms }
+            const diff = conditionsDiff(editTransaction?.conditions ?? [], conditionsNext)
+            return { sortedIds, conditions: conditionsNext, vms, atoms, diff }
         });
     }, []);
 
 
     const [handleOperation, loading] = useHandleOperation();
 
-    disable = disable || loading;
 
     // 
     // actions
@@ -266,21 +271,34 @@ export const AddExpenceScreen = () => {
     const onClick = React.useCallback(() => {
         console.log("submit click", sumInputRef.current?.value);
         const sum = Math.floor(Number(sumInputRef.current?.value.replace(',', '.')) * 100);
+        const description = descriptionRef.current?.value;
         if (model) {
             handleOperation(
-                model.commitOperation({
-                    type: editTransaction ? 'update' : 'create',
+                editTransaction ? model.commitOperation({
+                    type: 'update',
+                    operation: {
+                        type: 'split',
+                        sum: (editTransaction.sum === sum) ? undefined : sum,
+                        id: editTransaction.id,
+                        // TODO: user update not detected - should be taken as diff, made opt
+                        uid: srcUserId,
+                        description: (editTransaction.description === description) ? undefined : description,
+                        conditions: diff
+                    }
+                }) : model.commitOperation({
+                    type: 'create',
                     operation: {
                         type: 'split',
                         sum,
-                        id: editTransaction?.id ?? model.nextId() + '',
+                        id: model.nextId() + '',
                         uid: srcUserId,
-                        description: descriptionRef.current?.value,
+                        description,
                         conditions
                     }
                 }))
+
         }
-    }, [model, conditions, editTransaction, handleOperation, srcUserId]);
+    }, [model, sum, conditions, diff, editTransaction, handleOperation, srcUserId]);
 
 
     const onDeleteClick = React.useCallback(() => {
@@ -295,11 +313,26 @@ export const AddExpenceScreen = () => {
         })
     }, [model, editTransactionId, handleOperation])
 
+    // 
+    // check/uncheck all
+    // 
     const someSelected = React.useMemo(() => !!conditions.find(c => c.type !== 'disabled'), [conditions])
     const onAllCheckClick = React.useCallback(() => {
         onConditionUpdated(undefined, !someSelected)
         WebApp?.HapticFeedback.selectionChanged();
     }, [someSelected])
+
+
+    // 
+    // disable states
+    // 
+    let disable = !!editTransaction?.deleted;
+    disable ||= loading;
+
+    let disableSave = sum === 0;
+    if (editTransaction) {
+        disableSave ||= (editTransaction.sum === sum) && (editTransaction.description === descriptionState) && (diff.length === 0);
+    }
 
     return <>
         <BackButtopnController />
@@ -313,7 +346,7 @@ export const AddExpenceScreen = () => {
             <UserPicker show={!!showUserPicker} showGroupOption={showUserPicker === 'dst'} onUserClick={onUserPicked} onGroupClick={pickDst} />
 
             <input ref={sumInputRef} value={sumStr} onChange={onSumInputChange} autoFocus={!editTransaction} disabled={disable} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
-            <textarea ref={descriptionRef} defaultValue={editTransaction?.description} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder={disable ? "No description" : `What did ${srcUser.name} pay for?`} />
+            <textarea ref={descriptionRef} value={descriptionState} onChange={onDescriptionInputChange} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder={disable ? "No description" : `What did ${srcUser.name} pay for?`} />
             <CardLight>
                 <ListItem subtitle="Split among: " right={
                     <input onClick={onAllCheckClick} checked={someSelected} readOnly={true} type="checkbox" disabled={disable} style={{ width: 20, height: 20, accentColor: 'var(--tg-theme-button-color)' }} />
@@ -323,6 +356,6 @@ export const AddExpenceScreen = () => {
             <CardLight><ListItem subtitle={`Missing someone?\nIf there are users not displayed here (but they are in the group), ask them to write a message to the group or open this app.\n${!editTransaction ? `Don't worry if you can't add them right now, you can still add the expense and edit the list of involved users later on.` : ''}`} /></CardLight>
             {editTransaction && <Button disabled={disable} onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="DELETE EXPENSE" /></Button>}
         </div>
-        <MainButtopnController onClick={onClick} text={(editTransaction ? 'EDIT' : 'ADD') + ' EXPENSE'} progress={loading} isActive={!disable && (sum !== 0)} />
+        <MainButtopnController onClick={onClick} text={(editTransaction ? 'EDIT' : 'ADD') + ' EXPENSE'} progress={loading} isActive={!disableSave && !disable} />
     </>
 }

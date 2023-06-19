@@ -4,9 +4,11 @@ import { MDBClient } from "../../utils/MDB";
 import { ObjectId, WithId } from "mongodb";
 import { Subject } from "../../utils/subject";
 import { savedOpToApi } from "../../api/ClientAPI";
-import { BalanceState, ClientAPICommandOperation, OperationSplit, Balance, SharesCondition } from "../../../../src/shared/entity";
+import { BalanceState, OperationSplit, Balance, SharesCondition, ClientAPICommand, ClientApiCreateCommand, ClientApiUpdateCommand, Condition } from "../../../../src/shared/entity";
 import { Atom, atom } from "../../../../src/shared/atom";
 import { splitToAtoms } from "../../../../src/shared/splitToAtoms";
+
+type ClientAPICommandOperation = ClientApiCreateCommand['operation']
 
 @singleton()
 export class SplitModule {
@@ -15,10 +17,16 @@ export class SplitModule {
 
   readonly stateUpateSubject = new Subject<{ chatId: number, threadId: number | undefined, balanceState: BalanceState, operation: SavedOp, type: 'create' | 'update' | 'delete' }>;
 
-  commitOperation = async (chatId: number, threadId: number | undefined, type: 'create' | 'update', operation: ClientAPICommandOperation) => {
-    if (typeof operation.sum !== 'number' || operation.sum % 1 !== 0 || operation.sum < 0) {
+  commitOperation = async (chatId: number, threadId: number | undefined, command: ClientApiCreateCommand | ClientApiUpdateCommand) => {
+    const { type, operation } = command;
+    if (operation.sum === undefined) {
+      if (type !== 'update') {
+        throw new Error("Sum should be non negative integer");
+      }
+    } else if (typeof operation.sum !== 'number' || operation.sum % 1 !== 0 || operation.sum < 0) {
       throw new Error("Sum should be non negative integer");
     }
+
     if (!Number.isInteger(operation.uid)) {
       throw new Error(operation.uid + " not a user id");
     }
@@ -44,24 +52,50 @@ export class SplitModule {
     try {
       await session.withTransaction(async () => {
         // Write op
-        const { id, uid, ...op } = operation;
-        const opData = { ...op, uid, chatId, threadId };
+        const { id, uid } = operation;
 
-        let atoms = opToAtoms(operation)
+        let atoms: Atom[]
 
-        if (type === 'create') {
+        if (command.type === 'create') {
+          const { id, ...op } = command.operation;
+          const opData = { ...op, chatId, threadId };
+          atoms = opToAtoms(command.operation)
           // create new op
           _id = (await this.ops.insertOne({ ...opData, seq: 0, idempotencyKey: `${uid}_${id}` }, { session })).insertedId
-        } else if (type === 'update') {
+        } else if (command.type === 'update') {
+          // find existing
           _id = new ObjectId(id)
-          // update op
           const op = (await this.ops.findOne({ _id, deleted: { $ne: true } }))
           if (!op) {
             throw new Error("Operation not found")
           }
-          await this.ops.updateOne({ _id, seq: op.seq }, { $set: opData, $inc: { seq: 1 } }, { session })
+
+          // create update obj
+          const { id: _, ...opPart } = command.operation;
+          const updFields = { ...opPart };
+          if (updFields.type === 'split') {
+            if (op.type !== 'split') {
+              throw new Error("updating operation with diffirent type")
+            }
+            // do not override existing with partitial undefind
+            if (updFields.sum === undefined) {
+              delete updFields.sum
+            }
+            if (updFields.description === undefined) {
+              delete updFields.description
+            }
+
+            // set old conditions, update/merge with new
+            const conditionsMap = new Map<number, Condition>();
+            op.conditions.forEach(c => conditionsMap.set(c.uid, c));
+            updFields.conditions.forEach(c => conditionsMap.set(c.uid, c));
+            updFields.conditions = [...conditionsMap.values()]
+          }
+
+          // update op
+          await this.ops.updateOne({ _id, seq: op.seq }, { $set: updFields, $inc: { seq: 1 } }, { session })
           // revert balance
-          atoms = sumAtoms([...atoms, ...invertAtoms(opToAtoms(op))])
+          atoms = sumAtoms([...opToAtoms({ ...op, ...updFields }), ...invertAtoms(opToAtoms(op))])
         } else {
           throw new Error('Unknown operation modification type')
         }

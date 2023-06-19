@@ -82,7 +82,7 @@ export class ClientAPI {
                         // TODO: sanitise op
                         const { type } = command
                         if (type === 'create' || type === 'update') {
-                            const { operation: updatedOp, balanceState } = await this.splitModule.commitOperation(chatId, threadId, type, command.operation)
+                            const { operation: updatedOp, balanceState } = await this.splitModule.commitOperation(chatId, threadId, command)
                             ack({ patch: { type, balanceState, operation: savedOpToApi(updatedOp) } })
                         } else if (type === 'delete') {
                             const { operation: updatedOp, balanceState } = await this.splitModule.deleteOperation(command.id)
