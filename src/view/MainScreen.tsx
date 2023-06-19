@@ -5,7 +5,9 @@ import { UsersModule } from "../model/UsersModule";
 import { useVMvalue } from "../utils/vm/useVM"
 import {
     createBrowserRouter,
+    Location,
     RouterProvider,
+    useLocation as loc,
     useNavigate as nav, useResolvedPath, useSearchParams
 } from "react-router-dom";
 import { AddExpenceScreen } from "./AddExpenceScreen";
@@ -41,12 +43,21 @@ export const ModelContext = React.createContext<SessionModel | undefined>(undefi
 export const UserContext = React.createContext<number | undefined>(undefined);
 export const UsersProvider = React.createContext<UsersModule>(new UsersModule());
 export const Timezone = React.createContext<string | undefined>(undefined);
+export const HomeLoc = React.createContext<{ loc: Location | undefined }>({ loc: undefined });
 
 export const useNav = () => {
     if (typeof window !== "undefined") {
         return nav()
     } else {
         return () => { }
+    }
+}
+
+export const useLoc = (): Location => {
+    if (typeof window !== "undefined") {
+        return loc()
+    } else {
+        return { state: {}, key: 'default', pathname: '', search: '', hash: '' }
     }
 }
 
@@ -85,7 +96,9 @@ export const renderApp = (model: SessionModel) => {
         <ModelContext.Provider value={model}>
             <UserContext.Provider value={model.tgWebApp.user.id}>
                 <UsersProvider.Provider value={model.users}>
-                    <RouterProvider router={router} />
+                    <HomeLoc.Provider value={{ loc: undefined }}>
+                        <RouterProvider router={router} />
+                    </HomeLoc.Provider>
                 </UsersProvider.Provider>
             </UserContext.Provider>
         </ModelContext.Provider>
@@ -93,6 +106,10 @@ export const renderApp = (model: SessionModel) => {
 }
 
 export const MainScreen = () => {
+    const homeLoc = React.useContext(HomeLoc);
+    const loc = useLoc();
+    homeLoc.loc = loc;
+
     const model = React.useContext(ModelContext)
     return model ? <MainScreenWithModel model={model} /> : null
 }
