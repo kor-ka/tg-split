@@ -36,9 +36,10 @@ export const splitToAtoms = (srcUid: number, sum: number, conditions: Condition[
     sum /= sharesCount;
     shares.forEach(({ uid, shares }) => {
         // split reminder across users, multiplyed by shares count
-        rem -= shares;
+        const sharesRem = Math.min(rem, shares);
+        rem -= sharesRem;
         if ((uid !== srcUid) || !skipSrc) {
-            atoms.push(atom(srcUid, uid, sum * shares + (rem >= 0 ? shares : 0)));
+            atoms.push(atom(srcUid, uid, sum * shares + (rem >= 0 ? sharesRem : 0)));
         }
     });
 
