@@ -75,6 +75,7 @@ const SharesConditionView = React.memo(({ condition, onConditionChange }: { cond
             </>} />
         <ListItem onClick={preventParentClick} style={{ marginBottom: 8 }}
             subtitle="extra sum ⓘ"
+            leftStyle={{ flexShrink: 0 }}
             onSubtitleClick={extraInfo}
             right={<SumInput sum={sum} onSumChange={onSumInputChange} style={{ fontSize: '1.2em', textAlign: 'end', backgroundColor: "var(--tg-theme-background)" }} />} />
     </>
