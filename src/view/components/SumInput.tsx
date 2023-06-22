@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { formatSum } from "../utils/formatSum";
 
-export const SumInput = React.memo(({ ref, sum, onSumChange, autoFocus: autofocus, disabled, style }: { ref: React.RefObject<HTMLInputElement>, sum: number, onSumChange: (sum: number) => void, autoFocus?: boolean, disabled?: boolean, style?: any }) => {
+export const SumInput = React.memo(({ ref, sum, onSumChange, autoFocus: autofocus, disabled, style }: { ref?: React.RefObject<HTMLInputElement>, sum: number, onSumChange: (sum: number) => void, autoFocus?: boolean, disabled?: boolean, style?: any }) => {
     const [sumStr, setSumStr] = React.useState(formatSum(sum, true, false))
 
     const onSumInputChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -9,7 +9,9 @@ export const SumInput = React.memo(({ ref, sum, onSumChange, autoFocus: autofocu
         const num = Math.floor(Number(targetStr) * 100);
 
         if (!Number.isNaN(num)) {
-            if (targetStr.endsWith('.') && (targetStr.indexOf('.') === targetStr.length - 1)) {
+            if (targetStr.length === 0) {
+                setSumStr('')
+            } else if (targetStr.endsWith('.') && (targetStr.indexOf('.') === targetStr.length - 1)) {
                 setSumStr(targetStr);
             } else {
                 setSumStr(formatSum(num));

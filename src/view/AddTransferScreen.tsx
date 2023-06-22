@@ -2,13 +2,13 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { OperationTransfer } from "../shared/entity";
 import { useVMvalue } from "../utils/vm/useVM";
+import { SumInput } from "./components/SumInput";
 import { UsersProvider, ModelContext, BackButtopnController, CardLight, ListItem, MainButtopnController, showConfirm, Button, HomeLoc } from "./MainScreen";
 import { useHandleOperation } from "./useHandleOperation";
 import { useGoHome } from "./utils/useGoHome";
 
 export const AddTransferScreen = () => {
     const model = React.useContext(ModelContext);
-    const sumRef = React.useRef<HTMLInputElement>(null);
 
     let [searchParams] = useSearchParams();
 
@@ -21,7 +21,9 @@ export const AddTransferScreen = () => {
 
     const src = useVMvalue(usersModule.getUser(editOp?.uid ?? Number(searchParams.get('src'))));
     const dst = useVMvalue(usersModule.getUser(editOp?.dstUid ?? Number(searchParams.get('dst'))));
-    const initialSum = React.useMemo(() => editOp?.sum ?? Number(searchParams.get('sum')), []);
+
+    const [sum, setSum] = React.useState(editOp?.sum ?? Number(searchParams.get('sum')))
+    const onSumInputChange = React.useCallback(setSum, [])
 
     const goHome = useGoHome()
     const [handleOperation, loading] = useHandleOperation(goHome);
@@ -29,7 +31,6 @@ export const AddTransferScreen = () => {
     disable = disable || loading
 
     const onClick = React.useCallback(() => {
-        const sum = Math.floor(Number(sumRef.current?.value.replace(',', '.')) * 100);
         if (model) {
             handleOperation(
                 model.commitOperation({
@@ -44,7 +45,7 @@ export const AddTransferScreen = () => {
                 }))
         }
 
-    }, [model, editOp, src, dst, handleOperation]);
+    }, [model, editOp, src, dst, handleOperation, sum]);
 
     const onDeleteClick = React.useCallback(() => {
         showConfirm("Delete payment? This can not be undone.", (confirmed) => {
@@ -62,7 +63,7 @@ export const AddTransferScreen = () => {
         <BackButtopnController />
         <div style={{ display: 'flex', flexDirection: 'column', padding: '20px 0px' }}>
             <CardLight><ListItem titile={`${src.fullName} → ${dst.fullName}`} /></CardLight>
-            <input ref={sumRef} defaultValue={(initialSum / 100) || ''} disabled={disable} autoFocus={true} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
+            <SumInput sum={sum} onSumChange={onSumInputChange} autoFocus={true} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} />
             {editOp && <Button disabled={disable} onClick={onDeleteClick}><ListItem titleStyle={{ color: "var(--text-destructive-color)", alignSelf: 'center' }} titile="DELETE PAYMENT" /></Button>}
         </div>
         <MainButtopnController onClick={onClick} text={(editOp ? "EDIT" : "ADD") + " PAYMENT"} progress={loading} />
