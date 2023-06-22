@@ -8,6 +8,7 @@ import { VM } from "../utils/vm/VM";
 import { BackButtopnController, Button, Card, CardLight, ListItem, MainButtopnController, ModelContext, showConfirm, useNav, UserContext, UsersProvider, WebApp, __DEV__ } from "./MainScreen"
 import { useHandleOperation } from "./useHandleOperation";
 import { formatSum } from "./utils/formatSum";
+import { SumInput } from "./components/SumInput";
 
 const describeCondition = (user: UserClient, condition: Condition) => {
     if (condition.type === 'shares') {
@@ -158,22 +159,16 @@ export const AddExpenceScreen = () => {
     // sum
     // 
     const [sum, setSum] = React.useState(editTransaction ? editTransaction.sum : 0)
-    const [sumStr, setSumStr] = React.useState(editTransaction ? formatSum(sum, true, false) : '')
     const sumRef = React.useRef(sum)
 
-    const onSumInputChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        let num = 0
-        try {
-            num = Math.floor(Number(e.target.value.replace(',', '.')) * 100);
-            num = Number.isNaN(num) ? 0 : num;
-        } finally {
-            if (num !== sumRef.current) {
-                sumRef.current = num;
-                setSum(num);
+    const onSumInputChange = React.useCallback((sum: number) => {
+        setSum((s => {
+            if (s !== sum) {
+                sumRef.current = sum;
                 onConditionUpdated();
             }
-            setSumStr(e.target.value);
-        }
+            return sum
+        }));
     }, [])
 
     // 
@@ -312,7 +307,7 @@ export const AddExpenceScreen = () => {
             </div>
             <UserPicker show={!!showUserPicker} showGroupOption={showUserPicker === 'dst'} onUserClick={onUserPicked} onGroupClick={pickDst} />
 
-            <input ref={sumInputRef} value={sumStr} onChange={onSumInputChange} autoFocus={!editTransaction} disabled={disable} inputMode="decimal" style={{ flexGrow: 1, padding: '8px 28px' }} placeholder="0,00" />
+            <SumInput ref={sumInputRef} sum={sum} onSumChange={onSumInputChange} autoFocus={!editTransaction} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} />
             <textarea ref={descriptionRef} defaultValue={editTransaction?.description} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder={disable ? "No description" : `What did ${srcUser.name} pay for?`} />
             <CardLight>
                 <ListItem subtitle="Split among: " right={
