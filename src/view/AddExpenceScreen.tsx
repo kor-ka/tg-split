@@ -65,7 +65,7 @@ const SharesConditionView = React.memo(({ condition, onConditionChange }: { cond
     }, []);
 
     return <>
-        <ListItem onClick={preventParentClick} style={{ marginBottom: 8 }}
+        <ListItem onClick={preventParentClick}
             subtitle="split parts to cover ⓘ"
             onSubtitleClick={sharesInfo}
             right={<>
