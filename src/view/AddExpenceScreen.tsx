@@ -5,17 +5,24 @@ import { splitToAtoms } from "../shared/splitToAtoms";
 import { UserClient } from "../model/UsersModule";
 import { useVMvalue } from "../utils/vm/useVM";
 import { VM } from "../utils/vm/VM";
-import { BackButtopnController, Button, Card, CardLight, ListItem, MainButtopnController, ModelContext, showConfirm, useNav, UserContext, UsersProvider, WebApp, __DEV__ } from "./MainScreen"
+import { BackButtopnController, Button, Card, CardLight, ListItem, MainButtopnController, ModelContext, showConfirm, useNav, UserContext, UsersProvider, WebApp, showAlert, __DEV__ } from "./MainScreen"
 import { useHandleOperation } from "./useHandleOperation";
 import { formatSum } from "./utils/formatSum";
 import { SumInput } from "./components/SumInput";
 
 const describeCondition = (user: UserClient, condition: Condition) => {
     if (condition.type === 'shares') {
+        let sharesDescr = 'covers own split part'
         if (condition.shares > 1) {
-            return `covers split part for ${condition.shares} persons 〉`
+            sharesDescr = `covers split part for ${condition.shares} persons`
+        } else if (condition.shares === 0) {
+            sharesDescr = 'no split'
         }
-        return "covers own split part 〉"
+        let fixedPart = ""
+        if (condition.extra > 0) {
+            fixedPart = "+ extra"
+        }
+        return [sharesDescr, fixedPart].filter(Boolean).join(' ') + ' 〉';
     } else if (condition.type === 'disabled') {
         return user.disabled ? "not in group" : "not involved"
     }
@@ -24,7 +31,7 @@ const describeCondition = (user: UserClient, condition: Condition) => {
 
 const SharesConditionView = React.memo(({ condition, onConditionChange }: { condition: SharesCondition, onConditionChange: (condition: Condition) => void }) => {
     const sharesIncr = React.useCallback((incr: 1 | -1) => {
-        let shares = (condition.shares + incr) || 1;
+        let shares = Math.max(0, (condition.shares + incr));
         onConditionChange({ ...condition, shares });
         WebApp?.HapticFeedback.selectionChanged();
     }, [condition, onConditionChange]);
@@ -39,17 +46,38 @@ const SharesConditionView = React.memo(({ condition, onConditionChange }: { cond
         sharesIncr(-1);
     }, [sharesIncr]);
 
+    const [sum, setSum] = React.useState(0);
+    const onSumInputChange = React.useCallback((s: number) => {
+        setSum(s);
+        onConditionChange({ ...condition, extra: s });
+    }, [condition, onConditionChange]);
+
     const preventParentClick = React.useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         e.stopPropagation();
     }, []);
 
-    return <ListItem onClick={preventParentClick} style={{ marginBottom: 8 }}
-        subtitle="split parts to cover"
-        right={<>
-            <button style={{ marginRight: 8, padding: '2px 8px', fontFamily: 'monospace', fontSize: '1.4em', fontWeight: 900 }} onClick={sharesMinus} >−</button>
-            {condition.shares}
-            <button style={{ marginLeft: 8, padding: '2px 8px', fontFamily: 'monospace', fontSize: '1.4em', fontWeight: 900 }} onClick={sharesPlus} >+</button>
-        </>} />
+    const sharesInfo = React.useCallback(() => {
+        showAlert("useful for couples - or in any other case when someone would like to bear someone's expenses")
+    }, []);
+
+    const extraInfo = React.useCallback(() => {
+        showAlert("useful in cases when there is some fixed sum that should not be shared")
+    }, []);
+
+    return <>
+        <ListItem onClick={preventParentClick} style={{ marginBottom: 8 }}
+            subtitle="split parts to cover ⓘ"
+            onSubtitleClick={sharesInfo}
+            right={<>
+                <button style={{ marginRight: 8, padding: '2px 8px', fontFamily: 'monospace', fontSize: '1.4em', fontWeight: 900 }} onClick={sharesMinus} >−</button>
+                {condition.shares}
+                <button style={{ marginLeft: 8, padding: '2px 8px', fontFamily: 'monospace', fontSize: '1.4em', fontWeight: 900 }} onClick={sharesPlus} >+</button>
+            </>} />
+        <ListItem onClick={preventParentClick} style={{ marginBottom: 8 }}
+            subtitle="extra sum ⓘ"
+            onSubtitleClick={extraInfo}
+            right={<SumInput sum={sum} onSumChange={onSumInputChange} style={{ fontSize: '1.2em', textAlign: 'end', backgroundColor: "var(--tg-theme-background)" }} />} />
+    </>
 })
 
 const UserCheckListItem = React.memo(({ onConditionUpdated, disabled, userVm, sum, condition }: { userVm: VM<UserClient>, condition: Condition, sum: number, onConditionUpdated: (condition: Condition) => void, disabled: boolean }) => {
@@ -150,7 +178,6 @@ export const AddExpenceScreen = () => {
     let disable = !!editTransaction?.deleted;
 
     const descriptionRef = React.useRef<HTMLTextAreaElement>(null);
-    const sumInputRef = React.useRef<HTMLInputElement>(null);
 
     const usersModule = React.useContext(UsersProvider);
 
@@ -259,8 +286,6 @@ export const AddExpenceScreen = () => {
     // actions
     // 
     const onClick = React.useCallback(() => {
-        console.log("submit click", sumInputRef.current?.value);
-        const sum = Math.floor(Number(sumInputRef.current?.value.replace(',', '.')) * 100);
         if (model) {
             handleOperation(
                 model.commitOperation({
@@ -275,7 +300,7 @@ export const AddExpenceScreen = () => {
                     }
                 }))
         }
-    }, [model, conditions, editTransaction, handleOperation, srcUserId]);
+    }, [model, sum, conditions, editTransaction, handleOperation, srcUserId]);
 
 
     const onDeleteClick = React.useCallback(() => {
@@ -307,7 +332,7 @@ export const AddExpenceScreen = () => {
             </div>
             <UserPicker show={!!showUserPicker} showGroupOption={showUserPicker === 'dst'} onUserClick={onUserPicked} onGroupClick={pickDst} />
 
-            <SumInput ref={sumInputRef} sum={sum} onSumChange={onSumInputChange} autoFocus={!editTransaction} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} />
+            <SumInput sum={sum} onSumChange={onSumInputChange} autoFocus={!editTransaction} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} />
             <textarea ref={descriptionRef} defaultValue={editTransaction?.description} disabled={disable} style={{ flexGrow: 1, padding: '8px 28px' }} placeholder={disable ? "No description" : `What did ${srcUser.name} pay for?`} />
             <CardLight>
                 <ListItem subtitle="Split among: " right={

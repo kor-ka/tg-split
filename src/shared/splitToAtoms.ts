@@ -29,6 +29,7 @@ export const splitToAtoms = (srcUid: number, sum: number, conditions: Condition[
 
         sharesCount += c.shares;
     })
+    sharesCount = sharesCount || 1;
 
 
     let rem = sum % sharesCount;
