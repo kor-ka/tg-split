@@ -78,24 +78,21 @@ export class SplitModule {
         }, { upsert: true, session })
 
       })
-
-      const balanceState = await this.getBalance(chatId, threadId)
-      // non-blocking cache update
-      this.getLog(chatId, threadId).catch((e) => console.error(e))
-
-      const op = await this.ops.findOne({ _id })
-      if (!op) {
-        throw new Error("operation lost during " + type)
-      }
-
-      // notify all
-      this.stateUpateSubject.next({ chatId, threadId, balanceState, operation: op, type })
-      return { operation: op, balanceState }
-
-
     } finally {
       await session.endSession()
     }
+    const balanceState = await this.getBalance(chatId, threadId)
+    // non-blocking cache update
+    this.getLog(chatId, threadId).catch((e) => console.error(e))
+
+    const op = await this.ops.findOne({ _id })
+    if (!op) {
+      throw new Error("operation lost during " + type)
+    }
+
+    // notify all
+    this.stateUpateSubject.next({ chatId, threadId, balanceState, operation: op, type })
+    return { operation: op, balanceState }
   };
 
   // TODO: merge with commit? - two signatures for this function?
