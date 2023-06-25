@@ -140,7 +140,7 @@ const ToClndr = React.memo(() => {
 
 export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<SortedBalance | undefined>, logVM: VM<Map<string, VM<Operation>>> }) => {
     const nav = useNav()
-    return <div style={{ display: 'flex', flexDirection: 'column', padding: "8px 0px" }}>
+    return <div style={{ display: 'flex', flexDirection: 'column', padding: "8px 0px", paddingBottom: 96 }}>
         <BackButtopnController />
         <BalanceView balanceVM={balanceVM} />
         <LogView logVM={log} />
