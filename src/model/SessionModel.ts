@@ -140,15 +140,18 @@ export class SessionModel {
         return Cookies.get('ssr_user_id')
     }
 
+    clndrAvailableSync = () => {
+        return Cookies.get('cldr_available') === 'true'
+    }
     clndrAvailable = async () => {
-        let splitAvailable = Cookies.get('split_available') === 'true'
+        let splitAvailable = this.clndrAvailableSync();
         if (!splitAvailable) {
             const [chat_descriptor, token] = (this.tgWebApp.start_param as string).split('T') ?? [];
             const [chatId, threadId] = chat_descriptor.split('_').map(Number) ?? [];
 
             splitAvailable = (await (await fetch(`${CLNDR_DOMAIN}/enabledInChat/${chatId}`)).text()) === 'true';
             if (splitAvailable) {
-                Cookies.set("split_available", 'true', { path: "/", sameSite: 'None', secure: true, expires: 7 })
+                Cookies.set("cldr_available", 'true', { path: "/", sameSite: 'None', secure: true, expires: 7 })
             }
         }
         return splitAvailable;

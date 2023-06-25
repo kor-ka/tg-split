@@ -120,16 +120,18 @@ const MainScreenWithModel = ({ model }: { model: SessionModel }) => {
 
 const ToClndr = React.memo(() => {
     const model = React.useContext(ModelContext);
-    const [splitAvailable, setSplitAvailable] = React.useState(false);
+    const [clndrAvailable, setClndrAvailable] = React.useState(!!model?.clndrAvailableSync());
     React.useEffect(() => {
-        model?.clndrAvailable()
-            .then(setSplitAvailable)
-            .catch(e => console.error(e));
+        if (!clndrAvailable) {
+            model?.clndrAvailable()
+                .then(setClndrAvailable)
+                .catch(e => console.error(e));
+        }
     }, []);
     const onClick = React.useCallback(() => {
         WebApp?.openTelegramLink(`https://t.me/clndrrrbot/clndr?startapp=${WebApp?.initDataUnsafe.start_param}&startApp=${WebApp?.initDataUnsafe.start_param}`);
     }, []);
-    return <Card onClick={onClick} style={{ position: 'fixed', padding: 16, top: 'calc(var(--tg-viewport-stable-height) - 77px)', right: 0, borderRadius: '32px 0 0 32px', marginRight: 0, transition: 'transform ease-out 150ms, top ease 150ms', transform: `translateX(${splitAvailable ? 0 : 64}px)` }}>🗓</Card>
+    return <Card onClick={onClick} style={{ position: 'fixed', padding: 16, top: 'calc(var(--tg-viewport-stable-height) - 77px)', right: 0, borderRadius: '32px 0 0 32px', marginRight: 0, transition: 'transform ease-out 150ms, top ease 150ms', transform: `translateX(${clndrAvailable ? 0 : 64}px)` }}>🗓</Card>
 });
 
 export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<SortedBalance | undefined>, logVM: VM<Map<string, VM<Operation>>> }) => {
