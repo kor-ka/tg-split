@@ -22,9 +22,12 @@ import { VM } from "../../src/utils/vm/VM";
 import { Balance, Operation } from "../../src/shared/entity";
 import { optimiseBalance } from "../../src/model/optimiseBalance";
 import { ChatMetaModule } from "./modules/chatMetaModule/ChatMetaModule";
+import cors from "cors";
 
 var path = require("path");
 const PORT = process.env.PORT || 5001;
+
+const CLNDR_DOMAIN = 'https://tg-clndr-4023e1d4419a.herokuapp.com';
 
 export const appRoot = path.resolve(__dirname);
 
@@ -80,10 +83,16 @@ initMDB().then(() => {
     .use(express.json({ limit: "500kb" }))
     .use(cookieParser());
 
+  app.get("/enabledInChat/:chatId", cors({ origin: CLNDR_DOMAIN }), async (req, res) => {
+    const chatMetaModule = container.resolve(ChatMetaModule);
+    const chatId = Number.parseInt(req.query.chatId as string);
+    res.send(!!await chatMetaModule.getChatMeta(chatId))
+  });
+
   app.use(compression()).get("/tg/", async (req, res) => {
     try {
       const splitModule = container.resolve(SplitModule);
-      const chatMetaModule = container.resolve(ChatMetaModule)
+      const chatMetaModule = container.resolve(ChatMetaModule);
 
       const [chat_descriptor, token] = (req.query.tgWebAppStartParam as string).split('T') ?? [];
       const [chatId, threadId] = chat_descriptor.split('_').map(Number) ?? [];
