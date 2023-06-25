@@ -5,6 +5,7 @@ import { container } from "tsyringe";
 import { UserModule } from "../../modules/userModule/UserModule";
 import { formatSum } from "../../../../src/view/utils/formatSum";
 import { ChatMetaModule } from "../../modules/chatMetaModule/ChatMetaModule";
+import { getChatToken } from "../Auth";
 
 export function htmlEntities(str: string) {
   return String(str)
@@ -35,8 +36,8 @@ export const renderPin = async (chatId: number, threadId: number | undefined, ba
 
   const text = (await Promise.all(promieses)).join('\n').trim() || '✨ All settled up ✨';
   let key = [chatId, threadId].filter(Boolean).join('_');
-  const token = (await chatMetaModule.getChatMeta(chatId))?.token
-  key = [key, token].filter(Boolean).join('T')
+  const token = getChatToken(chatId);
+  key = [key, token].filter(Boolean).join('T');
   let buttonsRows: TB.InlineKeyboardButton[][] = [];
   buttonsRows.push([
     {

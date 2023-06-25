@@ -23,6 +23,7 @@ import { Balance, Operation } from "../../src/shared/entity";
 import { optimiseBalance } from "../../src/model/optimiseBalance";
 import { ChatMetaModule } from "./modules/chatMetaModule/ChatMetaModule";
 import cors from "cors";
+import { checkChatToken } from "./api/Auth";
 
 var path = require("path");
 const PORT = process.env.PORT || 5001;
@@ -110,8 +111,12 @@ initMDB().then(() => {
 
       const [balanceCached, chatMeta] = await Promise.all([splitModule.getBalanceCached(chatId, threadId), chatMetaModule.getChatMeta(chatId)])
 
-      if ((chatMeta?.token ?? undefined) !== token) {
-        throw new Error("unauthorized")
+      try {
+        checkChatToken(token, chatId);
+      } catch (e) {
+        if ((chatMeta?.token ?? undefined) !== token) {
+          throw new Error("unauthorized")
+        }
       }
 
       const { balance: balanceState } = balanceCached;

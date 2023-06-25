@@ -118,6 +118,20 @@ const MainScreenWithModel = ({ model }: { model: SessionModel }) => {
     return <MainScreenView balanceVM={model.balance} logVM={model.logModule.log} />
 }
 
+const ToClndr = React.memo(() => {
+    const model = React.useContext(ModelContext);
+    const [splitAvailable, setSplitAvailable] = React.useState(false);
+    React.useEffect(() => {
+        model?.clndrAvailable()
+            .then(setSplitAvailable)
+            .catch(e => console.error(e));
+    }, []);
+    const onClick = React.useCallback(() => {
+        WebApp?.openTelegramLink(`https://t.me/clndrrrbot/clndr?startapp=${WebApp?.initDataUnsafe.start_param}&startApp=${WebApp?.initDataUnsafe.start_param}`);
+    }, []);
+    return <Card onClick={onClick} style={{ position: 'fixed', padding: 16, bottom: 24, right: 0, borderRadius: '32px 0 0 32px', marginRight: 0, transition: 'transform ease-in 300ms', transform: `translateX(${splitAvailable ? 0 : 64}px)` }}>🗓</Card>
+});
+
 export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<SortedBalance | undefined>, logVM: VM<Map<string, VM<Operation>>> }) => {
     const nav = useNav()
     return <div style={{ display: 'flex', flexDirection: 'column', padding: "8px 0px" }}>
@@ -125,6 +139,7 @@ export const MainScreenView = ({ balanceVM, logVM: log }: { balanceVM: VM<Sorted
         <BalanceView balanceVM={balanceVM} />
         <LogView logVM={log} />
         <MainButtopnController onClick={() => nav("/tg/addExpence")} text={"ADD PAYMENT"} />
+        <ToClndr />
     </div>
 }
 

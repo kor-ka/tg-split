@@ -8,6 +8,7 @@ import { SavedOp } from "../modules/splitModule/splitStore";
 import { UserModule } from "../modules/userModule/UserModule";
 import { SavedUser } from "../modules/userModule/userStore";
 import { SW } from "../utils/stopwatch";
+import { checkChatToken } from "./Auth";
 import { checkTgAuth } from "./tg/getTgAuth";
 
 export class ClientAPI {
@@ -55,8 +56,13 @@ export class ClientAPI {
 
                 const tokenCheckPromise = new Promise<boolean>(async (resolve, reject) => {
                     try {
-                        const chatMeta = await this.chatMetaModule.getChatMeta(chatId)
-                        resolve((chatMeta?.token ?? undefined) === token)
+                        try {
+                            checkChatToken(token, chatId);
+                            resolve(true);
+                        } catch (e) {
+                            const chatMeta = await this.chatMetaModule.getChatMeta(chatId)
+                            resolve((chatMeta?.token ?? undefined) === token)
+                        }
                     } catch (e) {
                         reject(e)
                     }
