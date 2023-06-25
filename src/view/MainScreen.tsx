@@ -42,6 +42,7 @@ export const showConfirm = (message: string, callback: (confirmed: boolean) => v
 export const ModelContext = React.createContext<SessionModel | undefined>(undefined);
 export const UserContext = React.createContext<number | undefined>(undefined);
 export const UsersProvider = React.createContext<UsersModule>(new UsersModule());
+export const ClndrAvailable = React.createContext(false);
 export const Timezone = React.createContext<string | undefined>(undefined);
 export const HomeLoc = React.createContext<{ loc: Location | undefined }>({ loc: undefined });
 
@@ -93,15 +94,17 @@ export const renderApp = (model: SessionModel) => {
     ]);
 
     return <Timezone.Provider value={Intl.DateTimeFormat().resolvedOptions().timeZone}>
-        <ModelContext.Provider value={model}>
-            <UserContext.Provider value={model.tgWebApp.user.id}>
-                <UsersProvider.Provider value={model.users}>
-                    <HomeLoc.Provider value={{ loc: undefined }}>
-                        <RouterProvider router={router} />
-                    </HomeLoc.Provider>
-                </UsersProvider.Provider>
-            </UserContext.Provider>
-        </ModelContext.Provider>
+        <ClndrAvailable.Provider value={model.clndrAvailableSync()}>
+            <ModelContext.Provider value={model}>
+                <UserContext.Provider value={model.tgWebApp.user.id}>
+                    <UsersProvider.Provider value={model.users}>
+                        <HomeLoc.Provider value={{ loc: undefined }}>
+                            <RouterProvider router={router} />
+                        </HomeLoc.Provider>
+                    </UsersProvider.Provider>
+                </UserContext.Provider>
+            </ModelContext.Provider>
+        </ClndrAvailable.Provider>
     </Timezone.Provider>
 }
 
@@ -120,7 +123,8 @@ const MainScreenWithModel = ({ model }: { model: SessionModel }) => {
 
 const ToClndr = React.memo(() => {
     const model = React.useContext(ModelContext);
-    const [clndrAvailable, setClndrAvailable] = React.useState(!!model?.clndrAvailableSync());
+    const clndrAvailableSync = React.useContext(ClndrAvailable)
+    const [clndrAvailable, setClndrAvailable] = React.useState(clndrAvailableSync);
     React.useEffect(() => {
         if (!clndrAvailable) {
             model?.clndrAvailable()

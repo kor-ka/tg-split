@@ -13,7 +13,7 @@ import { SocketApi } from "./api/socket";
 import { container } from "tsyringe";
 import * as fs from "fs";
 import { initMDB } from "./utils/MDB";
-import { MainScreenView, Timezone, UserContext, UsersProvider } from "../../src/view/MainScreen";
+import { ClndrAvailable, MainScreenView, Timezone, UserContext, UsersProvider } from "../../src/view/MainScreen";
 import { SplitModule } from "./modules/splitModule/SplitModule";
 import { savedOpsToApi, savedUserToApi } from "./api/ClientAPI";
 import { UsersModule as UsersClientModule } from "../../src/model/UsersModule";
@@ -147,13 +147,15 @@ initMDB().then(() => {
       // const app = ''
       const app = ReactDOMServer.renderToString(
         <Timezone.Provider value={timeZone}>
-          <UserContext.Provider
-            value={userId}
-          >
-            <UsersProvider.Provider value={usersProvider}>
-              <MainScreenView balanceVM={balanceStateVm} logVM={new VM(logMap)} />
-            </UsersProvider.Provider>
-          </UserContext.Provider>
+          <ClndrAvailable.Provider value={req.cookies.cldr_available}>
+            <UserContext.Provider
+              value={userId}
+            >
+              <UsersProvider.Provider value={usersProvider}>
+                <MainScreenView balanceVM={balanceStateVm} logVM={new VM(logMap)} />
+              </UsersProvider.Provider>
+            </UserContext.Provider>
+          </ClndrAvailable.Provider>
         </Timezone.Provider>
       );
       const data = await getIndexStr();
