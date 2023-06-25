@@ -85,7 +85,7 @@ initMDB().then(() => {
 
   app.get("/enabledInChat/:chatId", cors({ origin: CLNDR_DOMAIN }), async (req, res) => {
     const chatMetaModule = container.resolve(ChatMetaModule);
-    const chatId = Number.parseInt(req.query.chatId as string);
+    const chatId = Number.parseInt(req.params.chatId as string);
     res.send(!!await chatMetaModule.getChatMeta(chatId))
   });
 
