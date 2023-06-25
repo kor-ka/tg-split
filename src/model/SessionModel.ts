@@ -19,6 +19,7 @@ export class SessionModel {
     readonly balance = new VM<SortedBalance | undefined>(undefined);
     readonly logModule = new LogModule()
     readonly users: UsersModule
+    readonly chatId: number
 
     private localOprationId = Date.now()
 
@@ -30,6 +31,10 @@ export class SessionModel {
     };
 
     constructor(params: { initDataUnsafe: TgWebAppInitData, initData: string }) {
+        const [chat_descriptor, token] = (params.initDataUnsafe.start_param ?? '').split('T') ?? [];
+        const [chatId, threadId] = chat_descriptor.split('_').map(Number) ?? [];
+        this.chatId = chatId
+
         Cookies.set("user_id", params.initDataUnsafe.user.id.toString(), { path: "/", sameSite: 'None', secure: true, expires: 7 })
         Cookies.set("time_zone", Intl.DateTimeFormat().resolvedOptions().timeZone, { path: "/", sameSite: 'None', secure: true, expires: 7 })
 
@@ -141,7 +146,7 @@ export class SessionModel {
     }
 
     clndrAvailableSync = () => {
-        return Cookies.get('cldr_available') === 'true'
+        return Cookies.get(`cldr_available_${this.chatId}`) === 'true'
     }
     clndrAvailable = async () => {
         let splitAvailable = this.clndrAvailableSync();
@@ -151,7 +156,7 @@ export class SessionModel {
 
             splitAvailable = (await (await fetch(`${CLNDR_DOMAIN}/enabledInChat/${chatId}`)).text()) === 'true';
             if (splitAvailable) {
-                Cookies.set("cldr_available", 'true', { path: "/", sameSite: 'None', secure: true, expires: 7 })
+                Cookies.set(`cldr_available_${this.chatId}`, 'true', { path: "/", sameSite: 'None', secure: true, expires: 7 })
             }
         }
         return splitAvailable;

@@ -147,7 +147,7 @@ initMDB().then(() => {
       // const app = ''
       const app = ReactDOMServer.renderToString(
         <Timezone.Provider value={timeZone}>
-          <ClndrAvailable.Provider value={req.cookies.cldr_available}>
+          <ClndrAvailable.Provider value={req.cookies[`cldr_available_${chatId}`] === 'true'}>
             <UserContext.Provider
               value={userId}
             >
