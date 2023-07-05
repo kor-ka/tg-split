@@ -141,6 +141,16 @@ And don't forget to pin the message with the button, so everyone can open the ap
       }
     });
 
+    this.bot.onText(/\/start/, async (upd) => {
+      try {
+        await this.chatMetaModule.updateChat(upd.chat.id, upd.chat.title ?? "");
+        await this.createPin(upd.chat.id, upd.message_thread_id);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+
     this.bot.onText(/\/buymeacoffee/, async (upd) => {
       try {
         await this.bot.sendMessage(
@@ -155,6 +165,13 @@ And don't forget to pin the message with the button, so everyone can open the ap
 
     this.bot.on("message", async (message) => {
       try {
+
+        const pinned = await this.pinModule.getPinMeta(message.chat.id, message.message_thread_id);
+        if(!pinned){
+            await this.chatMetaModule.updateChat(message.chat.id, message.chat.title ?? "");
+            await this.createPin(upd.chat.id, upd.message_thread_id);      
+        }
+
         if (message.from && (!message.from.is_bot || (message.chat.title?.endsWith("__DEV__")))) {
           await this.userModule.updateUser(message.chat.id, message.message_thread_id, {
             id: message.from.id,
