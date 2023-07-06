@@ -169,7 +169,7 @@ And don't forget to pin the message with the button, so everyone can open the ap
         const pinned = await this.pinModule.getPinMeta(message.chat.id, message.message_thread_id);
         if(!pinned){
             await this.chatMetaModule.updateChat(message.chat.id, message.chat.title ?? "");
-            await this.createPin(upd.chat.id, upd.message_thread_id);      
+            await this.createPin(message.chat.id, message.message_thread_id);      
         }
 
         if (message.from && (!message.from.is_bot || (message.chat.title?.endsWith("__DEV__")))) {
