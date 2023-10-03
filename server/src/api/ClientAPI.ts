@@ -150,9 +150,9 @@ export const savedOpsToApi = (saved: SavedOp[]): Log => {
     return saved.map(savedOpToApi)
 }
 
-export const savedUserToApi = (saved: SavedUser[], chatId: number, threadId?: number): User[] => {
+export const savedUserToApi = (saved: SavedUser[], chatId: number, threadId: number | undefined): User[] => {
     return saved.map(s => {
-        const { _id, chatIds, disabledChatIds, threadIds, ...u } = s
-        return { ...u, disabled: !!disabledChatIds?.includes(chatId) || (!!threadId && !threadIds?.includes(threadId)) }
+        const { _id, chatIds, disabledChatIds, threadFullIds, ...u } = s
+        return { ...u, disabled: !!disabledChatIds?.includes(chatId) || ((threadId !== undefined) && !threadFullIds?.includes(`${chatId}_${threadId}`)) }
     })
 }

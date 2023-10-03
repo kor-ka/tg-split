@@ -28,7 +28,7 @@ export class UserModule {
         $set: {
           ...update,
         },
-        $addToSet: { ...disabled ? { disabledChatIds: chatId } : {}, chatIds: chatId, threadIds: threadId },
+        $addToSet: { ...disabled ? { disabledChatIds: chatId } : {}, chatIds: chatId, threadFullIds: `${chatId}_${threadId}` },
         $pull: { ...disabled ? {} : { disabledChatIds: chatId } }
       },
       { upsert: true }
