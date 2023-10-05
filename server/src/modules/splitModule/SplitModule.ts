@@ -17,6 +17,9 @@ export class SplitModule {
 
   readonly stateUpateSubject = new Subject<{ chatId: number, threadId: number | undefined, balanceState: BalanceState, operation: SavedOp, type: 'create' | 'update' | 'delete' }>;
 
+  // 
+  // ACTIONS
+  // 
   commitOperation = async (chatId: number, threadId: number | undefined, command: ClientApiCreateCommand | ClientApiUpdateCommand) => {
     const { type, operation } = command;
     if (operation.sum === undefined) {
@@ -181,6 +184,20 @@ export class SplitModule {
     }
   }
 
+  joinSplit = async (chatId: number, threadId: number | undefined, usedId: number, oprationId: string) => {
+    return this.commitOperation(chatId, threadId,
+      {
+        type: 'update', operation: {
+          id: oprationId, type: 'split', conditions: [
+            { type: 'shares', shares: 1, extra: 0, uid: usedId }
+          ]
+        }
+      })
+  }
+
+  // 
+  // GETTERS
+  // 
   balanceCache = new Map<string, BalanceState>();
   getBalance = async (chatId: number, threadId: number | undefined): Promise<BalanceState> => {
     const savedBalance = (await this.balance.findOne({ chatId, threadId }))
@@ -226,6 +243,9 @@ export class SplitModule {
   }
 }
 
+// 
+// UTILS
+// 
 const opToAtoms = (op: SavedOp | (ClientAPICommandOperation & { uid: number })) => {
   let atoms: Atom[]
 
