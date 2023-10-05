@@ -7,9 +7,9 @@ export const splitToAtoms = (srcUid: number, sum: number, conditions: Condition[
     conditions.forEach((c) => {
         if (c.type === 'shares') {
             shares.push(c);
-        } else {
-            atoms.push(atom(srcUid, c.uid, 0))
         }
+        // add empty atoms to preserve conditions order
+        atoms.push(atom(srcUid, c.uid, 0))
     })
 
 

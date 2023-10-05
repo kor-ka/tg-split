@@ -209,6 +209,9 @@ export const AddExpenceScreen = () => {
     // src/dst 
     // 
     const [srcUserId, setSrcUserId] = React.useState(editTransaction?.uid ?? userId ?? NaN);
+    const srcUserIdRef = React.useRef(srcUserId)
+    srcUserIdRef.current = srcUserId
+
     const [showUserPicker, setShowUserPicker] = React.useState<'src' | 'dst' | false>(false);
     const pickSrc = React.useCallback(() => {
         setShowUserPicker(picker => picker === 'src' ? false : 'src');
@@ -254,9 +257,8 @@ export const AddExpenceScreen = () => {
             });
 
             // TODO: unify initial and update calc?
-            const atoms = splitToAtoms(userId ?? -1, sum, conditions, false)
-                // [2][1] is dst user id in atom
-                .sort((a, b) => sortedIds.indexOf(a[2][1]) - sortedIds.indexOf(b[2][1]));
+            const srcUserId = srcUserIdRef.current
+            const atoms = splitToAtoms(srcUserId, sum, conditions, false)
             return { sortedIds, conditions, vms, atoms, diff: editTransaction ? [] : conditions };
 
         }
@@ -277,9 +279,8 @@ export const AddExpenceScreen = () => {
                     }
                 })
             }
-            const atoms = splitToAtoms(userId ?? -1, sumRef.current, conditionsNext, false)
-                // [2][1] is dst user id in atom
-                .sort((a, b) => sortedIds.indexOf(a[2][1]) - sortedIds.indexOf(b[2][1]));
+            const srcUserId = srcUserIdRef.current
+            const atoms = splitToAtoms(srcUserId, sumRef.current, conditionsNext, false)
             const diff = conditionsDiff(editTransaction?.conditions ?? [], conditionsNext)
             return { sortedIds, conditions: conditionsNext, vms, atoms, diff }
         });
