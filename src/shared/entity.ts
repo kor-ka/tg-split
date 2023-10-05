@@ -1,4 +1,5 @@
-import { OmitUnion } from "./types";
+import { OmitUnion, Optional } from "./types";
+
 
 // 
 // Abstract 
@@ -21,7 +22,6 @@ export type OperationBase = { id: string, uid: number, date: number, edited?: bo
 export type OperationSplit = OperationBase & {
     type: 'split',
     conditions: Condition[],
-    uids?: number[],
     sum: number,
     description?: string
 }
@@ -41,16 +41,12 @@ type ConditionBase = { uid: number };
 export type DisabledCondition = ConditionBase & {
     type: 'disabled',
 };
-export type FixedCondition = ConditionBase & {
-    type: 'fixed',
-    sum: number
-};
 export type SharesCondition = ConditionBase & {
     type: 'shares',
     shares: number,
 
 } & ExtraCondition;
-export type Condition = FixedCondition | SharesCondition | DisabledCondition;
+export type Condition = SharesCondition | DisabledCondition;
 
 // 
 // Client API
@@ -70,7 +66,12 @@ export type StateUpdate = {
 // 
 // Server API
 // 
-export type ClientAPICommandOperation = OmitUnion<Operation, 'edited' | 'deleted' | 'date'>
+export type ClientAPICommandCreateOperation = OmitUnion<Operation, 'edited' | 'deleted' | 'date'>
+// OMG
+export type ClientAPICommandUpdateOperation = OmitUnion<Optional<OperationSplit, 'description' | 'sum' | 'uid'> | OperationTransfer, 'edited' | 'deleted' | 'date'>
+export type ClientApiCreateCommand = { type: 'create', operation: ClientAPICommandCreateOperation }
+export type ClientApiUpdateCommand = { type: 'update', operation: ClientAPICommandUpdateOperation }
 export type ClientAPICommand =
-    { type: 'create' | 'update', operation: ClientAPICommandOperation } |
+    ClientApiCreateCommand |
+    ClientApiUpdateCommand |
     { type: 'delete', id: string };

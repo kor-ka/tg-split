@@ -1,14 +1,11 @@
 import { atom, Atom } from "./atom";
-import { Condition, FixedCondition, SharesCondition } from "./entity";
+import { Condition, SharesCondition } from "./entity";
 
 export const splitToAtoms = (srcUid: number, sum: number, conditions: Condition[], skipSrc = true) => {
-    const fixed: FixedCondition[] = [];
     const shares: SharesCondition[] = [];
     const atoms: Atom[] = [];
     conditions.forEach((c) => {
-        if (c.type === 'fixed') {
-            fixed.push(c);
-        } else if (c.type === 'shares') {
+        if (c.type === 'shares') {
             shares.push(c);
         } else {
             atoms.push(atom(srcUid, c.uid, 0))
@@ -16,12 +13,7 @@ export const splitToAtoms = (srcUid: number, sum: number, conditions: Condition[
     })
 
 
-    // extract fixed and extra from general sum, split the rest
-    fixed.forEach((c) => {
-        sum -= c.sum;
-        atoms.push(atom(srcUid, c.uid, c.sum));
-    })
-
+    // extract extra from general sum, split the rest
     let sharesCount = 0;
     shares.forEach((c) => {
         sum -= c.extra;
