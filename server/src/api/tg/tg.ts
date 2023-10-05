@@ -265,7 +265,7 @@ And don't forget to pin the message with the button, so everyone can open the ap
 
         }
 
-        (upd.type === 'create' ? this.sendEventMessage : this.updateEventMessages)(upd.operation)
+        await (upd.type === 'create' ? this.sendEventMessage : this.updateEventMessages)(upd.operation)
 
       } catch (e) {
         console.error(e)
