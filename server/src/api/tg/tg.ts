@@ -12,6 +12,7 @@ import { PINS } from "../../modules/pinsModule/pinsStore";
 import { CHATMETA } from "../../modules/chatMetaModule/chatMetaStore";
 import { USER } from "../../modules/userModule/userStore";
 import { renderOpMessage } from "./renderOpMessage";
+import { BalanceState } from "../../../../src/shared/entity";
 
 export class TelegramBot {
   private pinModule = container.resolve(PinsModule);
@@ -46,6 +47,22 @@ And don't forget to pin the message with the button, so everyone can open the ap
       { message_thread_id: threadId }
     );
   };
+
+  updatePin = async (chatId: number, threadId: number | undefined, balanceState: BalanceState) => {
+    const pinned = await this.pinModule.getPinMeta(chatId, threadId);
+
+    if (pinned) {
+      const { text, buttonsRows } = await renderPin(chatId, threadId, balanceState.balance);
+
+      await this.bot.editMessageText(text, {
+        chat_id: chatId,
+        message_id: pinned.messageId,
+        parse_mode: "HTML",
+        reply_markup: { inline_keyboard: buttonsRows },
+      });
+
+    }
+  }
 
   sendEventMessage = async (op: SavedOp) => {
     if (op.type === 'split') {
@@ -251,21 +268,11 @@ And don't forget to pin the message with the button, so everyone can open the ap
     this.splitModule.stateUpateSubject.subscribe(async (upd) => {
       try {
         const { chatId, threadId, balanceState } = upd;
-        const pinned = await this.pinModule.getPinMeta(chatId, threadId);
 
-        if (pinned) {
-          const { text, buttonsRows } = await renderPin(chatId, threadId, balanceState.balance);
-
-          await this.bot.editMessageText(text, {
-            chat_id: chatId,
-            message_id: pinned.messageId,
-            parse_mode: "HTML",
-            reply_markup: { inline_keyboard: buttonsRows },
-          });
-
-        }
-
-        await (upd.type === 'create' ? this.sendEventMessage : this.updateEventMessages)(upd.operation)
+        await Promise.all([
+          (upd.type === 'create' ? this.sendEventMessage : this.updateEventMessages)(upd.operation),
+          this.updatePin(chatId, threadId, balanceState)
+        ])
 
       } catch (e) {
         console.error(e)

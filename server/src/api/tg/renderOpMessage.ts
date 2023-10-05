@@ -13,15 +13,15 @@ export const renderOpMessage = async (op: SavedOp) => {
     let text = "";
     let buttonsRows: TB.InlineKeyboardButton[][] = [];
     if (op.type === 'split') {
-
+        const conditions = op.conditions.filter(c => c.type !== 'disabled')
         // fetch all user data
         const users = new Map<number, SavedUser & { fullName: string }>();
-        const usersIds = new Set(op.conditions.map(c => c.uid));
+        const usersIds = new Set(conditions.map(c => c.uid));
         usersIds.add(op.uid);
         (await USER().find({ id: { $in: [...usersIds] } }).toArray()).forEach(u => users.set(u.id, { ...u, fullName: [u.name, u.lastname].filter(Boolean).join(' ') }))
 
-        const fullNames = op.conditions.map((cond) => users.get(cond.uid)?.fullName ?? "???").join(', ')
-        const namesShort = op.conditions.length > 2 ? `${op.conditions.length} persons` : op.conditions.map((cond) => users.get(cond.uid)?.name ?? '???').join(', ')
+        const fullNames = conditions.map((cond) => users.get(cond.uid)?.fullName ?? "???").join(', ')
+        const namesShort = conditions.length > 2 ? `${conditions.length} persons` : conditions.map((cond) => users.get(cond.uid)?.name ?? '???').join(', ')
 
         const srcUserFullName = users.get(op.uid)?.fullName ?? '???'
 
