@@ -31,9 +31,7 @@ export const renderOpMessage = async (op: SavedOp) => {
         if (op.deleted) {
             title = wrapInTag("s", title)
         }
-        const subtitle = htmlEntities([
-            op.description && `${srcUserFullName} paid for ${op.description.trim()}`, `Split among: ${fullNames}`].filter(Boolean).join('. ')
-        )
+        const subtitle = htmlEntities(`Split among: ${fullNames}`)
         text = [title, subtitle].join('\n')
 
         let key = [chatId, threadId].filter(Boolean).join('_');
