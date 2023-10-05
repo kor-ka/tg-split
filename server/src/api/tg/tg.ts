@@ -6,11 +6,12 @@ import { ChatMetaModule } from "../../modules/chatMetaModule/ChatMetaModule";
 import { SplitModule } from "../../modules/splitModule/SplitModule";
 import { UserModule } from "../../modules/userModule/UserModule";
 import { optimiseBalance } from "../../../../src/model/optimiseBalance";
-import { BALANCE, OP } from "../../modules/splitModule/splitStore";
+import { BALANCE, OP, SavedOp } from "../../modules/splitModule/splitStore";
 import { MDBClient } from "../../utils/MDB";
 import { PINS } from "../../modules/pinsModule/pinsStore";
 import { CHATMETA } from "../../modules/chatMetaModule/chatMetaStore";
 import { USER } from "../../modules/userModule/userStore";
+import { renderOpMessage } from "./renderOpMessage";
 
 export class TelegramBot {
   private pinModule = container.resolve(PinsModule);
@@ -20,7 +21,7 @@ export class TelegramBot {
 
   private token = process.env.TELEGRAM_BOT_TOKEN!;
   private bot = new TB(this.token, {
-    polling: false,
+    polling: true,
   });
 
   private createPin = async (chatId: number, threadId: number | undefined) => {
@@ -45,6 +46,30 @@ And don't forget to pin the message with the button, so everyone can open the ap
       { message_thread_id: threadId }
     );
   };
+
+  sendEventMessage = async (op: SavedOp) => {
+    if (op.type === 'split') {
+      const [text, buttons] = await renderOpMessage(op)
+      const message = await this.bot.sendMessage(op.chatId, text, {
+        reply_markup: { inline_keyboard: buttons },
+        parse_mode: "HTML",
+        message_thread_id: op.threadId
+      });
+      await OP().updateOne({ _id: op._id }, { $addToSet: { messages: message.message_id } })
+    }
+  }
+
+  updateEventMessages = async (op: SavedOp) => {
+    const [text, buttons] = await renderOpMessage(op)
+    const meessages = (await OP().findOne({ _id: op._id }))?.messages || []
+    await Promise.all(meessages.map(mid =>
+      this.bot.editMessageText(text, {
+        chat_id: op.chatId,
+        message_id: mid,
+        parse_mode: "HTML",
+        reply_markup: { inline_keyboard: buttons },
+      })))
+  }
 
   init = () => {
     this.bot.on("group_chat_created", async (upd) => {
@@ -206,6 +231,22 @@ And don't forget to pin the message with the button, so everyone can open the ap
       }
     });
 
+    this.bot.on("callback_query", async q => {
+      try {
+        const { data: dataString, from, message } = q;
+        if (message && dataString && from) {
+          let data = dataString.split("/");
+          if (data[0] === 'join_split') {
+            const opId = data[1]
+            await this.splitModule.joinSplit(message.chat.id, message.message_thread_id, from.id, opId)
+          }
+        }
+        await this.bot.answerCallbackQuery(q.id);
+      } catch (e) {
+        console.error(e)
+      }
+    })
+
     // TODO: this shit can race, add worker
     this.splitModule.stateUpateSubject.subscribe(async (upd) => {
       try {
@@ -223,6 +264,9 @@ And don't forget to pin the message with the button, so everyone can open the ap
           });
 
         }
+
+        (upd.type === 'create' ? this.sendEventMessage : this.updateEventMessages)(upd.operation)
+
       } catch (e) {
         console.error(e)
       }

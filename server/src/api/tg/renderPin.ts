@@ -41,7 +41,7 @@ export const renderPin = async (chatId: number, threadId: number | undefined, ba
   let buttonsRows: TB.InlineKeyboardButton[][] = [];
   buttonsRows.push([
     {
-      text: "Split",
+      text: "Split app",
       url: `https://t.me/splitsimplebot/split?startapp=${key}&startApp=${key}`,
     },
   ]);
