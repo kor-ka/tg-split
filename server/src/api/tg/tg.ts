@@ -14,6 +14,8 @@ import { USER } from "../../modules/userModule/userStore";
 import { renderOpMessage } from "./renderOpMessage";
 import { BalanceState } from "../../../../src/shared/entity";
 
+const nick = "splitsimplebot"
+
 export class TelegramBot {
   private pinModule = container.resolve(PinsModule);
   private chatMetaModule = container.resolve(ChatMetaModule);
@@ -24,6 +26,10 @@ export class TelegramBot {
   private bot = new TB(this.token, {
     polling: true,
   });
+
+  onCommand = (command: string, callback: (msg: TB.Message, match: RegExpExecArray | null) => void) => {
+    return this.bot.onText(new RegExp(`^\/(${command}|${command}@${nick})$`), callback)
+  }
 
   private createPin = async (chatId: number, threadId: number | undefined) => {
     console.log("createPin", chatId);
@@ -174,7 +180,7 @@ And don't forget to pin the message with the button, so everyone can open the ap
       }
     });
 
-    this.bot.onText(/\/pin/, async (upd) => {
+    this.onCommand('pin', async (upd) => {
       try {
         await this.chatMetaModule.updateChat(upd.chat.id, upd.chat.title ?? "");
         await this.createPin(upd.chat.id, upd.message_thread_id);
@@ -183,7 +189,7 @@ And don't forget to pin the message with the button, so everyone can open the ap
       }
     });
 
-    this.bot.onText(/\/start$/, async (upd) => {
+    this.onCommand('start', async (upd) => {
       try {
         await this.bot.sendMessage(
           upd.chat.id,
@@ -197,7 +203,7 @@ And don't forget to pin the message with the button, so everyone can open the ap
     });
 
 
-    this.bot.onText(/\/buymeacoffee/, async (upd) => {
+    this.onCommand('buymeacoffee', async (upd) => {
       try {
         await this.bot.sendMessage(
           upd.chat.id,
