@@ -43,13 +43,25 @@ export class TelegramBot {
     });
 
     const { message_id: messageId } = message
-    this.pinModule.updatePinMeta(chatId, threadId, { messageId }).catch(((e) => console.log(e)));
+    const prevPin = await this.pinModule.updatePinMeta(chatId, threadId, { messageId })
+
+    if (prevPin.value) {
+      await this.bot.deleteMessage(chatId, prevPin.value.messageId)
+    }
+
+    let pinned = true
+    try {
+      await this.bot.pinChatMessage(chatId, messageId)
+    } catch (e) {
+      pinned = false
+    }
+
     await this.bot.sendMessage(
       chatId,
       `Hi there! 
 I'll help you split expenses among this group. Imagine someone paid for dinner, another one paid for the taxi, and someone bought ice cream for all. Who owes whom what sum? I'm here so you don't need to puzzle over it each time; just enjoy your time. 
 To start, add your first expense using the "Split" button. 
-And don't forget to pin the message with the button, so everyone can open the app.`,
+${pinned ? '' : "And don't forget to pin the message with the button, so everyone can open the app."}`.trim(),
       { message_thread_id: threadId }
     );
   };
@@ -210,7 +222,7 @@ And don't forget to pin the message with the button, so everyone can open the ap
           await this.bot.sendMessage(
             upd.chat.id,
             'Hey👋\nThis bot is meant to work in groups with your friends, add me to any group to start.',
-            { reply_markup: { inline_keyboard: [[{ text: 'Add to group', url: "https://telegram.me/splitsimplebot?startgroup=true&admin=none" }]] } }
+            { reply_markup: { inline_keyboard: [[{ text: 'Add to group', url: "https://telegram.me/splitsimplebot?startgroup=true&admin=pin_message" }]] } }
           );
         } else {
           await this.createPin(upd.chat.id, upd.message_thread_id)

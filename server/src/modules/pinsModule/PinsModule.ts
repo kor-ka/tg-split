@@ -9,7 +9,7 @@ export class PinsModule {
     messageId?: number, chatInstance?: string
   }) => {
     const { messageId, chatInstance } = options;
-    return await this.db.updateOne(
+    return await this.db.findOneAndUpdate(
       { chatId, threadId },
       {
         $set: {
@@ -18,7 +18,7 @@ export class PinsModule {
           ...chatInstance ? { chatInstance } : {}
         }
       },
-      { upsert: true }
+      { upsert: true, returnDocument: 'before' }
     );
   };
 
