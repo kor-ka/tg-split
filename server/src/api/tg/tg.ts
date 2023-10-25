@@ -46,7 +46,7 @@ export class TelegramBot {
     const prevPin = await this.pinModule.updatePinMeta(chatId, threadId, { messageId })
 
     if (prevPin.value) {
-      await this.bot.deleteMessage(chatId, prevPin.value.messageId)
+      this.bot.deleteMessage(chatId, prevPin.value.messageId).catch(e => console.error(e.message))
     }
 
     let pinned = true
