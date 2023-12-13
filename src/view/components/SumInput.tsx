@@ -17,7 +17,7 @@ export const SumInput = React.memo(({ sum, onSumChange, autoFocus: autofocus, di
 
     const onSumInputChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const targetStr = e.target.value.replace(',', '.')
-        const num = Math.floor(Number(targetStr) * 100);
+        const num = Math.round(Number(targetStr) * 100);
 
         if (Number.isSafeInteger(num)) {
             setSumStr(formatSunInput(targetStr, num))
